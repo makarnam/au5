@@ -9,6 +9,8 @@ import {
   Activity,
   Link as LinkIcon,
   PlusCircle,
+  X as XIcon,
+  Save,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -44,6 +46,58 @@ const SectionCard: React.FC<{ title: string; children: React.ReactNode; action?:
   </div>
 );
 
+type RiskDetailModalProps = {
+  title: string;
+  open: boolean;
+  onClose: () => void;
+  onSubmit: () => Promise<void> | void;
+  submitLabel?: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+};
+
+const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
+  title,
+  open,
+  onClose,
+  onSubmit,
+  submitLabel = "Save",
+  children,
+  disabled,
+}) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-2xl rounded-lg border border-gray-200 shadow-xl">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <XIcon className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-4">{children}</div>
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!!disabled}
+            onClick={() => void onSubmit()}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {submitLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const RiskDetails: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -56,6 +110,54 @@ const RiskDetails: React.FC = () => {
   const [incidents, setIncidents] = useState<RiskIncident[]>([]);
   const [reviews, setReviews] = useState<RiskReview[]>([]);
   const canEdit = checkPermission(["auditor", "supervisor_auditor", "admin", "super_admin"]);
+
+  // Modals state and form values
+  const [treatmentOpen, setTreatmentOpen] = useState(false);
+  const [treatmentSaving, setTreatmentSaving] = useState(false);
+  const [treatmentForm, setTreatmentForm] = useState<Partial<RiskTreatment>>({
+    title: "",
+    description: "",
+    treatment_type: "mitigate",
+    status: "planned",
+    priority: "medium",
+    target_date: "",
+    currency: "USD",
+  } as any);
+
+  const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const [assessmentSaving, setAssessmentSaving] = useState(false);
+  const [assessmentForm, setAssessmentForm] = useState<Partial<RiskAssessment>>({
+    assessment_type: "periodic",
+    assessment_date: new Date().toISOString().slice(0, 10),
+    probability: 3,
+    impact: 3,
+    risk_score: 9,
+    risk_level: "medium",
+    confidence_level: "medium",
+  } as any);
+
+  const [incidentOpen, setIncidentOpen] = useState(false);
+  const [incidentSaving, setIncidentSaving] = useState(false);
+  const [incidentForm, setIncidentForm] = useState<Partial<RiskIncident>>({
+    incident_title: "",
+    incident_description: "",
+    incident_date: new Date().toISOString().slice(0, 10),
+    severity: "medium",
+    status: "open",
+    currency: "USD",
+  } as any);
+
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewForm, setReviewForm] = useState<Partial<RiskReview>>({
+    review_type: "periodic",
+    review_date: new Date().toISOString().slice(0, 10),
+    review_outcome: "no_change",
+  } as any);
+
+  const [linkControlOpen, setLinkControlOpen] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [controlId, setControlId] = useState<string>("");
 
   useEffect(() => {
     const load = async () => {
@@ -104,6 +206,152 @@ const RiskDetails: React.FC = () => {
         : "",
     [risk?.status],
   );
+
+  // Submit handlers
+  const submitTreatment = async () => {
+    if (!risk) return;
+    if (!treatmentForm.title || !treatmentForm.description) {
+      toast.error("Title and Description are required");
+      return;
+    }
+    try {
+      setTreatmentSaving(true);
+      await riskService.addTreatment(risk.id, {
+        ...(treatmentForm as any),
+        risk_id: risk.id,
+      });
+      const t = await riskService.getTreatments(risk.id);
+      setTreatments(t);
+      setTreatmentOpen(false);
+      setTreatmentForm({
+        title: "",
+        description: "",
+        treatment_type: "mitigate",
+        status: "planned",
+        priority: "medium",
+        target_date: "",
+        currency: "USD",
+      } as any);
+      toast.success("Treatment added");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to add treatment");
+    } finally {
+      setTreatmentSaving(false);
+    }
+  };
+
+  const submitAssessment = async () => {
+    if (!risk) return;
+    try {
+      setAssessmentSaving(true);
+      await riskService.addAssessment(risk.id, {
+        ...(assessmentForm as any),
+        risk_id: risk.id,
+      });
+      const a = await riskService.getAssessments(risk.id);
+      setAssessments(a);
+      setAssessmentOpen(false);
+      setAssessmentForm({
+        assessment_type: "periodic",
+        assessment_date: new Date().toISOString().slice(0, 10),
+        probability: 3,
+        impact: 3,
+        risk_score: 9,
+        risk_level: "medium",
+        confidence_level: "medium",
+      } as any);
+      toast.success("Assessment added");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to add assessment");
+    } finally {
+      setAssessmentSaving(false);
+    }
+  };
+
+  const submitIncident = async () => {
+    if (!risk) return;
+    if (!incidentForm.incident_title || !incidentForm.incident_description) {
+      toast.error("Title and Description are required");
+      return;
+    }
+    try {
+      setIncidentSaving(true);
+      await riskService.addIncident(risk.id, {
+        ...(incidentForm as any),
+        risk_id: risk.id,
+      });
+      const i = await riskService.getIncidents(risk.id);
+      setIncidents(i);
+      setIncidentOpen(false);
+      setIncidentForm({
+        incident_title: "",
+        incident_description: "",
+        incident_date: new Date().toISOString().slice(0, 10),
+        severity: "medium",
+        status: "open",
+        currency: "USD",
+      } as any);
+      toast.success("Incident added");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to add incident");
+    } finally {
+      setIncidentSaving(false);
+    }
+  };
+
+  const submitReview = async () => {
+    if (!risk) return;
+    try {
+      setReviewSaving(true);
+      // Ensure reviewer_id (NOT NULL) is set to current user
+      const { supabase } = await import("../../lib/supabase");
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      await riskService.addReview(risk.id, {
+        ...(reviewForm as any),
+        risk_id: risk.id,
+        reviewer_id: user.id,
+      });
+      const v = await riskService.getReviews(risk.id);
+      setReviews(v);
+      setReviewOpen(false);
+      setReviewForm({
+        review_type: "periodic",
+        review_date: new Date().toISOString().slice(0, 10),
+        review_outcome: "no_change",
+      } as any);
+      toast.success("Review added");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to add review");
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  const submitLinkControl = async () => {
+    if (!risk) return;
+    if (!controlId) {
+      toast.error("Enter a valid Control ID");
+      return;
+    }
+    try {
+      setLinking(true);
+      await riskService.linkControl(risk.id, controlId);
+      setLinkControlOpen(false);
+      setControlId("");
+      toast.success("Control linked");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to link control");
+    } finally {
+      setLinking(false);
+    }
+  };
 
   if (loading || !risk) {
     return (
@@ -226,11 +474,7 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() =>
-                toast("Implement add-treatment modal in a follow-up (API already ready).", {
-                  icon: "🛠️",
-                })
-              }
+              onClick={() => setTreatmentOpen(true)}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -273,11 +517,7 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() =>
-                toast("Implement add-assessment modal in a follow-up (API already ready).", {
-                  icon: "🛠️",
-                })
-              }
+              onClick={() => setAssessmentOpen(true)}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -303,7 +543,9 @@ const RiskDetails: React.FC = () => {
                 {assessments.map((a) => (
                   <tr key={a.id} className="border-b last:border-0">
                     <td className="py-2 pr-3">{a.assessment_date}</td>
-                    <td className="py-2 pr-3 capitalize">{a.assessment_type.replace("_", " ")}</td>
+                    <td className="py-2 pr-3 capitalize">
+                      {a.assessment_type.replace("_", " ")}
+                    </td>
                     <td className="py-2 pr-3">{a.risk_score}</td>
                     <td className="py-2 pr-3 capitalize">{a.risk_level}</td>
                   </tr>
@@ -320,11 +562,7 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() =>
-                toast("Implement add-incident modal in a follow-up (API already ready).", {
-                  icon: "🛠️",
-                })
-              }
+              onClick={() => setIncidentOpen(true)}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -367,11 +605,7 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() =>
-                toast("Implement add-review modal in a follow-up (API already ready).", {
-                  icon: "🛠️",
-                })
-              }
+              onClick={() => setReviewOpen(true)}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -409,23 +643,410 @@ const RiskDetails: React.FC = () => {
       </SectionCard>
 
       {/* Links */}
-      <SectionCard title="Linked Controls" action={
-        canEdit && (
-          <button
-            onClick={() =>
-              toast("Implement control linking in a follow-up (API already ready).", { icon: "🛠️" })
-            }
-            className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
-          >
-            <LinkIcon className="w-4 h-4 mr-1" />
-            Link Control
-          </button>
-        )
-      }>
+      <SectionCard
+        title="Linked Controls"
+        action={
+          canEdit && (
+            <button
+              onClick={() => setLinkControlOpen(true)}
+              className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
+            >
+              <LinkIcon className="w-4 h-4 mr-1" />
+              Link Control
+            </button>
+          )
+        }
+      >
         <p className="text-sm text-gray-500">
-          Display controls linked to this risk (via risk_controls). Implement in follow-up.
+          Display controls linked to this risk (via risk_controls). Linking modal available.
         </p>
       </SectionCard>
+
+      {/* Modals */}
+      <RiskDetailModal
+        title="Add Treatment"
+        open={treatmentOpen}
+        onClose={() => setTreatmentOpen(false)}
+        onSubmit={submitTreatment}
+        submitLabel={treatmentSaving ? "Saving..." : "Save"}
+        disabled={treatmentSaving}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm text-gray-700">Title *</label>
+            <input
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={treatmentForm.title || ""}
+              onChange={(e) => setTreatmentForm((f) => ({ ...f, title: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Type</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(treatmentForm as any).treatment_type || "mitigate"}
+              onChange={(e) =>
+                setTreatmentForm((f) => ({ ...f, treatment_type: e.target.value as any }))
+              }
+            >
+              <option value="mitigate">Mitigate</option>
+              <option value="accept">Accept</option>
+              <option value="transfer">Transfer</option>
+              <option value="avoid">Avoid</option>
+              <option value="monitor">Monitor</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm text-gray-700">Description *</label>
+            <textarea
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              rows={3}
+              value={treatmentForm.description || ""}
+              onChange={(e) =>
+                setTreatmentForm((f) => ({ ...f, description: e.target.value }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Status</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(treatmentForm as any).status || "planned"}
+              onChange={(e) => setTreatmentForm((f) => ({ ...f, status: e.target.value as any }))}
+            >
+              <option value="planned">Planned</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="on_hold">On Hold</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Priority</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(treatmentForm as any).priority || "medium"}
+              onChange={(e) => setTreatmentForm((f) => ({ ...f, priority: e.target.value as any }))}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Target Date</label>
+            <input
+              type="date"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(treatmentForm as any).target_date || ""}
+              onChange={(e) => setTreatmentForm((f) => ({ ...f, target_date: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Cost</label>
+            <input
+              type="number"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(treatmentForm as any).cost_estimate || ""}
+              onChange={(e) =>
+                setTreatmentForm((f) => ({
+                  ...f,
+                  cost_estimate: e.target.value ? Number(e.target.value) : undefined,
+                }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Currency</label>
+            <input
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(treatmentForm as any).currency || "USD"}
+              onChange={(e) => setTreatmentForm((f) => ({ ...f, currency: e.target.value }))}
+            />
+          </div>
+        </div>
+      </RiskDetailModal>
+
+      <RiskDetailModal
+        title="Add Assessment"
+        open={assessmentOpen}
+        onClose={() => setAssessmentOpen(false)}
+        onSubmit={submitAssessment}
+        submitLabel={assessmentSaving ? "Saving..." : "Save"}
+        disabled={assessmentSaving}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm text-gray-700">Date</label>
+            <input
+              type="date"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(assessmentForm as any).assessment_date || ""}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, assessment_date: e.target.value }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Type</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(assessmentForm as any).assessment_type || "periodic"}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, assessment_type: e.target.value as any }))
+              }
+            >
+              <option value="initial">Initial</option>
+              <option value="periodic">Periodic</option>
+              <option value="triggered">Triggered</option>
+              <option value="ad_hoc">Ad hoc</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Probability</label>
+            <input
+              type="number"
+              min={1}
+              max={5}
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(assessmentForm as any).probability ?? 3}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, probability: Number(e.target.value) }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Impact</label>
+            <input
+              type="number"
+              min={1}
+              max={5}
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(assessmentForm as any).impact ?? 3}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, impact: Number(e.target.value) }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Score</label>
+            <input
+              type="number"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(assessmentForm as any).risk_score ?? 9}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, risk_score: Number(e.target.value) }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Level</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(assessmentForm as any).risk_level || "medium"}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, risk_level: e.target.value as any }))
+              }
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm text-gray-700">Notes</label>
+            <textarea
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              rows={3}
+              value={(assessmentForm as any).assessment_notes || ""}
+              onChange={(e) =>
+                setAssessmentForm((f) => ({ ...f, assessment_notes: e.target.value }))
+              }
+            />
+          </div>
+        </div>
+      </RiskDetailModal>
+
+      <RiskDetailModal
+        title="Add Incident"
+        open={incidentOpen}
+        onClose={() => setIncidentOpen(false)}
+        onSubmit={submitIncident}
+        submitLabel={incidentSaving ? "Saving..." : "Save"}
+        disabled={incidentSaving}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm text-gray-700">Title *</label>
+            <input
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(incidentForm as any).incident_title || ""}
+              onChange={(e) =>
+                setIncidentForm((f) => ({ ...f, incident_title: e.target.value }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Date</label>
+            <input
+              type="date"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(incidentForm as any).incident_date || ""}
+              onChange={(e) =>
+                setIncidentForm((f) => ({ ...f, incident_date: e.target.value }))
+              }
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm text-gray-700">Description *</label>
+            <textarea
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              rows={3}
+              value={(incidentForm as any).incident_description || ""}
+              onChange={(e) =>
+                setIncidentForm((f) => ({ ...f, incident_description: e.target.value }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Severity</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(incidentForm as any).severity || "medium"}
+              onChange={(e) =>
+                setIncidentForm((f) => ({ ...f, severity: e.target.value as any }))
+              }
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Status</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(incidentForm as any).status || "open"}
+              onChange={(e) =>
+                setIncidentForm((f) => ({ ...f, status: e.target.value as any }))
+              }
+            >
+              <option value="open">Open</option>
+              <option value="investigating">Investigating</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Financial Impact</label>
+            <input
+              type="number"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(incidentForm as any).financial_impact || ""}
+              onChange={(e) =>
+                setIncidentForm((f) => ({
+                  ...f,
+                  financial_impact: e.target.value ? Number(e.target.value) : undefined,
+                }))
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Currency</label>
+            <input
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(incidentForm as any).currency || "USD"}
+              onChange={(e) => setIncidentForm((f) => ({ ...f, currency: e.target.value }))}
+            />
+          </div>
+        </div>
+      </RiskDetailModal>
+
+      <RiskDetailModal
+        title="Add Review"
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        onSubmit={submitReview}
+        submitLabel={reviewSaving ? "Saving..." : "Save"}
+        disabled={reviewSaving}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm text-gray-700">Date</label>
+            <input
+              type="date"
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(reviewForm as any).review_date || ""}
+              onChange={(e) => setReviewForm((f) => ({ ...f, review_date: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Type</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(reviewForm as any).review_type || "periodic"}
+              onChange={(e) =>
+                setReviewForm((f) => ({ ...f, review_type: e.target.value as any }))
+              }
+            >
+              <option value="periodic">Periodic</option>
+              <option value="triggered">Triggered</option>
+              <option value="incident_based">Incident Based</option>
+              <option value="audit_based">Audit Based</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">Outcome</label>
+            <select
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={(reviewForm as any).review_outcome || "no_change"}
+              onChange={(e) =>
+                setReviewForm((f) => ({ ...f, review_outcome: e.target.value as any }))
+              }
+            >
+              <option value="no_change">No Change</option>
+              <option value="updated">Updated</option>
+              <option value="escalated">Escalated</option>
+              <option value="closed">Closed</option>
+              <option value="transferred">Transferred</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm text-gray-700">Notes</label>
+            <textarea
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              rows={3}
+              value={(reviewForm as any).review_notes || ""}
+              onChange={(e) => setReviewForm((f) => ({ ...f, review_notes: e.target.value }))}
+            />
+          </div>
+        </div>
+      </RiskDetailModal>
+
+      <RiskDetailModal
+        title="Link Control"
+        open={linkControlOpen}
+        onClose={() => setLinkControlOpen(false)}
+        onSubmit={submitLinkControl}
+        submitLabel={linking ? "Linking..." : "Link"}
+        disabled={linking}
+      >
+        <div className="grid grid-cols-1 gap-3">
+          <div>
+            <label className="block text-sm text-gray-700">Control ID (UUID)</label>
+            <input
+              className="mt-1 w-full border rounded-lg px-3 py-2"
+              value={controlId}
+              onChange={(e) => setControlId(e.target.value)}
+              placeholder="Paste an existing Control ID"
+            />
+          </div>
+        </div>
+      </RiskDetailModal>
     </div>
   );
 };
