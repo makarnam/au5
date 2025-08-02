@@ -377,6 +377,82 @@ class RiskService {
     return (data || []) as RiskReview[];
   }
 
+  // ------- UPDATE methods for related entities -------
+
+  async updateAssessment(id: string, updates: Partial<RiskAssessment>): Promise<RiskAssessment> {
+    if (!isUUID(id)) throw new Error("Invalid assessment ID");
+    const { data, error } = await supabase
+      .from("risk_assessments")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) throw new Error(`Database error: ${error.message}`);
+    return data as RiskAssessment;
+  }
+
+  async updateTreatment(id: string, updates: Partial<RiskTreatment>): Promise<RiskTreatment> {
+    if (!isUUID(id)) throw new Error("Invalid treatment ID");
+    const { data, error } = await supabase
+      .from("risk_treatments")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) throw new Error(`Database error: ${error.message}`);
+    return data as RiskTreatment;
+  }
+
+  async updateIncident(id: string, updates: Partial<RiskIncident>): Promise<RiskIncident> {
+    if (!isUUID(id)) throw new Error("Invalid incident ID");
+    const { data, error } = await supabase
+      .from("risk_incidents")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) throw new Error(`Database error: ${error.message}`);
+    return data as RiskIncident;
+  }
+
+  async updateReview(id: string, updates: Partial<RiskReview>): Promise<RiskReview> {
+    if (!isUUID(id)) throw new Error("Invalid review ID");
+    const { data, error } = await supabase
+      .from("risk_reviews")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) throw new Error(`Database error: ${error.message}`);
+    return data as RiskReview;
+  }
+
+  // ------- DELETE methods for related entities -------
+
+  async deleteAssessment(id: string): Promise<void> {
+    if (!isUUID(id)) throw new Error("Invalid assessment ID");
+    const { error } = await supabase.from("risk_assessments").delete().eq("id", id);
+    if (error) throw new Error(`Database error: ${error.message}`);
+  }
+
+  async deleteTreatment(id: string): Promise<void> {
+    if (!isUUID(id)) throw new Error("Invalid treatment ID");
+    const { error } = await supabase.from("risk_treatments").delete().eq("id", id);
+    if (error) throw new Error(`Database error: ${error.message}`);
+  }
+
+  async deleteIncident(id: string): Promise<void> {
+    if (!isUUID(id)) throw new Error("Invalid incident ID");
+    const { error } = await supabase.from("risk_incidents").delete().eq("id", id);
+    if (error) throw new Error(`Database error: ${error.message}`);
+  }
+
+  async deleteReview(id: string): Promise<void> {
+    if (!isUUID(id)) throw new Error("Invalid review ID");
+    const { error } = await supabase.from("risk_reviews").delete().eq("id", id);
+    if (error) throw new Error(`Database error: ${error.message}`);
+  }
+
   // Link Controls <-> Risk
   async linkControl(riskId: string, controlId: string, meta?: Partial<Pick<RiskTreatment, "effectiveness_rating">>): Promise<void> {
     if (!isUUID(riskId)) throw new Error("Invalid risk ID");

@@ -10,6 +10,7 @@ import riskService, {
   RiskStatus,
 } from "../../services/riskService";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import AIGenerator from "../../components/ai/AIGenerator";
 
 const levelOptions: RiskLevel[] = ["low", "medium", "high", "critical"];
 const statusOptions: RiskStatus[] = [
@@ -265,7 +266,24 @@ const EditRiskPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <AIGenerator
+              fieldType="description"
+              auditData={{
+                title: form.title || "Risk",
+                audit_type: "risk",
+                business_unit: form.category || "General",
+                scope: form.risk_source || "",
+              }}
+              currentValue={form.description || ""}
+              onGenerated={(content) => {
+                const text = Array.isArray(content) ? content.join("\n") : content;
+                handleChange("description", text);
+              }}
+              className="ml-2"
+            />
+          </div>
           <textarea
             value={form.description || ""}
             onChange={(e) => handleChange("description", e.target.value)}
@@ -276,7 +294,24 @@ const EditRiskPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Mitigation Strategy</label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-gray-700">Mitigation Strategy</label>
+            <AIGenerator
+              fieldType="methodology"
+              auditData={{
+                title: form.title || "Risk Mitigation",
+                audit_type: "risk",
+                business_unit: form.category || "General",
+                scope: `Mitigation for risk: ${form.title}`,
+              }}
+              currentValue={form.mitigation_strategy || ""}
+              onGenerated={(content) => {
+                const text = Array.isArray(content) ? content.join("\n") : content;
+                handleChange("mitigation_strategy", text);
+              }}
+              className="ml-2"
+            />
+          </div>
           <textarea
             value={form.mitigation_strategy || ""}
             onChange={(e) => handleChange("mitigation_strategy", e.target.value)}

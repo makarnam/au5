@@ -28,8 +28,10 @@ import {
   Plus,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import { Comment, Finding, Control, Audit } from "../../types";
+import { Comment, Control, Audit } from "../../types";
+import type { Finding as DbFinding } from "../../services/findingsService";
 import { auditService } from "../../services/auditService";
+import findingsService from "../../services/findingsService";
 import { toast } from "react-hot-toast";
 import {
   formatDate,
@@ -49,111 +51,61 @@ const AuditDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [newComment, setNewComment] = useState("");
-
-  const mockFindings: Finding[] = [
-    {
-      id: "1",
-      audit_id: "1",
-      control_id: "ctrl-1",
-      title: "Weak Password Requirements",
-      description:
-        "Current password policy does not meet industry standards for complexity and length requirements.",
-      severity: "high",
-      status: "open",
-      risk_rating: "high",
-      business_impact:
-        "Increased risk of unauthorized access to systems and data breaches",
-      root_cause:
-        "Password policy configuration is outdated and not regularly reviewed",
-      recommendation:
-        "Update password policy to require minimum 12 characters with complexity requirements including uppercase, lowercase, numbers, and special characters",
-      assigned_to: "55555555-5555-5555-5555-555555555555",
-      due_date: "2024-01-30",
-      evidence_files: [
-        "password-policy-screenshot.png",
-        "security-assessment-report.pdf",
-      ],
-      ai_generated: false,
-      created_by: "22222222-2222-2222-2222-222222222222",
-      created_at: "2024-01-10T14:30:00Z",
-      updated_at: "2024-01-15T09:45:00Z",
-    },
-    {
-      id: "2",
-      audit_id: "1",
-      control_id: "ctrl-2",
-      title: "Incomplete Backup Testing",
-      description:
-        "Backup restoration testing is not performed regularly as required by policy",
-      severity: "medium",
-      status: "in_progress",
-      risk_rating: "medium",
-      business_impact:
-        "Risk of data loss in case of system failure due to untested backup procedures",
-      root_cause:
-        "Lack of formal backup testing procedures and assigned responsibilities",
-      recommendation:
-        "Implement monthly backup restoration testing with documented procedures and assign clear responsibilities",
-      assigned_to: "55555555-5555-5555-5555-555555555555",
-      due_date: "2024-02-15",
-      evidence_files: ["backup-logs.xlsx"],
-      ai_generated: true,
-      created_by: "22222222-2222-2222-2222-222222222222",
-      created_at: "2024-01-12T11:20:00Z",
-      updated_at: "2024-01-18T16:10:00Z",
-    },
-  ];
-
-  const mockControls: Control[] = [
+  const [findings, setFindings] = useState<DbFinding[]>([]);
+  
+  // Narrow mockControls to include fields required by Control type to satisfy TS
+  // Cast mock objects to Control to satisfy structural typing in this demo page.
+  const mockControls = [
     {
       id: "ctrl-1",
+      control_set_id: "00000000-0000-0000-0000-000000000000",
+      audit_id: "00000000-0000-0000-0000-000000000000",
+      control_code: "IT-001",
       code: "IT-001",
       title: "Password Policy Control",
       description:
         "Ensures strong password requirements are enforced across all systems",
-      control_type: "preventive",
-      frequency: "continuous",
-      business_unit_id: "550e8400-e29b-41d4-a716-446655440001",
+      control_type: "preventive" as any,
+      frequency: "continuous" as any,
       process_area: "Access Management",
-      owner_id: "55555555-5555-5555-5555-555555555555",
-      risk_ids: ["risk-1"],
+      owner_id: "55555555-5555-5555-5555-555555555555" as any,
       testing_procedure:
         "Review password policy settings and test password creation process",
-      evidence_requirements: [
-        "Password policy documentation",
-        "System configuration screenshots",
-      ],
-      effectiveness: "partially_effective",
+      evidence_requirements: "Password policy documentation; System configuration screenshots",
+      effectiveness: "partially_effective" as any,
       last_tested_date: "2024-01-10",
       next_test_date: "2024-04-10",
-      automated: false,
-      ai_generated: false,
-      created_by: "11111111-1111-1111-1111-111111111111",
-      created_at: "2023-12-01T00:00:00Z",
-      updated_at: "2024-01-10T14:30:00Z",
-    },
+      is_automated: false,
+      is_deleted: false,
+      ai_generated: false as any,
+      created_by: "11111111-1111-1111-1111-111111111111" as any,
+      created_at: "2023-12-01T00:00:00Z" as any,
+      updated_at: "2024-01-10T14:30:00Z" as any
+    } as unknown as Control,
     {
       id: "ctrl-2",
+      control_set_id: "00000000-0000-0000-0000-000000000000",
+      audit_id: "00000000-0000-0000-0000-000000000000",
+      control_code: "IT-002",
       code: "IT-002",
       title: "Data Backup Verification",
       description: "Verification of data backup completeness and integrity",
-      control_type: "detective",
-      frequency: "weekly",
-      business_unit_id: "550e8400-e29b-41d4-a716-446655440001",
+      control_type: "detective" as any,
+      frequency: "weekly" as any,
       process_area: "Data Management",
-      owner_id: "55555555-5555-5555-5555-555555555555",
-      risk_ids: ["risk-2"],
+      owner_id: "55555555-5555-5555-5555-555555555555" as any,
       testing_procedure: "Test backup restoration and verify data integrity",
-      evidence_requirements: ["Backup logs", "Restoration test results"],
-      effectiveness: "effective",
+      evidence_requirements: "Backup logs; Restoration test results",
+      effectiveness: "effective" as any,
       last_tested_date: "2024-01-12",
       next_test_date: "2024-04-12",
-      automated: true,
-      ai_generated: false,
-      created_by: "11111111-1111-1111-1111-111111111111",
-      created_at: "2023-12-01T00:00:00Z",
-      updated_at: "2024-01-12T11:20:00Z",
-    },
+      is_automated: true,
+      is_deleted: false,
+      ai_generated: false as any,
+      created_by: "11111111-1111-1111-1111-111111111111" as any,
+      created_at: "2023-12-01T00:00:00Z" as any,
+      updated_at: "2024-01-12T11:20:00Z" as any
+    } as unknown as Control,
   ];
 
   const mockComments: Comment[] = [
@@ -182,18 +134,22 @@ const AuditDetails: React.FC = () => {
   ];
 
   useEffect(() => {
-    const loadAudit = async () => {
+    const load = async () => {
       if (!id) return;
 
       setLoading(true);
       try {
         const auditData = await auditService.getAudit(id);
-        if (auditData) {
-          setAudit(auditData);
-        } else {
+        if (!auditData) {
           toast.error("Audit not found");
           navigate("/audits");
+          return;
         }
+        setAudit(auditData);
+
+        // Load real findings for this audit
+        const { items } = await findingsService.list({ auditId: id, orderBy: 'created_at' as any, orderDir: 'desc' });
+        setFindings(items as DbFinding[]);
       } catch (error) {
         console.error("Error loading audit:", error);
         toast.error("Failed to load audit details");
@@ -203,7 +159,7 @@ const AuditDetails: React.FC = () => {
       }
     };
 
-    loadAudit();
+    load();
   }, [id, navigate]);
 
   const tabs = [
@@ -212,7 +168,7 @@ const AuditDetails: React.FC = () => {
       id: "findings",
       label: "Findings",
       icon: Search,
-      count: mockFindings.length,
+      count: findings.length,
     },
     {
       id: "controls",
@@ -538,7 +494,7 @@ const AuditDetails: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-red-600">
-                      {mockFindings.length}
+                      {findings.length}
                     </div>
                     <div className="text-sm text-gray-600">Findings</div>
                   </div>
@@ -551,9 +507,9 @@ const AuditDetails: React.FC = () => {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">
                       {
-                        mockFindings.filter(
+                        findings.filter(
                           (f) =>
-                            f.severity === "high" || f.severity === "critical",
+                            (f as any).severity === "high" || (f as any).severity === "critical" || f.risk_rating === "high" || f.risk_rating === "critical",
                         ).length
                       }
                     </div>
@@ -562,11 +518,10 @@ const AuditDetails: React.FC = () => {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
                       {
-                        mockFindings.filter((f) => f.status === "resolved")
-                          .length
+                        findings.filter((f) => (f as any).workflow_status === "remediated" || (f as any).status === "resolved").length
                       }
                     </div>
-                    <div className="text-sm text-gray-600">Resolved</div>
+                    <div className="text-sm text-gray-600">Resolved/Remediated</div>
                   </div>
                 </div>
               </div>
@@ -578,7 +533,7 @@ const AuditDetails: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
-                Findings ({mockFindings.length})
+                Findings ({findings.length})
               </h2>
               {checkPermission([
                 "auditor",
@@ -586,7 +541,10 @@ const AuditDetails: React.FC = () => {
                 "admin",
                 "super_admin",
               ]) && (
-                <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button
+                  onClick={() => navigate(`/findings/create`)}
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Finding
                 </button>
@@ -594,7 +552,7 @@ const AuditDetails: React.FC = () => {
             </div>
 
             <div className="grid gap-6">
-              {mockFindings.map((finding, index) => (
+              {findings.map((finding, index) => (
                 <motion.div
                   key={finding.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -607,11 +565,11 @@ const AuditDetails: React.FC = () => {
                       <div
                         className={cn(
                           "w-12 h-12 rounded-lg flex items-center justify-center",
-                          finding.severity === "critical"
+                          ((finding as any).severity ?? finding.risk_rating) === "critical"
                             ? "bg-red-100"
-                            : finding.severity === "high"
+                            : ((finding as any).severity ?? finding.risk_rating) === "high"
                               ? "bg-orange-100"
-                              : finding.severity === "medium"
+                              : ((finding as any).severity ?? finding.risk_rating) === "medium"
                                 ? "bg-yellow-100"
                                 : "bg-green-100",
                         )}
@@ -619,11 +577,11 @@ const AuditDetails: React.FC = () => {
                         <AlertTriangle
                           className={cn(
                             "w-6 h-6",
-                            finding.severity === "critical"
+                            ((finding as any).severity ?? finding.risk_rating) === "critical"
                               ? "text-red-600"
-                              : finding.severity === "high"
+                              : ((finding as any).severity ?? finding.risk_rating) === "high"
                                 ? "text-orange-600"
-                                : finding.severity === "medium"
+                                : ((finding as any).severity ?? finding.risk_rating) === "medium"
                                   ? "text-yellow-600"
                                   : "text-green-600",
                           )}
@@ -637,20 +595,20 @@ const AuditDetails: React.FC = () => {
                           <span
                             className={cn(
                               "px-2 py-1 rounded-full text-xs font-medium",
-                              getSeverityColor(finding.severity),
+                              getSeverityColor(((finding as any).severity ?? finding.risk_rating) as any),
                             )}
                           >
-                            {finding.severity.toUpperCase()}
+                            {(((finding as any).severity ?? finding.risk_rating) as string).toUpperCase()}
                           </span>
                           <span
                             className={cn(
                               "px-2 py-1 rounded-full text-xs font-medium",
-                              getStatusColor(finding.status),
+                              getStatusColor(((finding as any).workflow_status ?? (finding as any).status) as any),
                             )}
                           >
-                            {finding.status.replace("_", " ").toUpperCase()}
+                            {(((finding as any).workflow_status ?? (finding as any).status) as string).replace("_", " ").toUpperCase()}
                           </span>
-                          {finding.ai_generated && (
+                          {(finding as any).ai_generated && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               <Bot className="w-3 h-3 mr-1" />
                               AI
@@ -689,10 +647,18 @@ const AuditDetails: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                      <button
+                        onClick={() => navigate(`/findings/${finding.id}`)}
+                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        aria-label="View Finding"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="p-1 text-gray-400 hover:text-yellow-600 transition-colors">
+                      <button
+                        onClick={() => navigate(`/findings/${finding.id}/edit`)}
+                        className="p-1 text-gray-400 hover:text-yellow-600 transition-colors"
+                        aria-label="Edit Finding"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
                     </div>
@@ -705,11 +671,11 @@ const AuditDetails: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
-                        <span>Due {formatDate(finding.due_date)}</span>
+                        <span>Due {formatDate(((finding as any).remediation_due_date || (finding as any).due_date) || "")}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {finding.evidence_files.map((file, i) => (
+                      {((finding as any).evidence_files as string[] | undefined)?.map((file: string, i: number) => (
                         <button
                           key={i}
                           className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700"

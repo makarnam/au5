@@ -111,9 +111,16 @@ export default function AIGenerator({
       return;
     }
 
-    if (!auditData.title) {
-      toast.error("Please provide an audit title before generating content");
-      return;
+    // For risk treatments and similar non-audit contexts, allow generation with a fallback title
+    if (!auditData.title || auditData.title.trim().length === 0) {
+      // If the caller passed an audit_type that indicates risk/treatment context, proceed with a sensible default
+      const nonAuditContext =
+        auditData.audit_type?.toLowerCase().includes("risk") ||
+        auditData.audit_type?.toLowerCase().includes("treatment");
+      if (!nonAuditContext) {
+        toast.error("Please provide a title before generating content");
+        return;
+      }
     }
 
     try {
@@ -224,35 +231,20 @@ export default function AIGenerator({
     }
   };
 
-  if (configurations.length === 0) {
-    return (
-      <>
-        <button
-          onClick={() => setShowConfiguration(true)}
-          className={`flex items-center px-3 py-1.5 text-sm bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors ${className}`}
-          title="Configure AI to generate content"
-        >
-          <Settings className="w-4 h-4 mr-1" />
-          Setup AI
-        </button>
-
-        <AIConfigurationComponent
-          isOpen={showConfiguration}
-          onClose={() => {
-            setShowConfiguration(false);
-            loadConfigurations();
-          }}
-        />
-      </>
-    );
-  }
+  // Do NOT early-return a different button. Always render the same trigger to avoid unmount/remount flashes.
+  // If there are no configurations, clicking the trigger will open the modal and we show the Manage panel inside.
 
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(true);
+        }}
         className={`flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-sm hover:shadow-md ${className}`}
         title={`Generate ${getFieldDisplayName(fieldType)} with AI`}
+        type="button"
       >
         <Wand2 className="w-4 h-4 mr-1" />
         AI Generate
@@ -260,12 +252,18 @@ export default function AIGenerator({
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={() => setIsOpen(false)}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
@@ -314,13 +312,21 @@ export default function AIGenerator({
                   <label className="block text-sm font-medium text-gray-700">
                     AI Configuration
                   </label>
-                  <button
-                    onClick={() => setShowConfiguration(true)}
-                    className="text-sm text-blue-600 hover:text-blue-700"
-                  >
-                    <Settings className="w-4 h-4 inline mr-1" />
-                    Manage
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    {configurations.length === 0 && (
+                      <div className="text-xs text-red-600">
+                        No active AI configuration found.
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowConfiguration(true)}
+                      className="text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      <Settings className="w-4 h-4 inline mr-1" />
+                      Manage
+                    </button>
+                  </div>
                 </div>
                 <select
                   value={selectedConfig?.id || ""}
@@ -338,7 +344,7 @@ export default function AIGenerator({
                     );
                     return (
                       <option key={config.id} value={config.id}>
-                        {provider?.name} - {config.model_name}
+                        {(provider?.name || config.provider)} - {config.model_name}
                       </option>
                     );
                   })}
@@ -443,8 +449,9 @@ export default function AIGenerator({
                 <button
                   onClick={() => setIsOpen(false)}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  type="button"
                 >
-                  Cancel
+                  Close
                 </button>
               </div>
 

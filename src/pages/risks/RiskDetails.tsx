@@ -11,6 +11,7 @@ import {
   PlusCircle,
   X as XIcon,
   Save,
+  Trash2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -72,7 +73,7 @@ const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
       <div className="relative bg-white w-full max-w-2xl rounded-lg border border-gray-200 shadow-xl">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700" aria-label="Close">
             <XIcon className="w-5 h-5" />
           </button>
         </div>
@@ -111,7 +112,7 @@ const RiskDetails: React.FC = () => {
   const [reviews, setReviews] = useState<RiskReview[]>([]);
   const canEdit = checkPermission(["auditor", "supervisor_auditor", "admin", "super_admin"]);
 
-  // Modals state and form values
+  // Modals state and forms
   const [treatmentOpen, setTreatmentOpen] = useState(false);
   const [treatmentSaving, setTreatmentSaving] = useState(false);
   const [treatmentForm, setTreatmentForm] = useState<Partial<RiskTreatment>>({
@@ -158,6 +159,12 @@ const RiskDetails: React.FC = () => {
   const [linkControlOpen, setLinkControlOpen] = useState(false);
   const [linking, setLinking] = useState(false);
   const [controlId, setControlId] = useState<string>("");
+
+  // track edit or create mode per modal
+  const isTreatmentEdit = !!(treatmentForm as any)?.id;
+  const isAssessmentEdit = !!(assessmentForm as any)?.id;
+  const isIncidentEdit = !!(incidentForm as any)?.id;
+  const isReviewEdit = !!(reviewForm as any)?.id;
 
   useEffect(() => {
     const load = async () => {
@@ -207,8 +214,8 @@ const RiskDetails: React.FC = () => {
     [risk?.status],
   );
 
-  // Submit handlers
-  const submitTreatment = async () => {
+  // Create handlers (already used for create-path; update flows override onSubmit)
+  const submitTreatmentCreate = async () => {
     if (!risk) return;
     if (!treatmentForm.title || !treatmentForm.description) {
       toast.error("Title and Description are required");
@@ -220,6 +227,7 @@ const RiskDetails: React.FC = () => {
         ...(treatmentForm as any),
         risk_id: risk.id,
       });
+      // optimistic refresh by fetching latest
       const t = await riskService.getTreatments(risk.id);
       setTreatments(t);
       setTreatmentOpen(false);
@@ -240,7 +248,7 @@ const RiskDetails: React.FC = () => {
     }
   };
 
-  const submitAssessment = async () => {
+  const submitAssessmentCreate = async () => {
     if (!risk) return;
     try {
       setAssessmentSaving(true);
@@ -268,7 +276,7 @@ const RiskDetails: React.FC = () => {
     }
   };
 
-  const submitIncident = async () => {
+  const submitIncidentCreate = async () => {
     if (!risk) return;
     if (!incidentForm.incident_title || !incidentForm.incident_description) {
       toast.error("Title and Description are required");
@@ -299,11 +307,11 @@ const RiskDetails: React.FC = () => {
     }
   };
 
-  const submitReview = async () => {
+  const submitReviewCreate = async () => {
     if (!risk) return;
     try {
       setReviewSaving(true);
-      // Ensure reviewer_id (NOT NULL) is set to current user
+      // Ensure reviewer_id (NOT NULL) is set
       const { supabase } = await import("../../lib/supabase");
       const {
         data: { user },
@@ -334,22 +342,102 @@ const RiskDetails: React.FC = () => {
     }
   };
 
-  const submitLinkControl = async () => {
+  // Update handlers (called when form has id)
+  const submitTreatmentUpdate = async () => {
     if (!risk) return;
-    if (!controlId) {
-      toast.error("Enter a valid Control ID");
-      return;
-    }
     try {
-      setLinking(true);
-      await riskService.linkControl(risk.id, controlId);
-      setLinkControlOpen(false);
-      setControlId("");
-      toast.success("Control linked");
+      setTreatmentSaving(true);
+      await riskService.updateTreatment?.((treatmentForm as any).id, {
+        ...(treatmentForm as any),
+        risk_id: risk.id,
+      });
+      // optimistic: reflect changes in memory
+      setTreatments((prev) =>
+        prev.map((x) => (x.id === (treatmentForm as any).id ? ({ ...(x as any), ...(treatmentForm as any) } as any) : x)),
+      );
+      toast.success("Treatment updated");
+      setTreatmentOpen(false);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to link control");
+      toast.error(e?.message || "Save failed (RLS?)");
+      // refetch to ensure consistency
+      const latest = await riskService.getTreatments(risk.id);
+      setTreatments(latest);
     } finally {
-      setLinking(false);
+      setTreatmentSaving(false);
+    }
+  };
+
+  const submitAssessmentUpdate = async () => {
+    if (!risk) return;
+    try {
+      setAssessmentSaving(true);
+      await riskService.updateAssessment?.((assessmentForm as any).id, {
+        ...(assessmentForm as any),
+        risk_id: risk.id,
+      });
+      setAssessments((prev) =>
+        prev.map((x) => (x.id === (assessmentForm as any).id ? ({ ...(x as any), ...(assessmentForm as any) } as any) : x)),
+      );
+      toast.success("Assessment updated");
+      setAssessmentOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Save failed (RLS?)");
+      const latest = await riskService.getAssessments(risk.id);
+      setAssessments(latest);
+    } finally {
+      setAssessmentSaving(false);
+    }
+  };
+
+  const submitIncidentUpdate = async () => {
+    if (!risk) return;
+    try {
+      setIncidentSaving(true);
+      await riskService.updateIncident?.((incidentForm as any).id, {
+        ...(incidentForm as any),
+        risk_id: risk.id,
+      });
+      setIncidents((prev) =>
+        prev.map((x) => (x.id === (incidentForm as any).id ? ({ ...(x as any), ...(incidentForm as any) } as any) : x)),
+      );
+      toast.success("Incident updated");
+      setIncidentOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Save failed (RLS?)");
+      const latest = await riskService.getIncidents(risk.id);
+      setIncidents(latest);
+    } finally {
+      setIncidentSaving(false);
+    }
+  };
+
+  const submitReviewUpdate = async () => {
+    if (!risk) return;
+    try {
+      setReviewSaving(true);
+      const { supabase } = await import("../../lib/supabase");
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("User not authenticated");
+
+      await riskService.updateReview?.((reviewForm as any).id, {
+        ...(reviewForm as any),
+        risk_id: risk.id,
+        reviewer_id: user.id,
+      });
+      setReviews((prev) =>
+        prev.map((x) => (x.id === (reviewForm as any).id ? ({ ...(x as any), ...(reviewForm as any) } as any) : x)),
+      );
+      toast.success("Review updated");
+      setReviewOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Save failed (RLS?)");
+      const latest = await riskService.getReviews(risk.id);
+      setReviews(latest);
+    } finally {
+      setReviewSaving(false);
     }
   };
 
@@ -474,7 +562,18 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() => setTreatmentOpen(true)}
+              onClick={() => {
+                setTreatmentForm({
+                  title: "",
+                  description: "",
+                  treatment_type: "mitigate",
+                  status: "planned",
+                  priority: "medium",
+                  target_date: "",
+                  currency: "USD",
+                } as any);
+                setTreatmentOpen(true);
+              }}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -494,6 +593,7 @@ const RiskDetails: React.FC = () => {
                   <th className="py-2 pr-3">Type</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Target</th>
+                  <th className="py-2 pr-3 w-28">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -503,6 +603,41 @@ const RiskDetails: React.FC = () => {
                     <td className="py-2 pr-3 capitalize">{t.treatment_type}</td>
                     <td className="py-2 pr-3 capitalize">{t.status.replace("_", " ")}</td>
                     <td className="py-2 pr-3">{t.target_date ?? "-"}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setTreatmentForm(t as any);
+                            setTreatmentOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
+                          title="Edit"
+                        >
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!risk) return;
+                            if (!confirm("Delete this treatment?")) return;
+                            try {
+                              // optimistic
+                              setTreatments((prev) => prev.filter((x) => x.id !== t.id));
+                              await riskService.deleteTreatment?.(t.id as any);
+                              toast.success("Treatment deleted");
+                            } catch (e: any) {
+                              toast.error(e?.message || "Delete failed (RLS?)");
+                              // revert by refetch
+                              const latest = await riskService.getTreatments(risk.id);
+                              setTreatments(latest);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -517,7 +652,18 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() => setAssessmentOpen(true)}
+              onClick={() => {
+                setAssessmentForm({
+                  assessment_type: "periodic",
+                  assessment_date: new Date().toISOString().slice(0, 10),
+                  probability: 3,
+                  impact: 3,
+                  risk_score: 9,
+                  risk_level: "medium",
+                  confidence_level: "medium",
+                } as any);
+                setAssessmentOpen(true);
+              }}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -537,17 +683,49 @@ const RiskDetails: React.FC = () => {
                   <th className="py-2 pr-3">Type</th>
                   <th className="py-2 pr-3">Score</th>
                   <th className="py-2 pr-3">Level</th>
+                  <th className="py-2 pr-3 w-28">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {assessments.map((a) => (
                   <tr key={a.id} className="border-b last:border-0">
                     <td className="py-2 pr-3">{a.assessment_date}</td>
-                    <td className="py-2 pr-3 capitalize">
-                      {a.assessment_type.replace("_", " ")}
-                    </td>
+                    <td className="py-2 pr-3 capitalize">{a.assessment_type.replace("_", " ")}</td>
                     <td className="py-2 pr-3">{a.risk_score}</td>
                     <td className="py-2 pr-3 capitalize">{a.risk_level}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setAssessmentForm(a as any);
+                            setAssessmentOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
+                          title="Edit"
+                        >
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!risk) return;
+                            if (!confirm("Delete this assessment?")) return;
+                            try {
+                              setAssessments((prev) => prev.filter((x) => x.id !== a.id));
+                              await riskService.deleteAssessment?.(a.id as any);
+                              toast.success("Assessment deleted");
+                            } catch (e: any) {
+                              toast.error(e?.message || "Delete failed (RLS?)");
+                              const latest = await riskService.getAssessments(risk.id);
+                              setAssessments(latest);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -562,7 +740,17 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() => setIncidentOpen(true)}
+              onClick={() => {
+                setIncidentForm({
+                  incident_title: "",
+                  incident_description: "",
+                  incident_date: new Date().toISOString().slice(0, 10),
+                  severity: "medium",
+                  status: "open",
+                  currency: "USD",
+                } as any);
+                setIncidentOpen(true);
+              }}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -582,6 +770,7 @@ const RiskDetails: React.FC = () => {
                   <th className="py-2 pr-3">Title</th>
                   <th className="py-2 pr-3">Severity</th>
                   <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3 w-28">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -591,6 +780,39 @@ const RiskDetails: React.FC = () => {
                     <td className="py-2 pr-3">{i.incident_title}</td>
                     <td className="py-2 pr-3 capitalize">{i.severity}</td>
                     <td className="py-2 pr-3 capitalize">{i.status}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setIncidentForm(i as any);
+                            setIncidentOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
+                          title="Edit"
+                        >
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!risk) return;
+                            if (!confirm("Delete this incident?")) return;
+                            try {
+                              setIncidents((prev) => prev.filter((x) => x.id !== i.id));
+                              await riskService.deleteIncident?.(i.id as any);
+                              toast.success("Incident deleted");
+                            } catch (e: any) {
+                              toast.error(e?.message || "Delete failed (RLS?)");
+                              const latest = await riskService.getIncidents(risk.id);
+                              setIncidents(latest);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -605,7 +827,14 @@ const RiskDetails: React.FC = () => {
         action={
           canEdit && (
             <button
-              onClick={() => setReviewOpen(true)}
+              onClick={() => {
+                setReviewForm({
+                  review_type: "periodic",
+                  review_date: new Date().toISOString().slice(0, 10),
+                  review_outcome: "no_change",
+                } as any);
+                setReviewOpen(true);
+              }}
               className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
             >
               <PlusCircle className="w-4 h-4 mr-1" />
@@ -625,6 +854,7 @@ const RiskDetails: React.FC = () => {
                   <th className="py-2 pr-3">Type</th>
                   <th className="py-2 pr-3">Outcome</th>
                   <th className="py-2 pr-3">Next Review</th>
+                  <th className="py-2 pr-3 w-28">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -634,6 +864,39 @@ const RiskDetails: React.FC = () => {
                     <td className="py-2 pr-3 capitalize">{r.review_type.replace("_", " ")}</td>
                     <td className="py-2 pr-3 capitalize">{r.review_outcome.replace("_", " ")}</td>
                     <td className="py-2 pr-3">{r.next_review_date ?? "-"}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setReviewForm(r as any);
+                            setReviewOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
+                          title="Edit"
+                        >
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!risk) return;
+                            if (!confirm("Delete this review?")) return;
+                            try {
+                              setReviews((prev) => prev.filter((x) => x.id !== r.id));
+                              await riskService.deleteReview?.(r.id as any);
+                              toast.success("Review deleted");
+                            } catch (e: any) {
+                              toast.error(e?.message || "Delete failed (RLS?)");
+                              const latest = await riskService.getReviews(risk.id);
+                              setReviews(latest);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -664,10 +927,16 @@ const RiskDetails: React.FC = () => {
 
       {/* Modals */}
       <RiskDetailModal
-        title="Add Treatment"
+        title={isTreatmentEdit ? "Edit Treatment" : "Add Treatment"}
         open={treatmentOpen}
         onClose={() => setTreatmentOpen(false)}
-        onSubmit={submitTreatment}
+        onSubmit={async () => {
+          if (isTreatmentEdit) {
+            await submitTreatmentUpdate();
+          } else {
+            await submitTreatmentCreate();
+          }
+        }}
         submitLabel={treatmentSaving ? "Saving..." : "Save"}
         disabled={treatmentSaving}
       >
@@ -770,10 +1039,16 @@ const RiskDetails: React.FC = () => {
       </RiskDetailModal>
 
       <RiskDetailModal
-        title="Add Assessment"
+        title={isAssessmentEdit ? "Edit Assessment" : "Add Assessment"}
         open={assessmentOpen}
         onClose={() => setAssessmentOpen(false)}
-        onSubmit={submitAssessment}
+        onSubmit={async () => {
+          if (isAssessmentEdit) {
+            await submitAssessmentUpdate();
+          } else {
+            await submitAssessmentCreate();
+          }
+        }}
         submitLabel={assessmentSaving ? "Saving..." : "Save"}
         disabled={assessmentSaving}
       >
@@ -871,10 +1146,16 @@ const RiskDetails: React.FC = () => {
       </RiskDetailModal>
 
       <RiskDetailModal
-        title="Add Incident"
+        title={isIncidentEdit ? "Edit Incident" : "Add Incident"}
         open={incidentOpen}
         onClose={() => setIncidentOpen(false)}
-        onSubmit={submitIncident}
+        onSubmit={async () => {
+          if (isIncidentEdit) {
+            await submitIncidentUpdate();
+          } else {
+            await submitIncidentCreate();
+          }
+        }}
         submitLabel={incidentSaving ? "Saving..." : "Save"}
         disabled={incidentSaving}
       >
@@ -967,10 +1248,16 @@ const RiskDetails: React.FC = () => {
       </RiskDetailModal>
 
       <RiskDetailModal
-        title="Add Review"
+        title={isReviewEdit ? "Edit Review" : "Add Review"}
         open={reviewOpen}
         onClose={() => setReviewOpen(false)}
-        onSubmit={submitReview}
+        onSubmit={async () => {
+          if (isReviewEdit) {
+            await submitReviewUpdate();
+          } else {
+            await submitReviewCreate();
+          }
+        }}
         submitLabel={reviewSaving ? "Saving..." : "Save"}
         disabled={reviewSaving}
       >
@@ -1031,7 +1318,24 @@ const RiskDetails: React.FC = () => {
         title="Link Control"
         open={linkControlOpen}
         onClose={() => setLinkControlOpen(false)}
-        onSubmit={submitLinkControl}
+        onSubmit={async () => {
+          if (!risk) return;
+          if (!controlId) {
+            toast.error("Enter a valid Control ID");
+            return;
+          }
+          try {
+            setLinking(true);
+            await riskService.linkControl(risk.id, controlId);
+            setLinkControlOpen(false);
+            setControlId("");
+            toast.success("Control linked");
+          } catch (e: any) {
+            toast.error(e?.message || "Failed to link control");
+          } finally {
+            setLinking(false);
+          }
+        }}
         submitLabel={linking ? "Linking..." : "Link"}
         disabled={linking}
       >
