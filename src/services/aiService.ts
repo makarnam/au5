@@ -253,14 +253,43 @@ class AIService {
     }
   }
 
+  // Read configurations with local fallback when user is not authenticated or DB unavailable.
   async getConfigurations(): Promise<AIConfiguration[]> {
     try {
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error("User not authenticated");
+
+      if (!user || userError) {
+        // Fallback to localStorage configuration for unauthenticated sessions
+        const raw = localStorage.getItem("ai_configurations_fallback");
+        if (raw) {
+          const parsed = JSON.parse(raw) as AIConfiguration[];
+          return parsed.map((c) => ({
+            ...c,
+            model: c.model_name,
+            baseUrl: c.api_endpoint,
+            is_active: c.is_active ?? true,
+            created_by: c.created_by || "local",
+          }));
+        }
+        // Provide sensible defaults (Ollama local)
+        const defaults: AIConfiguration[] = [
+          {
+            id: "local-ollama",
+            provider: "ollama",
+            model_name: "llama3.2",
+            api_endpoint: "http://localhost:11434",
+            temperature: 0.7,
+            max_tokens: 500,
+            created_by: "local",
+            is_active: true,
+            model: "llama3.2",
+            baseUrl: "http://localhost:11434",
+          },
+        ];
+        return defaults;
       }
 
       const { data, error } = await supabase
@@ -292,8 +321,35 @@ class AIService {
         baseUrl: config.api_endpoint,
       }));
     } catch (error) {
+      // On any error, return local fallback to keep UI working
+      try {
+        const raw = localStorage.getItem("ai_configurations_fallback");
+        if (raw) {
+          const parsed = JSON.parse(raw) as AIConfiguration[];
+          return parsed.map((c) => ({
+            ...c,
+            model: c.model_name,
+            baseUrl: c.api_endpoint,
+            is_active: c.is_active ?? true,
+            created_by: c.created_by || "local",
+          }));
+        }
+      } catch {}
       console.error("Error fetching AI configurations:", error);
-      throw error;
+      return [
+        {
+          id: "local-ollama",
+          provider: "ollama",
+          model_name: "llama3.2",
+          api_endpoint: "http://localhost:11434",
+          temperature: 0.7,
+          max_tokens: 500,
+          created_by: "local",
+          is_active: true,
+          model: "llama3.2",
+          baseUrl: "http://localhost:11434",
+        },
+      ];
     }
   }
 
@@ -565,6 +621,149 @@ Generate only the JSON array, no additional text or formatting.`;
 - Assess operational effectiveness and risk management
 - Evaluate monitoring and reporting mechanisms
 - Review continuous improvement and corrective actions`;
+    }
+  }
+
+  // General chat support: accepts a free-form messages array and optional system prompt.
+  // Streams are handled by the caller using web APIs where supported; here we provide non-streaming convenience.
+  async generateChat(request: {
+    provider: string;
+    model: string;
+    messages: { role: "system" | "user" | "assistant"; content: string }[];
+    apiKey?: string;
+    baseUrl?: string;
+    temperature?: number;
+    maxTokens?: number;
+  }): Promise<AIGenerationResponse> {
+    const { provider, model, messages, apiKey, baseUrl, temperature, maxTokens } = request;
+
+    // Fallback: if only a user message exists, re-route through generateContent using a generic prompt
+    const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
+    const systemPrefix = messages.find(m => m.role === "system")?.content ||
+      "You are a helpful AI assistant for governance, risk, audit, and any general topic. Respond clearly and provide actionable steps when relevant.";
+
+    const unifiedPrompt = `${systemPrefix}\n\nConversation so far:\n${messages
+      .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+      .join("\n")}\n\nPlease reply to the last USER message.`;
+
+    try {
+      switch (provider) {
+        case "ollama":
+          // For Ollama, emulate chat using a single prompt; many models don't support chat natively
+          return await this.generateWithOllama(unifiedPrompt, {
+            provider,
+            model,
+            prompt: unifiedPrompt,
+            context: "",
+            fieldType: "description",
+            auditData: { title: "AI Chat" },
+            apiKey,
+            baseUrl,
+            temperature,
+            maxTokens
+          });
+        case "openai": {
+          if (!apiKey) throw new Error("OpenAI API key is required");
+          const url = (baseUrl || "https://api.openai.com/v1") + "/chat/completions";
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages,
+              temperature: temperature ?? 0.7,
+              max_tokens: maxTokens ?? 500,
+            }),
+          });
+          if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            throw new Error(`OpenAI API error: ${resp.status} ${errorData?.error?.message || resp.statusText}`);
+          }
+          const data = await resp.json();
+          return {
+            success: true,
+            content: data.choices?.[0]?.message?.content || "",
+            tokensUsed: data.usage?.total_tokens,
+            model,
+            provider: "openai",
+          };
+        }
+        case "claude": {
+          if (!apiKey) throw new Error("Claude API key is required");
+          const url = (baseUrl || "https://api.anthropic.com/v1") + "/messages";
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            },
+            body: JSON.stringify({
+              model,
+              max_tokens: maxTokens ?? 500,
+              temperature: temperature ?? 0.7,
+              messages,
+            }),
+          });
+          if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            throw new Error(`Claude API error: ${resp.status} ${errorData?.error?.message || resp.statusText}`);
+          }
+          const data = await resp.json();
+          return {
+            success: true,
+            content: data.content?.[0]?.text || "",
+            model,
+            provider: "claude",
+          };
+        }
+        case "gemini": {
+          if (!apiKey) throw new Error("Gemini API key is required");
+          const url =
+            (baseUrl || "https://generativelanguage.googleapis.com/v1beta") +
+            `/models/${model}:generateContent?key=${apiKey}`;
+          const geminiContents = [
+            {
+              parts: [{ text: systemPrefix }],
+              role: "user",
+            },
+            ...messages.map(m => ({ parts: [{ text: m.content }], role: m.role })),
+          ];
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: geminiContents,
+              generationConfig: {
+                temperature: temperature ?? 0.7,
+                maxOutputTokens: maxTokens ?? 500,
+              },
+            }),
+          });
+          if (!resp.ok) {
+            const errorData = await resp.json().catch(() => null);
+            throw new Error(`Gemini API error: ${resp.status} ${errorData?.error?.message || resp.statusText}`);
+          }
+          const data = await resp.json();
+          return {
+            success: true,
+            content: data.candidates?.[0]?.content?.parts?.[0]?.text || "",
+            model,
+            provider: "gemini",
+          };
+        }
+        default:
+          throw new Error(`Unsupported provider: ${provider}`);
+      }
+    } catch (error) {
+      return {
+        success: false,
+        content: "",
+        error: error instanceof Error ? error.message : "Chat generation failed",
+      };
     }
   }
 

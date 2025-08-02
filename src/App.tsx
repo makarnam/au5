@@ -1,77 +1,58 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import RisksList from './pages/risks/RisksList';
-import RiskDetails from './pages/risks/RiskDetails';
-import CreateRiskPage from './pages/risks/CreateRiskPage';
-import EditRiskPage from './pages/risks/EditRiskPage';
-import ControlsList from './pages/controls/ControlsList';
-import ControlDetails from './pages/controls/ControlDetails';
-import CreateControlPage from './pages/controls/CreateControlPage';
-import EditControlPage from './pages/controls/ControlDetails';
-import AuditsList from './pages/audits/AuditsList';
-import AuditDetails from './pages/audits/AuditDetails';
-import CreateAuditPage from './pages/audits/CreateAuditPage';
-import EditAuditPage from './pages/audits/EditAuditPage';
-import Settings from './pages/Settings';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-
-// Findings pages (new)
+import Dashboard from './pages/Dashboard';
+import AuditsList from './pages/audits/AuditsList';
 import FindingsList from './pages/findings/FindingsList';
-import CreateFindingPage from './pages/findings/CreateFindingPage';
-import EditFindingPage from './pages/findings/EditFindingPage';
-import FindingDetails from './pages/findings/FindingDetails';
+import ControlsList from './pages/controls/ControlsList';
+import Risks from './components/Risks';
+import ComplianceFrameworks from './pages/compliance/ComplianceFrameworks';
+import RequirementsBrowser from './pages/compliance/RequirementsBrowser';
+import ProtectedRoute from './components/ProtectedRoute';
+import SignIn from './pages/auth/SignIn';
+import SignUp from './pages/auth/SignUp';
 
-function App() {
+function Placeholder({ title }: { title: string }) {
+  return <div className="p-6 text-lg font-semibold">{title} - Coming soon</div>;
+}
+
+export default function App() {
   return (
     <Router>
       <Routes>
+        {/* Public auth routes */}
+        <Route path="/auth/sign-in" element={<SignIn />} />
+        <Route path="/auth/sign-up" element={<SignUp />} />
+
+        {/* Protected app routes */}
         <Route
-          path="/"
+          path="/*"
           element={
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Dashboard />} />
 
-          {/* Risks */}
-          <Route path="risks" element={<RisksList />} />
-          <Route path="risks/create" element={<CreateRiskPage />} />
-          <Route path="risks/:id" element={<RiskDetails />} />
-          <Route path="risks/:id/edit" element={<EditRiskPage />} />
-
-          {/* Controls */}
-          <Route path="controls" element={<ControlsList />} />
-          <Route path="controls/create" element={<CreateControlPage />} />
-          <Route path="controls/:id" element={<ControlDetails />} />
-          <Route path="controls/:id/edit" element={<EditControlPage />} />
-
-          {/* Audits */}
+          {/* Existing */}
           <Route path="audits" element={<AuditsList />} />
-          <Route path="audits/create" element={<CreateAuditPage />} />
-          <Route path="audits/:id" element={<AuditDetails />} />
-          <Route path="audits/:id/edit" element={<EditAuditPage />} />
-          {/* Findings (new) */}
           <Route path="findings" element={<FindingsList />} />
-          <Route path="findings/create" element={<CreateFindingPage />} />
-          <Route path="findings/:id" element={<FindingDetails />} />
-          <Route path="findings/:id/edit" element={<EditFindingPage />} />
+          <Route path="controls" element={<ControlsList />} />
+          <Route path="risks" element={<Risks />} />
 
-          {/* Findings (new) */}
-          <Route path="findings" element={<FindingsList />} />
-          <Route path="findings/create" element={<CreateFindingPage />} />
-          <Route path="findings/:id" element={<FindingDetails />} />
-          <Route path="findings/:id/edit" element={<EditFindingPage />} />
-
-          <Route path="settings" element={<Settings />} />
+          {/* Compliance */}
+          <Route path="compliance/frameworks" element={<ComplianceFrameworks />} />
+          <Route path="compliance/requirements" element={<RequirementsBrowser />} />
+          <Route path="compliance/profiles" element={<Placeholder title="Compliance Profiles" />} />
+          <Route path="compliance/assessments" element={<Placeholder title="Compliance Assessments" />} />
+          <Route path="compliance/attestations" element={<Placeholder title="Compliance Attestations" />} />
+          <Route path="compliance/exceptions" element={<Placeholder title="Compliance Exceptions" />} />
+          <Route path="compliance/posture" element={<Placeholder title="Compliance Posture" />} />
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<SignIn />} />
       </Routes>
     </Router>
   );
 }
-
-export default App;

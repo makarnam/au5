@@ -4,6 +4,7 @@ import findingsService, { Finding, FindingStatus, FindingVersion, RiskRating } f
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { supabase } from '../../lib/supabase';
+import WorkflowCenter from '../workflows/WorkflowCenter';
 
 export default function FindingDetails() {
   const { id } = useParams<{ id: string }>();
@@ -237,6 +238,11 @@ export default function FindingDetails() {
             <div className="text-xs text-gray-600">Tags: {(finding.tags || []).join(', ') || '-'}</div>
           </div>
         </div>
+      </div>
+
+      {/* Workflow & Approval */}
+      <div className="p-4 border rounded bg-white">
+        {finding?.id ? <WorkflowCenter entityType="finding" entityId={finding.id} /> : null}
       </div>
     </div>
   );

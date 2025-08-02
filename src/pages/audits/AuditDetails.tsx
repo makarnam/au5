@@ -42,6 +42,7 @@ import {
 } from "../../utils";
 import { formatUserName } from "../../utils/displayUtils";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import WorkflowCenter from "../workflows/WorkflowCenter";
 
 const AuditDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -994,6 +995,11 @@ const AuditDetails: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Workflow & Approval */}
+      <div className="px-6 pb-10">
+        {audit?.id ? <WorkflowCenter entityType="audit" entityId={audit.id} /> : null}
       </div>
     </div>
   );

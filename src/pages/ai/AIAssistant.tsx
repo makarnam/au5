@@ -245,20 +245,23 @@ const AIAssistant: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      // Generate response using AI service
-      const response = await aiService.generateContent({
+      // General chat via new chat API; supports any subject including risks and audits
+      const systemPrompt =
+        "You are a helpful AI assistant. You can discuss any topic. You are particularly strong in audit, risk, controls, and compliance, but you should answer any valid question. Provide clear, concise, and actionable responses.";
+
+      const messagesPayload = [
+        { role: "system" as const, content: systemPrompt },
+        ...chatMessages.map((m) => ({
+          role: (m.type === "user" ? "user" : "assistant") as "user" | "assistant",
+          content: m.content,
+        })),
+        { role: "user" as const, content: message },
+      ];
+
+      const response = await aiService.generateChat({
         provider: selectedConfig.provider,
         model: selectedConfig.model_name,
-        prompt: "",
-        context: `You are a professional AI assistant specializing in audit, governance, risk, and compliance (GRC). You have extensive knowledge of audit methodologies, control frameworks, risk management, and regulatory compliance.
-
-Current conversation context: ${chatMessages.map((m) => `${m.type}: ${m.content}`).join("\n")}
-
-User message: ${message}
-
-Please provide a helpful, professional, and detailed response. If the user is asking about creating audits, controls, or compliance documentation, offer specific guidance and actionable steps.`,
-        fieldType: "description",
-        auditData: { title: "AI Assistant Chat" },
+        messages: messagesPayload,
         temperature: selectedConfig.temperature,
         maxTokens: selectedConfig.max_tokens,
         apiKey: selectedConfig.api_key,
@@ -266,11 +269,7 @@ Please provide a helpful, professional, and detailed response. If the user is as
       });
 
       if (response.success) {
-        addMessage(
-          "assistant",
-          response.content as string,
-          selectedConfig.model_name,
-        );
+        addMessage("assistant", response.content as string, selectedConfig.model_name);
       } else {
         throw new Error(response.error || "Failed to generate response");
       }
