@@ -4,7 +4,7 @@ Architecture Overview:
 - Frontend: React + Vite + TypeScript + Tailwind
 - Backend/Data: Supabase (Postgres, RLS, Auth), PostgREST
 - AI: Optional local Ollama integration; AI service abstraction in src/services
-- State: Lightweight client state (Zustand or simple hooks) [confirm]; Supabase as source of truth
+- State: React Query for server state; Lightweight client state (Zustand or simple hooks) [pending confirmation]; Supabase as source of truth
 
 Domain Modules:
 - Controls
@@ -36,6 +36,9 @@ Key Design Patterns:
 - SQL-first migrations in sql/** with module-oriented files
 - Reusable UI primitives in src/components/ui (button, input)
 - Progressive enhancement for AI features (graceful fallback when AI unavailable)
+- Error Boundary at app shell level to isolate failures per route
+- Internationalization keys colocated with features; language selector in Settings
+- Lazy-loaded route modules for heavy domains (audits, controls, workflows)
 
 Data Access & RLS Patterns:
 - Policies: per-module policies defined in sql/*/ and sql/migrations/*
@@ -63,13 +66,16 @@ Security & Permissions:
 - Separate admin-only UIs with ProtectedRoute
 
 Testing & Verification:
-- Unit tests colocated under src/__tests__
+- Unit tests colocated under src/__tests__ (components and services)
+- Integration tests using MSW for Supabase API boundaries
+- E2E baseline with Playwright for critical flows (audits, controls)
 - SQL verification scripts under sql/diagnostics and sql/**/verify*.sql
 
 Performance:
-- Client-side pagination and lazy loading where applicable
+- Client-side pagination and lazy-loaded routes for large modules
 - DB indexes aligned with queries; migration scripts include index creation
 - Avoid N+1 via views or RPC functions
+- Bundle analysis via vite-bundle-visualizer; tree-shake Radix/Framer Motion when possible
 
 Internationalization:
 - i18n scaffolding in src/i18n with index.ts as entry; keys colocated by feature
