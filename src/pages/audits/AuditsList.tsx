@@ -19,6 +19,7 @@ import {
   PlayCircle,
   PauseCircle,
   Bot,
+  AlarmClock,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "../../store/authStore";
@@ -551,13 +552,22 @@ const AuditsList: React.FC = () => {
                           "admin",
                           "super_admin",
                         ]) && (
-                          <button
-                            onClick={() => navigate(`/audits/${audit.id}/edit`)}
-                            className="text-gray-400 hover:text-blue-600 transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => navigate(`/audits/${audit.id}/edit`)}
+                              className="text-gray-400 hover:text-blue-600 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => navigate(`/audits/${audit.id}/schedule`)}
+                              className="text-gray-400 hover:text-amber-600 transition-colors"
+                              title="Schedule"
+                            >
+                              <AlarmClock className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                         {checkPermission(["admin", "super_admin"]) && (
                           <button

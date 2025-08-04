@@ -14,6 +14,7 @@ import SignUp from './pages/auth/SignUp';
 import AIAssistant from './pages/ai/AIAssistant';
 import Settings from './components/Settings';
 import CreateAuditPage from './pages/audits/CreateAuditPage';
+import ScheduleAuditPage from './pages/audits/ScheduleAuditPage';
 import CreateControlSetPage from './pages/controls/controlsets/CreateControlSetPage';
 import CreateRiskPage from './pages/risks/CreateRiskPage';
 import RisksList from './pages/risks/RisksList';
@@ -50,6 +51,8 @@ export default function App() {
           {/* Core */}
           <Route path="audits" element={<AuditsList />} />
           <Route path="audits/create" element={<CreateAuditPage />} />
+          <Route path="audits/:auditId/schedule" element={<ScheduleAuditPage />} />
+          <Route path="audits/schedules" element={<Placeholder title="Upcoming Schedules (WIP)" />} />
           <Route path="findings" element={<FindingsList />} />
           <Route path="controls" element={<ControlsList />} />
           <Route path="controls/create" element={<CreateControlSetPage />} />
