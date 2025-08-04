@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FieldArrayPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +23,7 @@ import { Audit, AuditType, AuditStatus, BusinessUnit, User } from "../../types";
 import { supabase } from "../../lib/supabase";
 import AIGenerator from "../ai/AIGenerator";
 import { aiService } from "../../services/aiService";
+import { auditService } from "../../services/auditService";
 
 // Form validation schema
 const auditFormSchema = z
@@ -196,13 +197,15 @@ export default function AuditForm({
         },
   });
 
+  // FieldArray strictly bound to the "objectives" array (string[])
   const {
     fields: objectiveFields,
     append: appendObjective,
     remove: removeObjective,
-  } = useFieldArray({
+  } = useFieldArray<AuditFormData, FieldArrayPath<AuditFormData>, "id">({
     control,
-    name: "objectives",
+    // cast ensures RHF infers correct key type instead of never
+    name: "objectives" as FieldArrayPath<AuditFormData>,
   });
 
   // Load users and business units from Supabase
@@ -427,9 +430,36 @@ export default function AuditForm({
 
   const onSubmit = async (data: AuditFormData) => {
     try {
-      await onSave(data);
-    } catch {
-      // Error is handled by the parent component
+      // Prefer page-level onSave if provided (CreateAuditPage/EditAuditPage). Fallback to direct service call for robustness.
+      if (onSave) {
+        await onSave(data);
+      } else {
+        await auditService.createAudit({
+          title: data.title,
+          description: data.description,
+          audit_type: data.audit_type,
+          status: data.status,
+          business_unit_id: data.business_unit_id,
+          lead_auditor_id: data.lead_auditor_id,
+          team_members: data.team_members,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          planned_hours: data.planned_hours,
+          objectives: data.objectives,
+          scope: data.scope,
+          methodology: data.methodology,
+          approval_status: data.approval_status || "draft",
+        });
+        toast.success("Audit created successfully");
+      }
+    } catch (e) {
+      // Error is handled by the parent component in most flows
+      if (e instanceof Error) {
+        toast.error(e.message);
+      } else {
+        toast.error("Failed to save audit");
+      }
+      throw e;
     }
   };
 
@@ -707,9 +737,9 @@ export default function AuditForm({
 
               <div className="space-y-3">
                 {objectiveFields.map((field, index) => (
-                  <div key={field.id} className="flex items-start space-x-2">
+                  <div key={field.id ?? index} className="flex items-start space-x-2">
                     <input
-                      {...register(`objectives.${index}`)}
+                      {...register(`objectives.${index}` as const)}
                       type="text"
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder={`${t("audit.objectives")} ${index + 1}`}
