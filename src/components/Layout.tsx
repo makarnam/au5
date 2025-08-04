@@ -81,6 +81,11 @@ const Layout: React.FC = () => {
           href: "/audits/create",
           current: location.pathname === "/audits/create",
         },
+        {
+          name: "Upcoming Schedules",
+          href: "/audits/schedules",
+          current: location.pathname === "/audits/schedules",
+        },
       ],
     },
     {
@@ -180,8 +185,47 @@ const Layout: React.FC = () => {
           name: "Profiles",
           href: "/compliance/profiles",
           current: location.pathname === "/compliance/profiles",
+        },
+        {
+          name: "Mapping",
+          href: "/compliance/mapping",
+          current: location.pathname === "/compliance/mapping",
+        },
+        {
+          name: "Import",
+          href: "/compliance/import",
+          current: location.pathname === "/compliance/import",
         }
       ]
+     },
+    {
+      name: "Governance",
+      href: "/governance",
+      icon: Shield,
+      current: location.pathname.startsWith("/governance"),
+      roles: ["auditor", "supervisor_auditor", "cro", "admin", "super_admin"],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/governance/dashboard",
+          current: location.pathname === "/governance/dashboard",
+        },
+        {
+          name: "Calendar",
+          href: "/governance/calendar",
+          current: location.pathname === "/governance/calendar",
+        },
+        {
+          name: "Reporting",
+          href: "/governance/reporting",
+          current: location.pathname === "/governance/reporting",
+        },
+        {
+          name: "Training",
+          href: "/governance/training",
+          current: location.pathname === "/governance/training",
+        }
+      ],
     },
     {
       name: "Advanced Analytics",
@@ -207,7 +251,7 @@ const Layout: React.FC = () => {
       comingSoon: true,
     },
     {
-      name: "Policy Management",
+      name: "Policies",
       href: "/policies",
       icon: BookOpen,
       current: location.pathname.startsWith("/policies"),
@@ -220,7 +264,18 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
+      children: [
+        {
+          name: "All Policies",
+          href: "/policies",
+          current: location.pathname === "/policies",
+        },
+        {
+          name: "Create / Edit",
+          href: "/policies",
+          current: location.pathname.startsWith("/policies/"),
+        },
+      ],
     },
     {
       name: "Incident Management",
@@ -552,13 +607,17 @@ const Layout: React.FC = () => {
               </div>
 
               {/* Notifications */}
-              <button
-                type="button"
-                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 relative"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 relative"
+                  onClick={() => navigate('/notifications')}
+                  title="Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400" />
+                </button>
+              </div>
 
               {/* User Menu */}
               <div className="relative">

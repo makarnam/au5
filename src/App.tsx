@@ -52,13 +52,48 @@ export default function App() {
           <Route path="audits" element={<AuditsList />} />
           <Route path="audits/create" element={<CreateAuditPage />} />
           <Route path="audits/:auditId/schedule" element={<ScheduleAuditPage />} />
-          <Route path="audits/schedules" element={<Placeholder title="Upcoming Schedules (WIP)" />} />
           <Route path="findings" element={<FindingsList />} />
           <Route path="controls" element={<ControlsList />} />
           <Route path="controls/create" element={<CreateControlSetPage />} />
+          {/* Policies */}
+          <Route
+            path="policies"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Policies" />}>
+                {React.createElement(React.lazy(() => import('./pages/policies/PoliciesList')) as any)}
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="policies/:policyId"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Policy" />}>
+                {React.createElement(React.lazy(() => import('./pages/policies/PolicyEditor')) as any)}
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="policies/:policyId/versions"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Versions" />}>
+                {React.createElement(React.lazy(() => import('./pages/policies/PolicyVersions')) as any)}
+              </React.Suspense>
+            }
+          />
           {/* Risks */}
           <Route path="risks" element={<RisksList />} />
           <Route path="risks/create" element={<CreateRiskPage />} />
+
+          {/* Scheduling */}
+          <Route
+            path="audits/schedules"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading" />}>
+                {/* Lazy import to avoid using require in ESM/Vite */}
+                {React.createElement(React.lazy(() => import('./pages/audits/UpcomingSchedules')) as any)}
+              </React.Suspense>
+            }
+          />
 
           {/* AI */}
           <Route path="ai/assistant" element={<AIAssistant />} />
@@ -89,11 +124,62 @@ export default function App() {
           <Route path="compliance/frameworks" element={<FrameworksList />} />
           <Route path="compliance/requirements" element={<RequirementsBrowser />} />
           <Route path="compliance/profiles" element={<ProfilesList />} />
+          {/* New: Requirement-Control Mapping */}
+          <Route
+            path="compliance/mapping"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Mapping" />}>
+                {React.createElement(React.lazy(() => import('./pages/compliance/RequirementControlMapping')) as any)}
+              </React.Suspense>
+            }
+          />
           <Route path="compliance/assessments" element={<Placeholder title="Compliance Assessments" />} />
           <Route path="compliance/attestations" element={<Placeholder title="Compliance Attestations" />} />
           <Route path="compliance/exceptions" element={<Placeholder title="Compliance Exceptions" />} />
           <Route path="compliance/posture" element={<Placeholder title="Compliance Posture" />} />
 
+          {/* Governance */}
+          <Route
+            path="governance/dashboard"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Dashboard" />}>
+                {React.createElement(React.lazy(() => import('./pages/governance/Dashboard')) as any)}
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="governance/calendar"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Calendar" />}>
+                {React.createElement(React.lazy(() => import('./pages/governance/Calendar.tsx')) as any)}
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="governance/reporting"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Reporting" />}>
+                {React.createElement(React.lazy(() => import('./pages/governance/Reporting.tsx')) as any)}
+              </React.Suspense>
+            }
+          />
+          <Route
+            path="governance/training"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Training" />}>
+                {React.createElement(React.lazy(() => import('./pages/governance/Training.tsx')) as any)}
+              </React.Suspense>
+            }
+          />
+          {/* Notifications */}
+          <Route
+            path="notifications"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Notifications" />}>
+                {React.createElement(React.lazy(() => import('./pages/notifications/NotificationsInbox')) as any)}
+              </React.Suspense>
+            }
+          />
           {/* Users and Settings */}
           <Route path="users" element={<Placeholder title="Users" />} />
           <Route path="settings" element={<Settings />} />

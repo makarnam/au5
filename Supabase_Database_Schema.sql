@@ -48,6 +48,39 @@ CREATE TABLE public.ai_requests (
   CONSTRAINT ai_requests_pkey PRIMARY KEY (id),
   CONSTRAINT ai_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.approval_actions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  request_id uuid NOT NULL,
+  step_id uuid,
+  performer_id uuid NOT NULL,
+  action USER-DEFINED NOT NULL,
+  comments text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT approval_actions_pkey PRIMARY KEY (id),
+  CONSTRAINT approval_actions_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.approval_requests(id),
+  CONSTRAINT approval_actions_performer_id_fkey FOREIGN KEY (performer_id) REFERENCES public.users(id),
+  CONSTRAINT approval_actions_step_id_fkey FOREIGN KEY (step_id) REFERENCES public.approval_request_steps(id)
+);
+CREATE TABLE public.approval_request_steps (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  request_id uuid NOT NULL,
+  step_order integer NOT NULL CHECK (step_order > 0),
+  step_name character varying NOT NULL,
+  assignee_role character varying NOT NULL,
+  assignee_id uuid,
+  required boolean DEFAULT true,
+  status USER-DEFINED DEFAULT 'pending'::approval_step_status,
+  action_by uuid,
+  action_at timestamp with time zone,
+  action USER-DEFINED,
+  comments text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT approval_request_steps_pkey PRIMARY KEY (id),
+  CONSTRAINT approval_request_steps_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.users(id),
+  CONSTRAINT approval_request_steps_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.approval_requests(id),
+  CONSTRAINT approval_request_steps_action_by_fkey FOREIGN KEY (action_by) REFERENCES public.users(id)
+);
 CREATE TABLE public.approval_requests (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   entity_type character varying NOT NULL CHECK (entity_type::text = ANY (ARRAY['audit'::character varying, 'finding'::character varying, 'control'::character varying, 'risk'::character varying]::text[])),
@@ -61,8 +94,8 @@ CREATE TABLE public.approval_requests (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT approval_requests_pkey PRIMARY KEY (id),
-  CONSTRAINT approval_requests_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES public.workflows(id),
-  CONSTRAINT approval_requests_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id)
+  CONSTRAINT approval_requests_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id),
+  CONSTRAINT approval_requests_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES public.workflows(id)
 );
 CREATE TABLE public.audit_comments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -80,11 +113,11 @@ CREATE TABLE public.audit_comments (
   resolved_at timestamp with time zone,
   resolved_by uuid,
   CONSTRAINT audit_comments_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_comments_parent_comment_id_fkey FOREIGN KEY (parent_comment_id) REFERENCES public.audit_comments(id),
-  CONSTRAINT audit_comments_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
   CONSTRAINT audit_comments_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id),
+  CONSTRAINT audit_comments_parent_comment_id_fkey FOREIGN KEY (parent_comment_id) REFERENCES public.audit_comments(id),
   CONSTRAINT audit_comments_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT audit_comments_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(id)
+  CONSTRAINT audit_comments_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(id),
+  CONSTRAINT audit_comments_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id)
 );
 CREATE TABLE public.audit_logs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -132,8 +165,8 @@ CREATE TABLE public.audit_objectives (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT audit_objectives_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_objectives_completed_by_fkey FOREIGN KEY (completed_by) REFERENCES public.users(id),
-  CONSTRAINT audit_objectives_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id)
+  CONSTRAINT audit_objectives_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
+  CONSTRAINT audit_objectives_completed_by_fkey FOREIGN KEY (completed_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.audit_phases (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -151,8 +184,8 @@ CREATE TABLE public.audit_phases (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT audit_phases_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_phases_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT audit_phases_phase_lead_id_fkey FOREIGN KEY (phase_lead_id) REFERENCES public.users(id)
+  CONSTRAINT audit_phases_phase_lead_id_fkey FOREIGN KEY (phase_lead_id) REFERENCES public.users(id),
+  CONSTRAINT audit_phases_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id)
 );
 CREATE TABLE public.audit_planning_documents (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -195,8 +228,8 @@ CREATE TABLE public.audit_status_history (
   change_reason text,
   additional_notes text,
   CONSTRAINT audit_status_history_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_status_history_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT audit_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id)
+  CONSTRAINT audit_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id),
+  CONSTRAINT audit_status_history_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id)
 );
 CREATE TABLE public.audit_team_members (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -212,10 +245,25 @@ CREATE TABLE public.audit_team_members (
   removed_by uuid,
   is_active boolean DEFAULT true,
   CONSTRAINT audit_team_members_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_team_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT audit_team_members_added_by_fkey FOREIGN KEY (added_by) REFERENCES public.users(id),
   CONSTRAINT audit_team_members_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT audit_team_members_removed_by_fkey FOREIGN KEY (removed_by) REFERENCES public.users(id)
+  CONSTRAINT audit_team_members_removed_by_fkey FOREIGN KEY (removed_by) REFERENCES public.users(id),
+  CONSTRAINT audit_team_members_added_by_fkey FOREIGN KEY (added_by) REFERENCES public.users(id),
+  CONSTRAINT audit_team_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.audit_templates (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  audit_type character varying NOT NULL DEFAULT 'internal'::character varying,
+  objectives ARRAY DEFAULT '{}'::text[],
+  scope text,
+  methodology text,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT audit_templates_pkey PRIMARY KEY (id),
+  CONSTRAINT audit_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.audit_time_entries (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -232,9 +280,9 @@ CREATE TABLE public.audit_time_entries (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT audit_time_entries_pkey PRIMARY KEY (id),
-  CONSTRAINT audit_time_entries_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id),
-  CONSTRAINT audit_time_entries_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
   CONSTRAINT audit_time_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT audit_time_entries_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
+  CONSTRAINT audit_time_entries_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id),
   CONSTRAINT audit_time_entries_audit_phase_id_fkey FOREIGN KEY (audit_phase_id) REFERENCES public.audit_phases(id)
 );
 CREATE TABLE public.audits (
@@ -285,13 +333,13 @@ CREATE TABLE public.audits (
   actual_start_date date,
   actual_end_date date,
   CONSTRAINT audits_pkey PRIMARY KEY (id),
-  CONSTRAINT audits_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id),
-  CONSTRAINT audits_parent_audit_id_fkey FOREIGN KEY (parent_audit_id) REFERENCES public.audits(id),
-  CONSTRAINT audits_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.users(id),
-  CONSTRAINT audits_supervisor_auditor_id_fkey FOREIGN KEY (supervisor_auditor_id) REFERENCES public.users(id),
-  CONSTRAINT audits_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
   CONSTRAINT audits_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id),
-  CONSTRAINT audits_lead_auditor_id_fkey FOREIGN KEY (lead_auditor_id) REFERENCES public.users(id)
+  CONSTRAINT audits_lead_auditor_id_fkey FOREIGN KEY (lead_auditor_id) REFERENCES public.users(id),
+  CONSTRAINT audits_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT audits_supervisor_auditor_id_fkey FOREIGN KEY (supervisor_auditor_id) REFERENCES public.users(id),
+  CONSTRAINT audits_assigned_by_fkey FOREIGN KEY (assigned_by) REFERENCES public.users(id),
+  CONSTRAINT audits_parent_audit_id_fkey FOREIGN KEY (parent_audit_id) REFERENCES public.audits(id),
+  CONSTRAINT audits_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.business_units (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -304,8 +352,8 @@ CREATE TABLE public.business_units (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT business_units_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_business_units_manager FOREIGN KEY (manager_id) REFERENCES public.users(id),
-  CONSTRAINT business_units_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.business_units(id)
+  CONSTRAINT business_units_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.business_units(id),
+  CONSTRAINT fk_business_units_manager FOREIGN KEY (manager_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.comments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -320,6 +368,242 @@ CREATE TABLE public.comments (
   CONSTRAINT comments_pkey PRIMARY KEY (id),
   CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.compliance_assessments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  profile_id uuid,
+  requirement_id uuid NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'unknown'::compliance_status,
+  justification text,
+  target_remediation_date date,
+  owner_id uuid,
+  reviewer_id uuid,
+  last_evaluated_at timestamp with time zone DEFAULT now(),
+  score integer CHECK (score IS NULL OR score >= 0 AND score <= 100),
+  ai_generated boolean DEFAULT false,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_assessments_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_assessments_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_assessments_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT compliance_assessments_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_assessments_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id),
+  CONSTRAINT compliance_assessments_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id),
+  CONSTRAINT compliance_assessments_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id)
+);
+CREATE TABLE public.compliance_attestations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  profile_id uuid,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  status USER-DEFINED DEFAULT 'draft'::attestation_status,
+  attestor_id uuid,
+  statement text,
+  attachments jsonb DEFAULT '[]'::jsonb,
+  submitted_at timestamp with time zone,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  rejection_reason text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_attestations_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_attestations_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_attestations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_attestations_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_attestations_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id),
+  CONSTRAINT compliance_attestations_attestor_id_fkey FOREIGN KEY (attestor_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_certification_cycles (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  profile_id uuid,
+  name character varying NOT NULL,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  status character varying DEFAULT 'planning'::character varying CHECK (status::text = ANY (ARRAY['planning'::character varying, 'in_progress'::character varying, 'submitted'::character varying, 'completed'::character varying, 'cancelled'::character varying, 'on_hold'::character varying]::text[])),
+  external_auditor character varying,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_certification_cycles_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_certification_cycles_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_certification_cycles_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id),
+  CONSTRAINT compliance_certification_cycles_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_evidence (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requirement_id uuid NOT NULL,
+  profile_id uuid,
+  evidence_source USER-DEFINED DEFAULT 'document'::evidence_type,
+  title character varying NOT NULL,
+  description text,
+  evidence_file_id uuid,
+  external_url text,
+  collected_at timestamp with time zone DEFAULT now(),
+  collected_by uuid,
+  expires_at timestamp with time zone,
+  is_current boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_evidence_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_evidence_evidence_file_id_fkey FOREIGN KEY (evidence_file_id) REFERENCES public.evidence_files(id),
+  CONSTRAINT compliance_evidence_collected_by_fkey FOREIGN KEY (collected_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_evidence_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id),
+  CONSTRAINT compliance_evidence_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT compliance_evidence_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_exceptions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  requirement_id uuid NOT NULL,
+  profile_id uuid,
+  title character varying NOT NULL,
+  description text,
+  compensating_controls text,
+  risk_acceptance text,
+  status USER-DEFINED DEFAULT 'proposed'::exception_status,
+  requested_by uuid,
+  approver_id uuid,
+  effective_from date,
+  effective_to date,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_exceptions_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_exceptions_approver_id_fkey FOREIGN KEY (approver_id) REFERENCES public.users(id),
+  CONSTRAINT compliance_exceptions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_exceptions_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_exceptions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id),
+  CONSTRAINT compliance_exceptions_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT compliance_exceptions_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id)
+);
+CREATE TABLE public.compliance_frameworks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  code character varying NOT NULL UNIQUE,
+  name character varying NOT NULL,
+  version character varying,
+  description text,
+  authority character varying,
+  category character varying,
+  is_active boolean DEFAULT true,
+  created_by uuid DEFAULT auth.uid(),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  ai_generated boolean DEFAULT false,
+  CONSTRAINT compliance_frameworks_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_frameworks_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_posture_snapshots (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  profile_id uuid,
+  snapshot_date date NOT NULL DEFAULT CURRENT_DATE,
+  compliant_count integer DEFAULT 0 CHECK (compliant_count >= 0),
+  partial_count integer DEFAULT 0 CHECK (partial_count >= 0),
+  non_compliant_count integer DEFAULT 0 CHECK (non_compliant_count >= 0),
+  not_applicable_count integer DEFAULT 0 CHECK (not_applicable_count >= 0),
+  unknown_count integer DEFAULT 0 CHECK (unknown_count >= 0),
+  overall_score integer CHECK (overall_score IS NULL OR overall_score >= 0 AND overall_score <= 100),
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_posture_snapshots_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_posture_snapshots_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_posture_snapshots_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_posture_snapshots_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id)
+);
+CREATE TABLE public.compliance_profile_requirements (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  profile_id uuid NOT NULL,
+  requirement_id uuid NOT NULL,
+  applicable boolean DEFAULT true,
+  applicability_notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_profile_requirements_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_profile_requirements_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT compliance_profile_requirements_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id),
+  CONSTRAINT compliance_profile_requirements_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_profiles (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  framework_id uuid NOT NULL,
+  business_unit_id uuid,
+  owner_id uuid,
+  is_active boolean DEFAULT true,
+  tags ARRAY DEFAULT ARRAY[]::text[],
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_profiles_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id),
+  CONSTRAINT compliance_profiles_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id),
+  CONSTRAINT compliance_profiles_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_profiles_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_requirements (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  section_id uuid,
+  requirement_code character varying NOT NULL,
+  title character varying NOT NULL,
+  text text NOT NULL,
+  guidance text,
+  priority USER-DEFINED DEFAULT 'medium'::priority_level,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_requirements_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_requirements_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_requirements_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_requirements_section_id_fkey FOREIGN KEY (section_id) REFERENCES public.compliance_sections(id)
+);
+CREATE TABLE public.compliance_sections (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid NOT NULL,
+  parent_section_id uuid,
+  code character varying,
+  title character varying NOT NULL,
+  description text,
+  sort_order integer DEFAULT 0,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_sections_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_sections_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_sections_parent_section_id_fkey FOREIGN KEY (parent_section_id) REFERENCES public.compliance_sections(id),
+  CONSTRAINT compliance_sections_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.compliance_tasks (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  framework_id uuid,
+  profile_id uuid,
+  requirement_id uuid,
+  title character varying NOT NULL,
+  description text,
+  status character varying DEFAULT 'open'::character varying CHECK (status::text = ANY (ARRAY['open'::character varying, 'in_progress'::character varying, 'blocked'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])),
+  priority USER-DEFINED DEFAULT 'medium'::priority_level,
+  assignee_id uuid,
+  due_date date,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT compliance_tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT compliance_tasks_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT compliance_tasks_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id),
+  CONSTRAINT compliance_tasks_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT compliance_tasks_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES public.users(id),
+  CONSTRAINT compliance_tasks_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id)
+);
 CREATE TABLE public.control_sets (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   audit_id uuid,
@@ -333,8 +617,8 @@ CREATE TABLE public.control_sets (
   updated_at timestamp with time zone DEFAULT now(),
   is_deleted boolean DEFAULT false,
   CONSTRAINT control_sets_pkey PRIMARY KEY (id),
-  CONSTRAINT fk_control_sets_audit_id FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT fk_control_sets_created_by FOREIGN KEY (created_by) REFERENCES public.users(id)
+  CONSTRAINT fk_control_sets_created_by FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT fk_control_sets_audit_id FOREIGN KEY (audit_id) REFERENCES public.audits(id)
 );
 CREATE TABLE public.control_tests (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -353,8 +637,8 @@ CREATE TABLE public.control_tests (
   CONSTRAINT control_tests_pkey PRIMARY KEY (id),
   CONSTRAINT fk_control_tests_created_by FOREIGN KEY (created_by) REFERENCES public.users(id),
   CONSTRAINT control_tests_control_id_fkey FOREIGN KEY (control_id) REFERENCES public.controls(id),
-  CONSTRAINT fk_control_tests_audit_id FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT fk_control_tests_tester_id FOREIGN KEY (tester_id) REFERENCES public.users(id)
+  CONSTRAINT fk_control_tests_tester_id FOREIGN KEY (tester_id) REFERENCES public.users(id),
+  CONSTRAINT fk_control_tests_audit_id FOREIGN KEY (audit_id) REFERENCES public.audits(id)
 );
 CREATE TABLE public.controls (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -383,10 +667,10 @@ CREATE TABLE public.controls (
   generated_at timestamp with time zone,
   test_results text,
   CONSTRAINT controls_pkey PRIMARY KEY (id),
-  CONSTRAINT controls_control_set_id_fkey FOREIGN KEY (control_set_id) REFERENCES public.control_sets(id),
-  CONSTRAINT fk_controls_owner_id FOREIGN KEY (owner_id) REFERENCES public.users(id),
   CONSTRAINT fk_controls_audit_id FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT fk_controls_created_by FOREIGN KEY (created_by) REFERENCES public.users(id)
+  CONSTRAINT fk_controls_created_by FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT controls_control_set_id_fkey FOREIGN KEY (control_set_id) REFERENCES public.control_sets(id),
+  CONSTRAINT fk_controls_owner_id FOREIGN KEY (owner_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.evidence_files (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -436,12 +720,12 @@ CREATE TABLE public.findings (
   remediated_at timestamp with time zone,
   closed_at timestamp with time zone,
   CONSTRAINT findings_pkey PRIMARY KEY (id),
-  CONSTRAINT findings_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
-  CONSTRAINT findings_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id),
   CONSTRAINT findings_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
   CONSTRAINT findings_internal_owner_id_fkey FOREIGN KEY (internal_owner_id) REFERENCES public.users(id),
   CONSTRAINT findings_remediation_owner_id_fkey FOREIGN KEY (remediation_owner_id) REFERENCES public.users(id),
-  CONSTRAINT findings_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id)
+  CONSTRAINT findings_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id),
+  CONSTRAINT findings_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
+  CONSTRAINT findings_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id)
 );
 CREATE TABLE public.findings_saved_views (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -463,8 +747,8 @@ CREATE TABLE public.findings_status_history (
   changed_at timestamp with time zone NOT NULL DEFAULT now(),
   change_reason text,
   CONSTRAINT findings_status_history_pkey PRIMARY KEY (id),
-  CONSTRAINT findings_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id),
-  CONSTRAINT findings_status_history_finding_id_fkey FOREIGN KEY (finding_id) REFERENCES public.findings(id)
+  CONSTRAINT findings_status_history_finding_id_fkey FOREIGN KEY (finding_id) REFERENCES public.findings(id),
+  CONSTRAINT findings_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.findings_versions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -475,8 +759,8 @@ CREATE TABLE public.findings_versions (
   diff jsonb,
   snapshot jsonb NOT NULL,
   CONSTRAINT findings_versions_pkey PRIMARY KEY (id),
-  CONSTRAINT findings_versions_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id),
-  CONSTRAINT findings_versions_finding_id_fkey FOREIGN KEY (finding_id) REFERENCES public.findings(id)
+  CONSTRAINT findings_versions_finding_id_fkey FOREIGN KEY (finding_id) REFERENCES public.findings(id),
+  CONSTRAINT findings_versions_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -490,6 +774,90 @@ CREATE TABLE public.notifications (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.policies (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name character varying NOT NULL,
+  description text,
+  owner_id uuid,
+  is_active boolean DEFAULT true,
+  tags ARRAY DEFAULT ARRAY[]::text[],
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT policies_pkey PRIMARY KEY (id),
+  CONSTRAINT policies_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT policies_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.policy_versions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  policy_id uuid NOT NULL,
+  version_number integer NOT NULL,
+  title character varying NOT NULL,
+  content text NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'draft'::policy_version_status,
+  ai_generated boolean DEFAULT false,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT policy_versions_pkey PRIMARY KEY (id),
+  CONSTRAINT policy_versions_policy_id_fkey FOREIGN KEY (policy_id) REFERENCES public.policies(id),
+  CONSTRAINT policy_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.requirement_audits_map (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requirement_id uuid NOT NULL,
+  audit_id uuid NOT NULL,
+  relation_type character varying DEFAULT 'scoped'::character varying,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT requirement_audits_map_pkey PRIMARY KEY (id),
+  CONSTRAINT requirement_audits_map_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
+  CONSTRAINT requirement_audits_map_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT requirement_audits_map_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.requirement_controls_map (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requirement_id uuid NOT NULL,
+  control_id uuid NOT NULL,
+  mapping_strength character varying DEFAULT 'direct'::character varying,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT requirement_controls_map_pkey PRIMARY KEY (id),
+  CONSTRAINT requirement_controls_map_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT requirement_controls_map_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT requirement_controls_map_control_id_fkey FOREIGN KEY (control_id) REFERENCES public.controls(id)
+);
+CREATE TABLE public.requirement_policies_map (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requirement_id uuid NOT NULL,
+  policy_id uuid,
+  policy_name character varying,
+  mapping_notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT requirement_policies_map_pkey PRIMARY KEY (id),
+  CONSTRAINT requirement_policies_map_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT requirement_policies_map_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id)
+);
+CREATE TABLE public.requirement_risks_map (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  requirement_id uuid NOT NULL,
+  risk_id uuid NOT NULL,
+  mapping_strength character varying DEFAULT 'direct'::character varying,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT requirement_risks_map_pkey PRIMARY KEY (id),
+  CONSTRAINT requirement_risks_map_requirement_id_fkey FOREIGN KEY (requirement_id) REFERENCES public.compliance_requirements(id),
+  CONSTRAINT requirement_risks_map_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT requirement_risks_map_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id)
 );
 CREATE TABLE public.risk_appetite (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -508,10 +876,10 @@ CREATE TABLE public.risk_appetite (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_appetite_pkey PRIMARY KEY (id),
-  CONSTRAINT risk_appetite_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT risk_appetite_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id),
+  CONSTRAINT risk_appetite_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id),
   CONSTRAINT risk_appetite_risk_category_id_fkey FOREIGN KEY (risk_category_id) REFERENCES public.risk_categories(id),
-  CONSTRAINT risk_appetite_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id)
+  CONSTRAINT risk_appetite_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.users(id),
+  CONSTRAINT risk_appetite_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_assessments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -533,9 +901,9 @@ CREATE TABLE public.risk_assessments (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_assessments_pkey PRIMARY KEY (id),
+  CONSTRAINT risk_assessments_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id),
   CONSTRAINT risk_assessments_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT risk_assessments_assessor_id_fkey FOREIGN KEY (assessor_id) REFERENCES public.users(id),
-  CONSTRAINT risk_assessments_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id)
+  CONSTRAINT risk_assessments_assessor_id_fkey FOREIGN KEY (assessor_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_categories (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -549,8 +917,8 @@ CREATE TABLE public.risk_categories (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_categories_pkey PRIMARY KEY (id),
-  CONSTRAINT risk_categories_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT risk_categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.risk_categories(id)
+  CONSTRAINT risk_categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.risk_categories(id),
+  CONSTRAINT risk_categories_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_controls (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -566,9 +934,9 @@ CREATE TABLE public.risk_controls (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_controls_pkey PRIMARY KEY (id),
-  CONSTRAINT risk_controls_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
   CONSTRAINT risk_controls_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id),
-  CONSTRAINT risk_controls_control_id_fkey FOREIGN KEY (control_id) REFERENCES public.controls(id)
+  CONSTRAINT risk_controls_control_id_fkey FOREIGN KEY (control_id) REFERENCES public.controls(id),
+  CONSTRAINT risk_controls_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_incidents (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -592,9 +960,9 @@ CREATE TABLE public.risk_incidents (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_incidents_pkey PRIMARY KEY (id),
-  CONSTRAINT risk_incidents_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT risk_incidents_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id),
   CONSTRAINT risk_incidents_reported_by_fkey FOREIGN KEY (reported_by) REFERENCES public.users(id),
-  CONSTRAINT risk_incidents_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id)
+  CONSTRAINT risk_incidents_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_matrices (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -633,9 +1001,9 @@ CREATE TABLE public.risk_reviews (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_reviews_pkey PRIMARY KEY (id),
-  CONSTRAINT risk_reviews_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
   CONSTRAINT risk_reviews_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id),
-  CONSTRAINT risk_reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id)
+  CONSTRAINT risk_reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id),
+  CONSTRAINT risk_reviews_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_treatments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -664,9 +1032,9 @@ CREATE TABLE public.risk_treatments (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_treatments_pkey PRIMARY KEY (id),
+  CONSTRAINT risk_treatments_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id),
   CONSTRAINT risk_treatments_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT risk_treatments_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id),
-  CONSTRAINT risk_treatments_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id)
+  CONSTRAINT risk_treatments_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id)
 );
 CREATE TABLE public.risk_workflows (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -683,8 +1051,8 @@ CREATE TABLE public.risk_workflows (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT risk_workflows_pkey PRIMARY KEY (id),
-  CONSTRAINT risk_workflows_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id),
-  CONSTRAINT risk_workflows_initiated_by_fkey FOREIGN KEY (initiated_by) REFERENCES public.users(id)
+  CONSTRAINT risk_workflows_initiated_by_fkey FOREIGN KEY (initiated_by) REFERENCES public.users(id),
+  CONSTRAINT risk_workflows_risk_id_fkey FOREIGN KEY (risk_id) REFERENCES public.risks(id)
 );
 CREATE TABLE public.risks (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -721,11 +1089,48 @@ CREATE TABLE public.risks (
   external_reference character varying,
   attachments jsonb DEFAULT '[]'::jsonb,
   CONSTRAINT risks_pkey PRIMARY KEY (id),
-  CONSTRAINT risks_risk_category_id_fkey FOREIGN KEY (risk_category_id) REFERENCES public.risk_categories(id),
-  CONSTRAINT risks_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id),
   CONSTRAINT risks_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id),
+  CONSTRAINT risks_risk_matrix_id_fkey FOREIGN KEY (risk_matrix_id) REFERENCES public.risk_matrices(id),
+  CONSTRAINT risks_risk_category_id_fkey FOREIGN KEY (risk_category_id) REFERENCES public.risk_categories(id),
   CONSTRAINT risks_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
-  CONSTRAINT risks_risk_matrix_id_fkey FOREIGN KEY (risk_matrix_id) REFERENCES public.risk_matrices(id)
+  CONSTRAINT risks_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id)
+);
+CREATE TABLE public.test_items (
+  id integer NOT NULL DEFAULT nextval('test_items_id_seq'::regclass),
+  label text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  note text,
+  CONSTRAINT test_items_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.training_assignments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  module_id uuid NOT NULL,
+  assigned_to uuid NOT NULL,
+  profile_id uuid,
+  due_date date,
+  status USER-DEFINED NOT NULL DEFAULT 'assigned'::training_status,
+  completed_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_assignments_pkey PRIMARY KEY (id),
+  CONSTRAINT training_assignments_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.training_modules(id),
+  CONSTRAINT training_assignments_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.users(id),
+  CONSTRAINT training_assignments_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.compliance_profiles(id),
+  CONSTRAINT training_assignments_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.training_modules (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  title character varying NOT NULL,
+  description text,
+  framework_id uuid,
+  url text,
+  estimated_minutes integer CHECK (estimated_minutes IS NULL OR estimated_minutes >= 0),
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_modules_pkey PRIMARY KEY (id),
+  CONSTRAINT training_modules_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT training_modules_framework_id_fkey FOREIGN KEY (framework_id) REFERENCES public.compliance_frameworks(id)
 );
 CREATE TABLE public.users (
   id uuid NOT NULL,
@@ -743,6 +1148,35 @@ CREATE TABLE public.users (
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT users_business_unit_id_fkey FOREIGN KEY (business_unit_id) REFERENCES public.business_units(id)
+);
+CREATE TABLE public.workflow_jobs (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  schedule_id uuid NOT NULL,
+  run_at timestamp with time zone NOT NULL,
+  status character varying NOT NULL DEFAULT 'pending'::character varying,
+  result jsonb,
+  logs text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT workflow_jobs_pkey PRIMARY KEY (id),
+  CONSTRAINT workflow_jobs_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.workflow_schedules(id)
+);
+CREATE TABLE public.workflow_schedules (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  audit_id uuid NOT NULL,
+  title character varying NOT NULL,
+  description text,
+  start_at timestamp with time zone NOT NULL,
+  end_at timestamp with time zone NOT NULL,
+  timezone character varying NOT NULL DEFAULT 'UTC'::character varying,
+  recurrence_rule text,
+  status character varying NOT NULL DEFAULT 'scheduled'::character varying,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT workflow_schedules_pkey PRIMARY KEY (id),
+  CONSTRAINT workflow_schedules_audit_id_fkey FOREIGN KEY (audit_id) REFERENCES public.audits(id),
+  CONSTRAINT workflow_schedules_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.workflow_steps (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -774,5 +1208,4 @@ CREATE TABLE public.workflows (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT workflows_pkey PRIMARY KEY (id),
   CONSTRAINT workflows_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
-);
 );
