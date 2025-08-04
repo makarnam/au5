@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { approve, reject, requestRevision, skipStep } from '../../services/workflows';
+import { approveStep, rejectStep, requestRevision, skipStep } from '../../services/workflows';
 
 type Props = {
   requestId: string;
@@ -16,10 +16,10 @@ export default function ApproveRejectDialog({ requestId, open, onClose, onDone }
   async function handle(action: 'approve' | 'reject' | 'revise' | 'skip') {
     try {
       setLoading(action);
-      if (action === 'approve') await approve(requestId, comments);
-      if (action === 'reject') await reject(requestId, comments);
-      if (action === 'revise') await requestRevision(requestId, comments);
-      if (action === 'skip') await skipStep(requestId, comments);
+      if (action === 'approve') await approveStep({ request_id: requestId, comments });
+      if (action === 'reject') await rejectStep({ request_id: requestId, comments });
+      if (action === 'revise') await requestRevision({ request_id: requestId, comments });
+      if (action === 'skip') await skipStep({ request_id: requestId, comments });
       onDone?.();
       onClose();
     } catch (e) {

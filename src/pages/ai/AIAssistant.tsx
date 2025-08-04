@@ -166,6 +166,16 @@ const AIAssistant: React.FC = () => {
     loadConfigurations();
   }, []);
 
+  // If no configurations found, show a helpful starter assistant message
+  useEffect(() => {
+    if (configurations.length === 0 && chatMessages.length === 0) {
+      addMessage(
+        "assistant",
+        "No AI configuration detected. Open AI Configuration (Settings → AI) to add a provider/model, or click the dropdown in the top-right here and select a configuration. You can still browse quick prompts below."
+      );
+    }
+  }, [configurations]);
+
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     scrollToBottom();

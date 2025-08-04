@@ -40,9 +40,11 @@ const Layout: React.FC = () => {
   const navigation = [
     {
       name: t("navigation.dashboard"),
-      href: "/dashboard",
+      href: "/",
       icon: Home,
-      current: location.pathname === "/dashboard",
+      current:
+        location.pathname === "/" ||
+        location.pathname === "/dashboard",
       roles: [
         "viewer",
         "business_unit_user",
@@ -133,9 +135,12 @@ const Layout: React.FC = () => {
     },
     {
       name: t("navigation.aiAssistant"),
-      href: "/ai-assistant",
+      // Align with existing AI Assistant page route in the app
+      href: "/ai/assistant",
       icon: Bot,
-      current: location.pathname.startsWith("/ai-assistant"),
+      current:
+        location.pathname === "/ai/assistant" ||
+        location.pathname.startsWith("/ai/assistant/"),
       roles: [
         "auditor",
         "reviewer",
@@ -144,10 +149,12 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
+      // Provide a simple fallback navigate if route exists but page renders empty due to stale state
+      onClick: () => navigate("/ai/assistant"),
     },
     {
-      name: "Compliance Frameworks",
-      href: "/compliance",
+      name: "Compliance",
+      href: "/compliance/frameworks",
       icon: Shield,
       current: location.pathname.startsWith("/compliance"),
       roles: [
@@ -158,7 +165,23 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
+      children: [
+        {
+          name: "Frameworks",
+          href: "/compliance/frameworks",
+          current: location.pathname === "/compliance/frameworks",
+        },
+        {
+          name: "Requirements",
+          href: "/compliance/requirements",
+          current: location.pathname === "/compliance/requirements",
+        },
+        {
+          name: "Profiles",
+          href: "/compliance/profiles",
+          current: location.pathname === "/compliance/profiles",
+        }
+      ]
     },
     {
       name: "Advanced Analytics",
@@ -265,14 +288,18 @@ const Layout: React.FC = () => {
       name: t("navigation.users"),
       href: "/users",
       icon: Users,
-      current: location.pathname.startsWith("/users"),
+      current:
+        location.pathname === "/users" ||
+        location.pathname.startsWith("/users/"),
       roles: ["admin", "super_admin"],
     },
     {
       name: t("navigation.settings"),
       href: "/settings",
       icon: Settings,
-      current: location.pathname.startsWith("/settings"),
+      current:
+        location.pathname === "/settings" ||
+        location.pathname.startsWith("/settings/"),
       roles: ["admin", "super_admin"],
     },
   ];
@@ -294,7 +321,7 @@ const Layout: React.FC = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/signin");
+    navigate("/auth/sign-in", { replace: true });
   };
 
   const changeLanguage = (languageCode: string) => {

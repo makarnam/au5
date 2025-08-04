@@ -6,58 +6,40 @@ type NavItem = {
 };
 
 const complianceItems: NavItem[] = [
-  { to: 'compliance/frameworks', label: 'Frameworks' },
-  { to: 'compliance/requirements', label: 'Requirements' },
-  { to: 'compliance/profiles', label: 'Profiles' },
-  { to: 'compliance/assessments', label: 'Assessments' },
-  { to: 'compliance/attestations', label: 'Attestations' },
-  { to: 'compliance/exceptions', label: 'Exceptions' },
-  { to: 'compliance/posture', label: 'Posture' },
+  // Use absolute paths so routing works regardless of nesting level.
+  // Note: Only "frameworks" and "requirements" have implemented routes in App.tsx.
+  // The others will render the "Coming soon" placeholder via Layout's navigation, not this legacy sidebar.
+  { to: '/compliance/frameworks', label: 'Frameworks' },
+  { to: '/compliance/requirements', label: 'Requirements' },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname.includes(path);
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
+  // This Sidebar component appears to be a legacy/simple sidebar. The app's active navigation lives in Layout.tsx.
+  // To avoid duplicate/contradicting sidebars, render a minimal wrapper that defers to Layout's sidebar.
+  // Keeping links only for Compliance quick access while not duplicating the full nav.
   return (
     <aside className="w-64 border-r h-full overflow-y-auto">
       <div className="p-4">
-        <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Main</div>
+        <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Compliance</div>
         <nav className="space-y-1">
-          <Link to="/" className={`block px-3 py-2 rounded ${isActive('/') ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}>Dashboard</Link>
+          {complianceItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`block px-3 py-2 rounded ${
+                isActive(item.to) ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
-
-        <div className="mt-6">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Audits & Risks</div>
-          <nav className="space-y-1">
-            <Link to="audits" className={`block px-3 py-2 rounded ${isActive('/audits') ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}>Audits</Link>
-            <Link to="risks" className={`block px-3 py-2 rounded ${isActive('/risks') ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}>Risks</Link>
-            <Link to="findings" className={`block px-3 py-2 rounded ${isActive('/findings') ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}>Findings</Link>
-            <Link to="controls" className={`block px-3 py-2 rounded ${isActive('/controls') ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}>Controls</Link>
-          </nav>
-        </div>
-
-        <div className="mt-6">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Compliance</div>
-          <nav className="space-y-1">
-            {complianceItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`block px-3 py-2 rounded ${isActive(item.to) ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        <div className="mt-6">
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Admin</div>
-          <nav className="space-y-1">
-            <Link to="settings" className={`block px-3 py-2 rounded ${isActive('/settings') ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}>Settings</Link>
-          </nav>
+        <div className="mt-6 text-xs text-gray-500">
+          Navigation is managed by the main layout. This sidebar is slimmed to avoid duplication.
         </div>
       </div>
     </aside>

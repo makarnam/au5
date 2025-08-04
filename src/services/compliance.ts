@@ -63,6 +63,40 @@ export type ComplianceAssessment = {
   updated_at: string;
 };
 
+// Light-weight row types for new relation maps
+export type RequirementControlMap = {
+  id: UUID;
+  requirement_id: UUID;
+  control_id: UUID;
+  mapping_strength?: string | null;
+  notes?: string | null;
+  created_by?: UUID | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RequirementRiskMap = {
+  id: UUID;
+  requirement_id: UUID;
+  risk_id: UUID;
+  mapping_strength?: string | null;
+  notes?: string | null;
+  created_by?: UUID | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RequirementAuditMap = {
+  id: UUID;
+  requirement_id: UUID;
+  audit_id: UUID;
+  relation_type?: string | null;
+  notes?: string | null;
+  created_by?: UUID | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export const ComplianceService = {
   // Frameworks
   async listFrameworks() {
@@ -100,7 +134,31 @@ export const ComplianceService = {
     return q;
   },
   async createProfile(payload: Partial<ComplianceProfile>) {
-    return supabase.from('compliance_profiles').insert(payload).select().single();
+    // Ensure created_by = auth.uid() via RPC wrapper to satisfy RLS
+    // Create a lightweight RPC using PostgREST single-row insert with default created_by set by trigger/policy
+    // If no trigger exists, we explicitly set created_by from the current session
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id || null;
+
+    // Only send allowed/necessary columns; rely on defaults for others
+    const toInsert: Partial<ComplianceProfile> = {
+      name: payload.name,
+      description: payload.description ?? null,
+      framework_id: payload.framework_id as string,
+      is_active: payload.is_active ?? true,
+      created_by: userId as any,
+    };
+
+    return supabase.from('compliance_profiles').insert(toInsert).select().single();
+  },
+
+  // Profile requirement applicability
+  async upsertProfileRequirement(payload: { profile_id: UUID; requirement_id: UUID; applicable?: boolean; applicability_notes?: string | null; }) {
+    return supabase
+      .from('compliance_profile_requirements')
+      .upsert(payload, { onConflict: 'profile_id,requirement_id' })
+      .select()
+      .single();
   },
 
   // Assessments
@@ -122,6 +180,62 @@ export const ComplianceService = {
       .insert({ requirement_id: requirementId, control_id: controlId, notes })
       .select()
       .single();
+  },
+
+  // New: Mapping requirement to risk
+  async mapRisk(requirementId: UUID, riskId: UUID, notes?: string, mapping_strength?: string) {
+    return supabase
+      .from('requirement_risks_map')
+      .insert({
+        requirement_id: requirementId,
+        risk_id: riskId,
+        notes,
+        mapping_strength: mapping_strength ?? 'direct',
+      })
+      .select()
+      .single();
+  },
+  async unmapRisk(requirementId: UUID, riskId: UUID) {
+    return supabase
+      .from('requirement_risks_map')
+      .delete()
+      .eq('requirement_id', requirementId)
+      .eq('risk_id', riskId);
+  },
+  async listRequirementRisks(requirementId: UUID) {
+    return supabase
+      .from('requirement_risks_map')
+      .select('*')
+      .eq('requirement_id', requirementId)
+      .order('created_at', { ascending: false });
+  },
+
+  // New: Mapping requirement to audit
+  async mapAudit(requirementId: UUID, auditId: UUID, notes?: string, relation_type?: string) {
+    return supabase
+      .from('requirement_audits_map')
+      .insert({
+        requirement_id: requirementId,
+        audit_id: auditId,
+        notes,
+        relation_type: relation_type ?? 'scoped',
+      })
+      .select()
+      .single();
+  },
+  async unmapAudit(requirementId: UUID, auditId: UUID) {
+    return supabase
+      .from('requirement_audits_map')
+      .delete()
+      .eq('requirement_id', requirementId)
+      .eq('audit_id', auditId);
+  },
+  async listRequirementAudits(requirementId: UUID) {
+    return supabase
+      .from('requirement_audits_map')
+      .select('*')
+      .eq('requirement_id', requirementId)
+      .order('created_at', { ascending: false });
   },
 
   // Exceptions

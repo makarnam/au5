@@ -13,10 +13,14 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRole,
-  fallbackPath = "/signin",
+  // Align fallback with actual public auth route used in App.tsx
+  fallbackPath = "/auth/sign-in",
 }) => {
   const { user, loading, initialized, checkPermission } = useAuthStore();
   const location = useLocation();
+
+  const pathname = location.pathname;
+  const isAuthRoute = pathname.startsWith("/auth/");
 
   // Still initializing
   if (!initialized) {
@@ -38,10 +42,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Not authenticated
   if (!user) {
+    // Allow access to public auth routes to prevent redirect loops
+    if (isAuthRoute) {
+      return <>{children}</>;
+    }
+    // Redirect to configured fallbackPath
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  // Check role-based permissions
+  // Authenticated users should not remain on auth routes
+  if (user && isAuthRoute) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Check role-based permissions (unchanged)
   if (requiredRole && !checkPermission(requiredRole)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
