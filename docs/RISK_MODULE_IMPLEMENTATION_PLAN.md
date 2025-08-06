@@ -29,46 +29,48 @@ Scope: R-REG-001/002/005, R-ASM-001/004/005, R-TRT-003/004, R-UX-001/003/005, R-
 
 Deliverables:
 1) SQL
-   - Create/verify risks core tables with RLS:
-     - risks (id, title, description, owner_id, primary_category_id, status, created_at, updated_at)
-     - risk_categories (id, code, label, framework)
-     - risk_tags (id, label)
-     - risk_tag_map (risk_id, tag_id)
-     - risk_assessments (id, risk_id, matrix_size, likelihood, impact, inherent_score, residual_score, appetite_color, assessed_at, assessed_by)
-     - risks_controls (risk_id, control_id, rationale)
-     - risk_treatments (id, risk_id, strategy, status, created_by, created_at)
-     - risk_tasks (id, risk_id, title, due_date, owner_id, status)
-     - risk_appetite_thresholds (id, scope, min, max, color)
-   - RPC:
-     - calculate_qualitative_score(matrix_size, likelihood, impact) → score
-     - map_score_to_appetite(score, scope) → color
-     - start_risk_treatment(risk_id, strategy) → creates treatment and default tasks
-   - Seeds:
-     - risk_categories for COSO, ISO 31000, NIST
-     - appetite thresholds default
-   - Policies:
-     - RLS aligning with project user model, owners/editors policy
+   - Status: Applied via MCP to Supabase (schema, RLS, RPCs, seeds)
+   - Implemented objects (see ['sql/risks/01_phase1_risk_module.sql'](sql/risks/01_phase1_risk_module.sql)):
+     - Tables: risks, risk_categories, risk_matrices, risk_assessments, risk_treatments, risk_controls, risk_appetite_thresholds
+     - Helper: update_updated_at_column()
+     - Functions: calculate_risk_score(), calculate_risk_level(), map_score_to_appetite(), create_risk_assessment(), start_risk_treatment()
+     - Triggers: timestamps + update_risk_scores on risks
+     - RLS: enabled + minimal policies for SELECT/INSERT/UPDATE for authenticated
+     - Seeds: default 5x5 matrix, COSO/ISO/NIST categories, appetite thresholds
+   - Deviations from initial outline:
+     - risk_tags/risk_tag_map deferred (not required for P1 core flows)
+     - risk_tasks deferred; using treatments table for SLA checks in P1
 
 2) UI
+   - Status: Routes and skeletons wired
    - Pages:
-     - RisksList.tsx: searchable, filterable list
-     - CreateRiskWizard.tsx: multi-step wizard (details → category/tags → assessment → controls → treatment → review)
-     - RiskDetails.tsx: header (status, owner, category), tabs: Overview, Assessments, Controls, Treatment, Tasks, History
-   - Components:
-     - RiskWizardStepper.tsx
-     - RiskAssessmentForm.tsx (3×3, 4×4, 5×5 selectors)
-     - RiskSearchFilters.tsx
+     - RisksList.tsx: present (search/filter improvements planned)
+     - CreateRiskPage.tsx: present
+     - CreateRiskWizard.tsx: implemented at ['src/pages/risks/CreateRiskWizard.tsx'](src/pages/risks/CreateRiskWizard.tsx) with 3 steps (Basics, Assessment, Targets)
+     - RiskDetails.tsx: lazy route present; detail view to be iterated as tabs
+   - Routing:
+     - ['src/App.tsx'](src/App.tsx:83) includes /risks, /risks/create, /risks/create-wizard (lazy), /risks/:id (lazy)
+   - Components (planned):
+     - RiskWizardStepper.tsx (inline within wizard for P1)
+     - RiskAssessmentForm.tsx (consolidate assessment inputs; backlog)
+     - RiskSearchFilters.tsx (extract from RisksList; backlog)
    - Store/Service:
-     - services/risks.ts: CRUD, assessments, treatments RPC
-     - store/riskStore.ts: list, filters, selectedRisk
+     - Service implemented: ['src/services/riskService.ts'](src/services/riskService.ts)
+     - Store implemented: ['src/store/riskStore.ts'](src/store/riskStore.ts)
 
 3) Notifications
-   - Integrate with notifications RPC to emit on:
-     - task overdue
-     - appetite breach (residual_color in Red)
+   - Status: App-side hooks defined (to implement next)
+   - Appetite breach hook:
+     - After addAssessment, compute appetite via map_score_to_appetite(score,'org'); if 'red', call existing notification RPC (e.g., public.create_notification)
+   - Task SLA hook:
+     - After add/update treatment, if target_date < today AND status != 'completed', enqueue due-soon notification
+   - Integration points:
+     - Implement inside store mutations after successful service calls
 
 4) Metrics instrumentation
-   - Log events for risk created, first assessment time, treatment started; enable dashboard queries later.
+   - Plan:
+     - Emit events: risk created, assessment added, treatment started with timestamps
+     - Can leverage existing audit trail or lightweight logging table (P1 optional)
 
 ### Phase 2 (P2): Advanced analytics and reporting
 
@@ -135,27 +137,21 @@ Scope: R-ASM-002 full, R-ADV-005
 
 ## Initial Task List (P1 Sprint)
 
-- SQL
-  - Add risk_categories seeds: COSO, ISO 31000, NIST
-  - Create risk_appetite_thresholds and map function
-  - Add calculate_qualitative_score RPC
-  - Create risk_assessments table
-  - Create risks_controls M2M table
-  - Create risk_treatments and risk_tasks
-  - RLS for risks and child tables
+- SQL (DONE)
+  - Seeds and core tables created, functions/triggers/RLS applied
 
-- Frontend
-  - services/risks.ts: CRUD + assessments + treatments
-  - store/riskStore.ts: filters and selection
-  - pages/risks/RisksList.tsx
-  - pages/risks/CreateRiskWizard.tsx
-  - pages/risks/RiskDetails.tsx
-  - components/risks/RiskAssessmentForm.tsx
-  - components/risks/RiskSearchFilters.tsx
+- Frontend (IN PROGRESS)
+  - services/riskService.ts: CRUD + assessments + treatments (DONE)
+  - store/riskStore.ts: filters and selection (DONE)
+  - pages/risks/RisksList.tsx (EXISTS; enhance filters/search later)
+  - pages/risks/CreateRiskWizard.tsx (DONE)
+  - pages/risks/RiskDetails.tsx (ROUTE PRESENT; iterative UI upcoming)
+  - components/risks/RiskAssessmentForm.tsx (PENDING)
+  - components/risks/RiskSearchFilters.tsx (PENDING)
 
-- Notifications
-  - Hook appetite breach to notifications RPC
-  - Task due SLA notifier
+- Notifications (NEXT)
+  - Hook appetite breach to notifications RPC (store.addAssessment)
+  - Task due SLA notifier (store.addTreatment/updateTreatment)
 
 ## Notes on Existing Repo
 

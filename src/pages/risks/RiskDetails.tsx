@@ -23,6 +23,7 @@ import riskService, {
   RiskTreatment,
   RiskLevel,
 } from "../../services/riskService";
+import RiskAssessmentForm, { AssessmentFormValue } from "../../components/risks/RiskAssessmentForm";
 import { useAuthStore } from "../../store/authStore";
 import { cn } from "../../utils";
 
@@ -127,7 +128,7 @@ const RiskDetails: React.FC = () => {
 
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [assessmentSaving, setAssessmentSaving] = useState(false);
-  const [assessmentForm, setAssessmentForm] = useState<Partial<RiskAssessment>>({
+  const [assessmentForm, setAssessmentForm] = useState<Partial<RiskAssessment & AssessmentFormValue>>({
     assessment_type: "periodic",
     assessment_date: new Date().toISOString().slice(0, 10),
     probability: 3,
@@ -449,6 +450,30 @@ const RiskDetails: React.FC = () => {
     );
   }
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<"overview" | "assessments" | "treatments" | "controls" | "history">("overview");
+
+  const HistoryList: React.FC = () => {
+    const events = [
+      ...assessments.map((a) => ({ type: "assessment" as const, date: a.assessment_date, title: `Assessment ${a.risk_level} (${a.risk_score})`, id: a.id })),
+      ...treatments.map((t) => ({ type: "treatment" as const, date: (t.start_date || t.created_at || ""), title: `Treatment ${t.title} (${t.status})`, id: t.id })),
+    ]
+      .filter((e) => !!e.date)
+      .sort((a, b) => (a.date! < b.date! ? 1 : -1));
+    if (events.length === 0) return <p className="text-sm text-gray-500">No history entries yet.</p>;
+    return (
+      <ul className="divide-y text-sm">
+        {events.map((e) => (
+          <li key={`${e.type}-${e.id}`} className="py-2 flex items-center justify-between">
+            <span className="capitalize">{e.type}</span>
+            <span className="text-gray-700">{e.title}</span>
+            <span className="text-gray-500">{e.date}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
@@ -497,242 +522,298 @@ const RiskDetails: React.FC = () => {
         )}
       </div>
 
-      {/* Top Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center text-gray-900">
-            <Activity className="w-5 h-5 text-sky-600 mr-2" />
-            Scores
-          </div>
-          <div className="mt-3 text-sm">
-            <div>Inherent: {risk.inherent_risk_score ?? "-"}</div>
-            <div>Residual: {risk.residual_risk_score ?? "-"}</div>
-            <div className="text-gray-500">
-              Target: {risk.target_risk_score ?? "-"} (P{risk.target_probability ?? "-"}×I
-              {risk.target_impact ?? "-"})
-            </div>
-          </div>
+      {/* Tabs */}
+      <div className="bg-white border border-gray-200 rounded-lg">
+        <div className="flex gap-1 px-2 py-2 border-b">
+          {[
+            { key: "overview", label: "Overview" },
+            { key: "assessments", label: "Assessments" },
+            { key: "treatments", label: "Treatments" },
+            { key: "controls", label: "Controls" },
+            { key: "history", label: "History" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key as any)}
+              className={cn(
+                "px-3 py-2 text-sm rounded",
+                activeTab === t.key ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center text-gray-900">
-            <Calendar className="w-5 h-5 text-amber-600 mr-2" />
-            Timeline
-          </div>
-          <div className="mt-3 text-sm">
-            <div>Next Review: {risk.next_review_date ?? "-"}</div>
-            <div>Target Date: {risk.target_date ?? "-"}</div>
-            <div className="text-gray-500">Last Review: {risk.last_review_date ?? "-"}</div>
-          </div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center text-gray-900">
-            <ShieldCheck className="w-5 h-5 text-emerald-600 mr-2" />
-            Trends
-          </div>
-          <div className="mt-3 text-sm">
-            <div>Likelihood: {risk.likelihood_trend ?? "-"}</div>
-            <div>Impact: {risk.impact_trend ?? "-"}</div>
-            <div className="text-gray-500">Review Freq: {risk.review_frequency ?? "-"}</div>
-          </div>
+        <div className="p-4">
+          {activeTab === "overview" && (
+            <>
+              {/* Top Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center text-gray-900">
+                    <Activity className="w-5 h-5 text-sky-600 mr-2" />
+                    Scores
+                  </div>
+                  <div className="mt-3 text-sm">
+                    <div>Inherent: {risk.inherent_risk_score ?? "-"}</div>
+                    <div>Residual: {risk.residual_risk_score ?? "-"}</div>
+                    <div className="text-gray-500">
+                      Target: {risk.target_risk_score ?? "-"} (P{risk.target_probability ?? "-"}×I
+                      {risk.target_impact ?? "-"})
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center text-gray-900">
+                    <Calendar className="w-5 h-5 text-amber-600 mr-2" />
+                    Timeline
+                  </div>
+                  <div className="mt-3 text-sm">
+                    <div>Next Review: {risk.next_review_date ?? "-"}</div>
+                    <div>Target Date: {risk.target_date ?? "-"}</div>
+                    <div className="text-gray-500">Last Review: {risk.last_review_date ?? "-"}</div>
+                  </div>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center text-gray-900">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 mr-2" />
+                    Trends
+                  </div>
+                  <div className="mt-3 text-sm">
+                    <div>Likelihood: {risk.likelihood_trend ?? "-"}</div>
+                    <div>Impact: {risk.impact_trend ?? "-"}</div>
+                    <div className="text-gray-500">Review Freq: {risk.review_frequency ?? "-"}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description & Mitigation */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SectionCard title="Description">
+                  {risk.description ? (
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{risk.description}</p>
+                  ) : (
+                    <p className="text-sm text-gray-500">No description provided.</p>
+                  )}
+                </SectionCard>
+
+                <SectionCard title="Mitigation Strategy">
+                  {risk.mitigation_strategy ? (
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{risk.mitigation_strategy}</p>
+                  ) : (
+                    <p className="text-sm text-gray-500">No mitigation strategy recorded.</p>
+                  )}
+                </SectionCard>
+              </div>
+            </>
+          )}
+
+          {activeTab === "treatments" && (
+            <SectionCard
+              title="Treatments"
+              action={
+                canEdit && (
+                  <button
+                    onClick={() => {
+                      setTreatmentForm({
+                        title: "",
+                        description: "",
+                        treatment_type: "mitigate",
+                        status: "planned",
+                        priority: "medium",
+                        target_date: "",
+                        currency: "USD",
+                      } as any);
+                      setTreatmentOpen(true);
+                    }}
+                    className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    <PlusCircle className="w-4 h-4 mr-1" />
+                    Add
+                  </button>
+                )
+              }
+            >
+              {treatments.length === 0 ? (
+                <p className="text-sm text-gray-500">No treatments recorded.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500 border-b">
+                        <th className="py-2 pr-3">Title</th>
+                        <th className="py-2 pr-3">Type</th>
+                        <th className="py-2 pr-3">Status</th>
+                        <th className="py-2 pr-3">Target</th>
+                        <th className="py-2 pr-3 w-28">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {treatments.map((t) => (
+                        <tr key={t.id} className="border-b last:border-0">
+                          <td className="py-2 pr-3">{t.title}</td>
+                          <td className="py-2 pr-3 capitalize">{t.treatment_type}</td>
+                          <td className="py-2 pr-3 capitalize">{t.status?.replace("_", " ")}</td>
+                          <td className="py-2 pr-3">{t.target_date ?? "-"}</td>
+                          <td className="py-2 pr-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setTreatmentForm(t as any);
+                                  setTreatmentOpen(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
+                                title="Edit"
+                              >
+                                <Edit className="w-3 h-3" /> Edit
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!risk) return;
+                                  if (!confirm("Delete this treatment?")) return;
+                                  try {
+                                    setTreatments((prev) => prev.filter((x) => x.id !== t.id));
+                                    await riskService.deleteTreatment?.(t.id as any);
+                                    toast.success("Treatment deleted");
+                                  } catch (e: any) {
+                                    toast.error(e?.message || "Delete failed (RLS?)");
+                                    const latest = await riskService.getTreatments(risk.id);
+                                    setTreatments(latest);
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3 h-3" /> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </SectionCard>
+          )}
+
+          {activeTab === "assessments" && (
+            <SectionCard
+              title="Assessments"
+              action={
+                canEdit && (
+                  <button
+                    onClick={() => {
+                      setAssessmentForm({
+                        assessment_type: "periodic",
+                        assessment_date: new Date().toISOString().slice(0, 10),
+                        probability: 3,
+                        impact: 3,
+                        risk_score: 9,
+                        risk_level: "medium",
+                        confidence_level: "medium",
+                      } as any);
+                      setAssessmentOpen(true);
+                    }}
+                    className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    <PlusCircle className="w-4 h-4 mr-1" />
+                    Add
+                  </button>
+                )
+              }
+            >
+              {assessments.length === 0 ? (
+                <p className="text-sm text-gray-500">No assessments recorded.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500 border-b">
+                        <th className="py-2 pr-3">Date</th>
+                        <th className="py-2 pr-3">Type</th>
+                        <th className="py-2 pr-3">Score</th>
+                        <th className="py-2 pr-3">Level</th>
+                        <th className="py-2 pr-3 w-28">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assessments.map((a) => (
+                        <tr key={a.id} className="border-b last:border-0">
+                          <td className="py-2 pr-3">{a.assessment_date}</td>
+                          <td className="py-2 pr-3 capitalize">{a.assessment_type ? a.assessment_type.replace("_", " ") : "-"}</td>
+                          <td className="py-2 pr-3">{a.risk_score}</td>
+                          <td className="py-2 pr-3 capitalize">{a.risk_level}</td>
+                          <td className="py-2 pr-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setAssessmentForm(a as any);
+                                  setAssessmentOpen(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
+                                title="Edit"
+                              >
+                                <Edit className="w-3 h-3" /> Edit
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!risk) return;
+                                  if (!confirm("Delete this assessment?")) return;
+                                  try {
+                                    setAssessments((prev) => prev.filter((x) => x.id !== a.id));
+                                    await riskService.deleteAssessment?.(a.id as any);
+                                    toast.success("Assessment deleted");
+                                  } catch (e: any) {
+                                    toast.error(e?.message || "Delete failed (RLS?)");
+                                    const latest = await riskService.getAssessments(risk.id);
+                                    setAssessments(latest);
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3 h-3" /> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </SectionCard>
+          )}
+
+          {activeTab === "controls" && (
+            <SectionCard
+              title="Linked Controls"
+              action={
+                canEdit && (
+                  <button
+                    onClick={() => setLinkControlOpen(true)}
+                    className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    <LinkIcon className="w-4 h-4 mr-1" />
+                    Link Control
+                  </button>
+                )
+              }
+            >
+              <p className="text-sm text-gray-500">
+                Display controls linked to this risk (via risk_controls). Linking modal available.
+              </p>
+            </SectionCard>
+          )}
+
+          {activeTab === "history" && (
+            <SectionCard title="History">
+              <HistoryList />
+            </SectionCard>
+          )}
         </div>
       </div>
-
-      {/* Description & Mitigation */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SectionCard title="Description">
-          {risk.description ? (
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{risk.description}</p>
-          ) : (
-            <p className="text-sm text-gray-500">No description provided.</p>
-          )}
-        </SectionCard>
-
-        <SectionCard title="Mitigation Strategy">
-          {risk.mitigation_strategy ? (
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{risk.mitigation_strategy}</p>
-          ) : (
-            <p className="text-sm text-gray-500">No mitigation strategy recorded.</p>
-          )}
-        </SectionCard>
-      </div>
-
-      {/* Treatments */}
-      <SectionCard
-        title="Treatments"
-        action={
-          canEdit && (
-            <button
-              onClick={() => {
-                setTreatmentForm({
-                  title: "",
-                  description: "",
-                  treatment_type: "mitigate",
-                  status: "planned",
-                  priority: "medium",
-                  target_date: "",
-                  currency: "USD",
-                } as any);
-                setTreatmentOpen(true);
-              }}
-              className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <PlusCircle className="w-4 h-4 mr-1" />
-              Add
-            </button>
-          )
-        }
-      >
-        {treatments.length === 0 ? (
-          <p className="text-sm text-gray-500">No treatments recorded.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="py-2 pr-3">Title</th>
-                  <th className="py-2 pr-3">Type</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Target</th>
-                  <th className="py-2 pr-3 w-28">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {treatments.map((t) => (
-                  <tr key={t.id} className="border-b last:border-0">
-                    <td className="py-2 pr-3">{t.title}</td>
-                    <td className="py-2 pr-3 capitalize">{t.treatment_type}</td>
-                    <td className="py-2 pr-3 capitalize">{t.status.replace("_", " ")}</td>
-                    <td className="py-2 pr-3">{t.target_date ?? "-"}</td>
-                    <td className="py-2 pr-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setTreatmentForm(t as any);
-                            setTreatmentOpen(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
-                          title="Edit"
-                        >
-                          <Edit className="w-3 h-3" /> Edit
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!risk) return;
-                            if (!confirm("Delete this treatment?")) return;
-                            try {
-                              // optimistic
-                              setTreatments((prev) => prev.filter((x) => x.id !== t.id));
-                              await riskService.deleteTreatment?.(t.id as any);
-                              toast.success("Treatment deleted");
-                            } catch (e: any) {
-                              toast.error(e?.message || "Delete failed (RLS?)");
-                              // revert by refetch
-                              const latest = await riskService.getTreatments(risk.id);
-                              setTreatments(latest);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3 h-3" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
-
-      {/* Assessments */}
-      <SectionCard
-        title="Assessments"
-        action={
-          canEdit && (
-            <button
-              onClick={() => {
-                setAssessmentForm({
-                  assessment_type: "periodic",
-                  assessment_date: new Date().toISOString().slice(0, 10),
-                  probability: 3,
-                  impact: 3,
-                  risk_score: 9,
-                  risk_level: "medium",
-                  confidence_level: "medium",
-                } as any);
-                setAssessmentOpen(true);
-              }}
-              className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <PlusCircle className="w-4 h-4 mr-1" />
-              Add
-            </button>
-          )
-        }
-      >
-        {assessments.length === 0 ? (
-          <p className="text-sm text-gray-500">No assessments recorded.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b">
-                  <th className="py-2 pr-3">Date</th>
-                  <th className="py-2 pr-3">Type</th>
-                  <th className="py-2 pr-3">Score</th>
-                  <th className="py-2 pr-3">Level</th>
-                  <th className="py-2 pr-3 w-28">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assessments.map((a) => (
-                  <tr key={a.id} className="border-b last:border-0">
-                    <td className="py-2 pr-3">{a.assessment_date}</td>
-                    <td className="py-2 pr-3 capitalize">{a.assessment_type.replace("_", " ")}</td>
-                    <td className="py-2 pr-3">{a.risk_score}</td>
-                    <td className="py-2 pr-3 capitalize">{a.risk_level}</td>
-                    <td className="py-2 pr-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setAssessmentForm(a as any);
-                            setAssessmentOpen(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
-                          title="Edit"
-                        >
-                          <Edit className="w-3 h-3" /> Edit
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!risk) return;
-                            if (!confirm("Delete this assessment?")) return;
-                            try {
-                              setAssessments((prev) => prev.filter((x) => x.id !== a.id));
-                              await riskService.deleteAssessment?.(a.id as any);
-                              toast.success("Assessment deleted");
-                            } catch (e: any) {
-                              toast.error(e?.message || "Delete failed (RLS?)");
-                              const latest = await riskService.getAssessments(risk.id);
-                              setAssessments(latest);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3 h-3" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
 
       {/* Incidents */}
       <SectionCard
@@ -767,25 +848,25 @@ const RiskDetails: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-500 border-b">
                   <th className="py-2 pr-3">Date</th>
-                  <th className="py-2 pr-3">Title</th>
-                  <th className="py-2 pr-3">Severity</th>
-                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3">Type</th>
+                  <th className="py-2 pr-3">Outcome</th>
+                  <th className="py-2 pr-3">Next Review</th>
                   <th className="py-2 pr-3 w-28">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {incidents.map((i) => (
-                  <tr key={i.id} className="border-b last:border-0">
-                    <td className="py-2 pr-3">{i.incident_date}</td>
-                    <td className="py-2 pr-3">{i.incident_title}</td>
-                    <td className="py-2 pr-3 capitalize">{i.severity}</td>
-                    <td className="py-2 pr-3 capitalize">{i.status}</td>
+                {reviews.map((r) => (
+                  <tr key={r.id} className="border-b last:border-0">
+                    <td className="py-2 pr-3">{r.review_date}</td>
+                    <td className="py-2 pr-3 capitalize">{(r.review_type ?? "").replace("_", " ") || "-"}</td>
+                    <td className="py-2 pr-3 capitalize">{(r.review_outcome ?? "").replace("_", " ") || "-"}</td>
+                    <td className="py-2 pr-3">{r.next_review_date ?? "-"}</td>
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => {
-                            setIncidentForm(i as any);
-                            setIncidentOpen(true);
+                            setReviewForm(r as any);
+                            setReviewOpen(true);
                           }}
                           className="text-blue-600 hover:text-blue-700 text-xs inline-flex items-center gap-1"
                           title="Edit"
@@ -795,15 +876,15 @@ const RiskDetails: React.FC = () => {
                         <button
                           onClick={async () => {
                             if (!risk) return;
-                            if (!confirm("Delete this incident?")) return;
+                            if (!confirm("Delete this review?")) return;
                             try {
-                              setIncidents((prev) => prev.filter((x) => x.id !== i.id));
-                              await riskService.deleteIncident?.(i.id as any);
-                              toast.success("Incident deleted");
+                              setReviews((prev) => prev.filter((x) => x.id !== r.id));
+                              await riskService.deleteReview?.(r.id as any);
+                              toast.success("Review deleted");
                             } catch (e: any) {
                               toast.error(e?.message || "Delete failed (RLS?)");
-                              const latest = await riskService.getIncidents(risk.id);
-                              setIncidents(latest);
+                              const latest = await riskService.getReviews(risk.id);
+                              setReviews(latest);
                             }
                           }}
                           className="text-red-600 hover:text-red-700 text-xs inline-flex items-center gap-1"

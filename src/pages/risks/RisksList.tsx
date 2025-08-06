@@ -26,9 +26,12 @@ import riskService, {
 } from "../../services/riskService";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { cn } from "../../utils";
+import RiskSearchFilters, { SavedFilter as SavedRiskFilter } from "../../components/risks/RiskSearchFilters";
 
 type LevelOption = RiskLevel | "all";
 type StatusOption = RiskStatus | "all";
+
+
 
 const levelColors: Record<RiskLevel, string> = {
   low: "bg-green-100 text-green-800",
@@ -59,12 +62,26 @@ const RisksList: React.FC = () => {
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters and UI
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusOption>("all");
-  const [levelFilter, setLevelFilter] = useState<LevelOption>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  // Filters and UI (with local persistence)
+  const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem("risk.search") ?? "");
+  const [statusFilter, setStatusFilter] = useState<StatusOption>(() => (localStorage.getItem("risk.status") as StatusOption) || "all");
+  const [levelFilter, setLevelFilter] = useState<LevelOption>(() => (localStorage.getItem("risk.level") as LevelOption) || "all");
+  const [categoryFilter, setCategoryFilter] = useState<string>(() => localStorage.getItem("risk.category") ?? "");
   const [showFilters, setShowFilters] = useState(false);
+  const [savedFilters, setSavedFilters] = useState<SavedRiskFilter[]>(() => {
+    const keys = Object.keys(localStorage).filter((k) => k.startsWith("risk.saved."));
+    return keys
+      .map((k) => {
+        const name = k.replace("risk.saved.", "");
+        try {
+          const payload = JSON.parse(localStorage.getItem(k) || "{}");
+          return { name, payload } as SavedRiskFilter;
+        } catch {
+          return null;
+        }
+      })
+      .filter((x): x is SavedRiskFilter => !!x);
+  });
 
   // Stats
   const [totalCount, setTotalCount] = useState(0);
@@ -86,6 +103,14 @@ const RisksList: React.FC = () => {
   });
   const [byCategory, setByCategory] = useState<Record<string, number>>({});
 
+  // persist filters
+  useEffect(() => {
+    localStorage.setItem("risk.search", searchTerm);
+    localStorage.setItem("risk.status", statusFilter as string);
+    localStorage.setItem("risk.level", levelFilter as string);
+    localStorage.setItem("risk.category", categoryFilter);
+  }, [searchTerm, statusFilter, levelFilter, categoryFilter]);
+
   const filterObj: RiskFilter = useMemo(
     () => ({
       search: searchTerm || undefined,
@@ -97,9 +122,17 @@ const RisksList: React.FC = () => {
   );
 
   useEffect(() => {
+    // persist filters locally
+    localStorage.setItem("risk.status", statusFilter);
+    localStorage.setItem("risk.level", levelFilter);
+    localStorage.setItem("risk.category", categoryFilter);
+    localStorage.setItem("risk.search", searchTerm);
+  }, [statusFilter, levelFilter, categoryFilter, searchTerm]);
+  
+  useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, levelFilter, categoryFilter]);
+  }, [statusFilter, levelFilter, categoryFilter, searchTerm]);
 
   const loadData = async () => {
     try {
@@ -238,6 +271,14 @@ const RisksList: React.FC = () => {
               <Plus className="w-4 h-4 mr-2" />
               Create Risk
             </button>
+            <button
+              onClick={() => navigate("/risks/create-wizard")}
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              title="Create (Wizard)"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create (Wizard)
+            </button>
           </div>
         )}
       </div>
@@ -289,83 +330,63 @@ const RisksList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search risks by title, description, category…"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") loadData();
-                }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* Toggle filters */}
-          <button
-            onClick={() => setShowFilters((s) => !s)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-            <ChevronDown className="w-4 h-4 ml-1" />
-          </button>
-
-          <button
-            onClick={loadData}
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
-          >
-            Apply
-          </button>
-        </div>
-
-        {showFilters && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusOption)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              {statusOrder.map((s) => (
-                <option key={s} value={s}>
-                  {s
-                    .split("_")
-                    .map((x) => x.charAt(0).toUpperCase() + x.slice(1))
-                    .join(" ")}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value as LevelOption)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Levels</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-
-            <input
-              type="text"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              placeholder="Filter by Category"
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        )}
-      </div>
+      <RiskSearchFilters
+        search={searchTerm}
+        status={statusFilter}
+        level={levelFilter}
+        category={categoryFilter}
+        onSearchChange={setSearchTerm}
+        onStatusChange={(v) => setStatusFilter(v)}
+        onLevelChange={(v) => setLevelFilter(v)}
+        onCategoryChange={setCategoryFilter}
+        onApply={loadData}
+        onClear={() => {
+          setSearchTerm("");
+          setStatusFilter("all");
+          setLevelFilter("all");
+          setCategoryFilter("");
+          localStorage.removeItem("risk.search");
+          localStorage.removeItem("risk.status");
+          localStorage.removeItem("risk.level");
+          localStorage.removeItem("risk.category");
+          void loadData();
+        }}
+        onSave={(name) => {
+          const payload = {
+            search: searchTerm || undefined,
+            status: statusFilter,
+            level: levelFilter,
+            category: categoryFilter || undefined,
+          } as RiskFilter & { status: StatusOption; level: LevelOption; category?: string; search?: string };
+          localStorage.setItem(`risk.saved.${name}`, JSON.stringify(payload));
+          setSavedFilters((prev) => {
+            const next = prev.filter((x) => x.name !== name).concat([{ name, payload }]);
+            return next.sort((a, b) => a.name.localeCompare(b.name));
+          });
+          toast.success(`Saved filters "${name}"`);
+        }}
+        onLoadByName={(name) => {
+          const raw = localStorage.getItem(`risk.saved.${name}`);
+          if (!raw) {
+            toast.error("No filters found");
+            return;
+          }
+          try {
+            const parsed = JSON.parse(raw) as RiskFilter & { status: StatusOption; level: LevelOption; category?: string; search?: string };
+            setSearchTerm(parsed.search ?? "");
+            setStatusFilter(parsed.status ?? "all");
+            setLevelFilter(parsed.level ?? "all");
+            setCategoryFilter(parsed.category ?? "");
+            void loadData();
+            toast.success(`Loaded "${name}"`);
+          } catch {
+            toast.error("Invalid saved filters");
+          }
+        }}
+        savedFilters={savedFilters}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+      />
 
       {/* Category quick chips */}
       {categoriesList.length > 0 && (
