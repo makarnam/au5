@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/button';
 import { ComplianceService } from '../../services/compliance';
@@ -31,7 +32,7 @@ type JsonImportSchema = {
   sections?: { code?: string | null; title: string; description?: string | null }[];
 };
 
-type ParseMode = 'csv' | 'json';
+type ParseMode = 'csv' | 'excel' | 'json';
 type ImportPhase = 'idle' | 'parsed' | 'valid' | 'committing' | 'done' | 'error';
 
 type PreviewRow<T> = {
@@ -51,18 +52,33 @@ export default function ImportCompliance() {
 
   const [phase, setPhase] = useState<ImportPhase>('idle');
   const [message, setMessage] = useState<string>('');
+  const [rowErrors, setRowErrors] = useState<string[]>([]);
 
   const reset = () => {
     setFrameworkPreview([]);
     setRequirementsPreview([]);
     setPhase('idle');
     setMessage('');
+    setRowErrors([]);
   };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
     setFile(f);
     reset();
+
+    // auto-switch mode by MIME/extension to reduce user error
+    if (f) {
+      const name = f.name.toLowerCase();
+      const type = f.type.toLowerCase();
+      if (name.endsWith('.json') || type.includes('json')) {
+        setMode('json');
+      } else if (name.endsWith('.xlsx') || name.endsWith('.xls') || type.includes('sheet') || type.includes('excel')) {
+        setMode('excel');
+      } else if (name.endsWith('.csv') || type.includes('csv') || type.includes('text')) {
+        setMode('csv');
+      }
+    }
   };
 
   const validateFramework = (f: any): PreviewRow<FrameworkRow> => {
@@ -119,6 +135,18 @@ export default function ImportCompliance() {
     });
   };
 
+  const parseExcel = async (f: File) => {
+    const arrayBuffer = await f.arrayBuffer();
+    const wb = XLSX.read(arrayBuffer, { type: 'array' });
+    // prefer a sheet named "requirements" if present; otherwise first sheet
+    const sheetName = wb.SheetNames.find((n: string) => n.toLowerCase().includes('requirement')) || wb.SheetNames[0];
+    const ws = wb.Sheets[sheetName];
+    if (!ws) return [];
+    // sheet_to_json infers headers from first row
+    const rows: any[] = XLSX.utils.sheet_to_json(ws, { raw: false, defval: '' });
+    return rows;
+  };
+
   const onParse = async () => {
     if (!file) {
       setMessage('Please select a file to import.');
@@ -128,26 +156,28 @@ export default function ImportCompliance() {
     try {
       setPhase('idle');
       setMessage('Parsing file...');
+      setRowErrors([]);
       let fwPreview: PreviewRow<FrameworkRow>[] = [];
       let reqPreview: PreviewRow<RequirementRow>[] = [];
 
-      if (mode === 'csv') {
-        // CSV mode expects rows for requirements; optionally first row may include framework fields
-        const rows = await parseCSV(file);
+      if (mode === 'csv' || mode === 'excel') {
+        // CSV/Excel mode expects rows for requirements; optionally first row may include framework fields
+        const rows = mode === 'csv' ? await parseCSV(file) : await parseExcel(file);
         if (!rows.length) {
-          setMessage('No rows found in CSV.');
+          setMessage(`No rows found in ${mode.toUpperCase()}.`);
           setPhase('error');
           return;
         }
 
         // Detect framework columns if present in first row
+        const r0 = rows[0] || {};
         const fwCandidate: any = {
-          code: rows[0].framework_code || rows[0].frameworkCode || rows[0].framework,
-          name: rows[0].framework_name || rows[0].frameworkName,
-          version: rows[0].framework_version,
-          authority: rows[0].framework_authority,
-          category: rows[0].framework_category,
-          description: rows[0].framework_description,
+          code: r0.framework_code || r0.frameworkCode || r0.framework || r0.Framework,
+          name: r0.framework_name || r0.frameworkName || r0.FrameworkName || r0['FrameworkName'],
+          version: r0.framework_version || r0.version || r0.Version || r0['Version'],
+          authority: r0.framework_authority || r0.authority,
+          category: r0.framework_category || r0.category,
+          description: r0.framework_description || r0.description,
         };
         if (fwCandidate.code && fwCandidate.name) {
           fwPreview.push(validateFramework(fwCandidate));
@@ -155,16 +185,53 @@ export default function ImportCompliance() {
 
         // Requirements
         reqPreview = rows.map((r) => {
-          // Allow framework_code in each row for mapping
+          // Normalize booleans and fields from excel headers (case-insensitive match via known aliases)
+          const isActiveRaw = r.is_active ?? r.active ?? r.enabled ?? r.IsActive ?? r['Is Active'];
+          const isActive =
+            typeof isActiveRaw === 'boolean'
+              ? isActiveRaw
+              : typeof isActiveRaw === 'string'
+              ? isActiveRaw.toLowerCase() !== 'false' && isActiveRaw !== '0' && isActiveRaw.toLowerCase() !== 'no'
+              : true;
+
+          // Map common Excel headers from user's sample:
+          // Framework, FrameworkName, Version, RequirementCode, Title, RequirementText
+          const frameworkFromHeaders =
+            r.framework_code ||
+            r.frameworkCode ||
+            r.framework ||
+            r.Framework ||
+            fwCandidate.code ||
+            undefined;
+
+          const requirementCodeFromHeaders =
+            r.requirement_code ||
+            r.code ||
+            r.req_code ||
+            r.requirement ||
+            r.RequirementCode ||
+            r['RequirementCode'];
+
+          const titleFromHeaders =
+            r.title ||
+            r.Title ||
+            r['Title'];
+
+          const textFromHeaders =
+            r.text ||
+            r.requirement_text ||
+            r.RequirementText ||
+            r['RequirementText'];
+
           const normalizedRow = {
-            framework_code: r.framework_code || r.frameworkCode || fwCandidate.code || undefined,
-            section_code: r.section_code || r.sectionCode || null,
-            requirement_code: r.requirement_code || r.code || r.req_code,
-            title: r.title,
-            text: r.text || r.requirement_text,
-            guidance: r.guidance || null,
-            priority: r.priority || null,
-            is_active: typeof r.is_active === 'string' ? r.is_active.toLowerCase() !== 'false' : true,
+            framework_code: frameworkFromHeaders,
+            section_code: r.section_code || r.sectionCode || r.section || null,
+            requirement_code: requirementCodeFromHeaders,
+            title: titleFromHeaders,
+            text: textFromHeaders,
+            guidance: r.guidance || r.Guidance || r['Guidance'] || null,
+            priority: r.priority || r.Priority || r['Priority'] || null,
+            is_active: isActive,
           };
           return validateRequirement(normalizedRow);
         });
@@ -185,6 +252,11 @@ export default function ImportCompliance() {
       setFrameworkPreview(fwPreview);
       setRequirementsPreview(reqPreview);
       const allOk = [...fwPreview, ...reqPreview].every((x) => x.ok);
+      // collect first 20 errors for quick display
+      const errs: string[] = [];
+      fwPreview.forEach((x, i) => { if (!x.ok) errs.push(`Framework row ${i + 1}: ${x.error}`); });
+      reqPreview.forEach((x, i) => { if (!x.ok) errs.push(`Requirement row ${i + 1}: ${x.error}`); });
+      setRowErrors(errs.slice(0, 20));
       setPhase(allOk ? 'valid' : 'parsed');
       setMessage(allOk ? 'Validation passed. Ready for dry-run/commit.' : 'Parsed with some validation errors. Fix source or proceed row-by-row.');
     } catch (e: any) {
@@ -202,6 +274,11 @@ export default function ImportCompliance() {
   }, [frameworkPreview, requirementsPreview]);
 
   const commit = async () => {
+    if (dryRunSummary.fwErr > 0 || dryRunSummary.reqErr > 0) {
+      setPhase('error');
+      setMessage('Cannot commit while there are validation errors. Please fix the source file and re-parse.');
+      return;
+    }
     setPhase('committing');
     setMessage('Committing to database...');
 
@@ -293,7 +370,9 @@ export default function ImportCompliance() {
       setMessage('Import completed successfully.');
     } catch (e: any) {
       setPhase('error');
-      setMessage(`Commit failed: ${e?.message || String(e)}`);
+      // Show PG/PostgREST error details if available
+      const friendly = e?.message || e?.hint || e?.details || String(e);
+      setMessage(`Commit failed: ${friendly}`);
     }
   };
 
@@ -317,6 +396,16 @@ export default function ImportCompliance() {
             <input
               type="radio"
               name="mode"
+              value="excel"
+              checked={mode === 'excel'}
+              onChange={() => setMode('excel')}
+            />
+            Excel (.xlsx/.xls)
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="mode"
               value="json"
               checked={mode === 'json'}
               onChange={() => setMode('json')}
@@ -326,7 +415,13 @@ export default function ImportCompliance() {
 
           <input
             type="file"
-            accept={mode === 'csv' ? '.csv,text/csv' : '.json,application/json'}
+            accept={
+              mode === 'csv'
+                ? '.csv,text/csv'
+                : mode === 'excel'
+                ? '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'
+                : '.json,application/json'
+            }
             onChange={onFileChange}
             className="border p-2 rounded"
           />

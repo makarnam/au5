@@ -50,20 +50,78 @@ export const useAuthStore = create<AuthStore>()(
 
       // Actions
       initialize: async () => {
+        // Prevent duplicate listeners if initialize() is called more than once
+        if ((window as any).__auth_init_in_progress__) {
+          return;
+        }
+        (window as any).__auth_init_in_progress__ = true;
+
         set({ loading: true });
 
+        let didSetFromSession = false;
+
         try {
-          // Get current session
+          // Attach listener first to catch any immediate state changes
+          const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+              // Load or create profile
+              const { data: userProfile, error: profileError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+              if (profileError) {
+                // Create minimal profile if missing
+                const newUser: Partial<User> = {
+                  id: session.user.id,
+                  email: session.user.email!,
+                  first_name: session.user.user_metadata?.first_name || '',
+                  last_name: session.user.user_metadata?.last_name || '',
+                  role: 'viewer',
+                  department: '',
+                  is_active: true,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  last_login: new Date().toISOString(),
+                };
+
+                const { data: createdUser, error: createError } = await supabase
+                  .from('users')
+                  .insert([newUser])
+                  .select()
+                  .single();
+
+                if (!createError && createdUser) {
+                  set({ user: createdUser as User, session, loading: false, initialized: true });
+                  didSetFromSession = true;
+                } else {
+                  console.error('User creation error:', createError);
+                  set({ user: null, session: null, loading: false, initialized: true });
+                }
+                return;
+              }
+
+              // Update last login (best effort)
+              try {
+                await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', userProfile.id);
+              } catch {}
+
+              set({ user: userProfile as User, session, loading: false, initialized: true });
+              didSetFromSession = true;
+            } else if (event === 'SIGNED_OUT') {
+              set({ user: null, session: null, loading: false, initialized: true });
+            }
+          });
+
+          // One-time read of current session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
           if (sessionError) {
             console.error('Session error:', sessionError);
             set({ user: null, session: null, loading: false, initialized: true });
-            return;
-          }
-
-          if (session?.user) {
-            // Fetch user profile from our users table
+          } else if (session?.user) {
+            // Load profile for current session (this path will set initialized when done)
             const { data: userProfile, error: profileError } = await supabase
               .from('users')
               .select('*')
@@ -71,8 +129,7 @@ export const useAuthStore = create<AuthStore>()(
               .single();
 
             if (profileError) {
-              console.error('Profile fetch error:', profileError);
-              // If profile doesn't exist, create a basic one
+              // Create minimal profile if missing
               const newUser: Partial<User> = {
                 id: session.user.id,
                 email: session.user.email!,
@@ -83,7 +140,7 @@ export const useAuthStore = create<AuthStore>()(
                 is_active: true,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                last_login: new Date().toISOString()
+                last_login: new Date().toISOString(),
               };
 
               const { data: createdUser, error: createError } = await supabase
@@ -92,61 +149,32 @@ export const useAuthStore = create<AuthStore>()(
                 .select()
                 .single();
 
-              if (createError) {
+              if (!createError && createdUser) {
+                set({ user: createdUser as User, session, loading: false, initialized: true });
+                didSetFromSession = true;
+              } else {
                 console.error('User creation error:', createError);
                 set({ user: null, session: null, loading: false, initialized: true });
-                return;
               }
-
-              set({
-                user: createdUser as User,
-                session,
-                loading: false,
-                initialized: true
-              });
             } else {
-              // Update last login
-              await supabase
-                .from('users')
-                .update({ last_login: new Date().toISOString() })
-                .eq('id', userProfile.id);
-
-              set({
-                user: userProfile as User,
-                session,
-                loading: false,
-                initialized: true
-              });
+              try {
+                await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', userProfile.id);
+              } catch {}
+              set({ user: userProfile as User, session, loading: false, initialized: true });
+              didSetFromSession = true;
             }
           } else {
+            // No session present
             set({ user: null, session: null, loading: false, initialized: true });
           }
 
-          // Listen for auth changes
-          supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-              const { data: userProfile } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-
-              if (userProfile) {
-                await supabase
-                  .from('users')
-                  .update({ last_login: new Date().toISOString() })
-                  .eq('id', userProfile.id);
-
-                set({ user: userProfile as User, session });
-              }
-            } else if (event === 'SIGNED_OUT') {
-              set({ user: null, session: null });
-            }
-          });
-
+          // Store unsubscribe so we can avoid duplicate listeners in future inits
+          (window as any).__auth_unsubscribe__ = authListener?.subscription?.unsubscribe?.bind(authListener.subscription) || null;
         } catch (error) {
           console.error('Initialization error:', error);
           set({ user: null, session: null, loading: false, initialized: true });
+        } finally {
+          (window as any).__auth_init_in_progress__ = false;
         }
       },
 

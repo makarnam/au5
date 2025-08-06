@@ -83,6 +83,28 @@ export default function App() {
           {/* Risks */}
           <Route path="risks" element={<RisksList />} />
           <Route path="risks/create" element={<CreateRiskPage />} />
+          <Route
+            path="risks/create-wizard"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Wizard" />}>
+                {React.createElement(CreateRiskWizard as any)}
+              </React.Suspense>
+            }
+          />
+          {/* Risk Details (keep lazy to reduce bundle) */}
+          <Route
+            path="risks/:id"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Risk" />}>
+                {React.createElement(React.lazy(() => import('./pages/risks/RiskDetails')) as any)}
+              </React.Suspense>
+            }
+          />
+          {/* Edit route placeholder to avoid 404s if page not yet implemented */}
+          <Route
+            path="risks/:id/edit"
+            element={<Placeholder title="Edit Risk" />}
+          />
 
           {/* Scheduling */}
           <Route
@@ -124,6 +146,15 @@ export default function App() {
           <Route path="compliance/frameworks" element={<FrameworksList />} />
           <Route path="compliance/requirements" element={<RequirementsBrowser />} />
           <Route path="compliance/profiles" element={<ProfilesList />} />
+          {/* Compliance Import */}
+          <Route
+            path="compliance/import"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Import" />}>
+                {React.createElement(React.lazy(() => import('./pages/compliance/ImportCompliance')) as any)}
+              </React.Suspense>
+            }
+          />
           {/* New: Requirement-Control Mapping */}
           <Route
             path="compliance/mapping"

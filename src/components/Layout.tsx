@@ -27,6 +27,9 @@ import {
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
 import { motion, AnimatePresence } from "framer-motion";
+ // Ensure NotificationBell is statically imported to work with Vite/ESM
+ import NotificationBell from "./notifications/NotificationBell";
+ import ComposeNotificationModal from "./notifications/ComposeNotificationModal";
 
 const Layout: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -36,6 +39,7 @@ const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   const navigation = [
     {
@@ -567,6 +571,17 @@ const Layout: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Compose Notification */}
+              <div className="hidden md:block">
+                <button
+                  type="button"
+                  className="px-3 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                  onClick={() => setComposeOpen(true)}
+                  title="Send notification/message"
+                >
+                  New Message
+                </button>
+              </div>
               {/* Language Selector */}
               <div className="relative">
                 <button
@@ -608,15 +623,7 @@ const Layout: React.FC = () => {
 
               {/* Notifications */}
               <div className="relative">
-                <button
-                  type="button"
-                  className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 relative"
-                  onClick={() => navigate('/notifications')}
-                  title="Notifications"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400" />
-                </button>
+                <NotificationBell />
               </div>
 
               {/* User Menu */}
@@ -686,6 +693,15 @@ const Layout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      {/* Compose Notification Modal */}
+      <ComposeNotificationModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        onSent={(count) => {
+          // optional: could toast here if a toast util exists
+          setComposeOpen(false);
+        }}
+      />
     </div>
   );
 };

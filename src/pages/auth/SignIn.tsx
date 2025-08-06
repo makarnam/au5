@@ -306,7 +306,7 @@ const SignIn: React.FC = () => {
                 <p className="text-sm text-gray-600">
                   {t('auth.dontHaveAccount')}{' '}
                   <Link
-                    to="/signup"
+                    to="/auth/sign-up"
                     className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
                   >
                     {t('auth.signUp')}

@@ -1,162 +1,301 @@
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { Button } from '../../components/ui/button';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNotificationStore } from '../../store/notificationStore';
+import type { AppNotification } from '../../store/notificationStore';
+import { useAuthStore } from '../../store/authStore';
+import { Check, Filter, RefreshCw, SendHorizonal } from 'lucide-react';
 
-type Notification = {
-  id: string;
-  user_id: string;
-  title: string;
-  message?: string | null;
-  category?: string | null;
-  entity_type?: string | null;
-  entity_id?: string | null;
-  payload?: any;
-  is_read?: boolean | null;
-  is_archived?: boolean | null;
-  created_at?: string;
-};
+// Derive the filter union from store state by sampling type
+type InboxFilter = ReturnType<typeof useNotificationStore> extends infer T
+  ? T extends { filter: infer F }
+    ? F
+    : 'all'
+  : 'all';
 
-const PAGE_SIZE = 20;
+const tabs: { key: InboxFilter; label: string }[] = [
+  { key: 'all' as InboxFilter, label: 'All' },
+  { key: 'unread' as InboxFilter, label: 'Unread' },
+  { key: 'reminders' as InboxFilter, label: 'Reminders' },
+  { key: 'status' as InboxFilter, label: 'Status' },
+  { key: 'incidents' as InboxFilter, label: 'Incidents' },
+  { key: 'workflow' as InboxFilter, label: 'Workflow' },
+  { key: 'system' as InboxFilter, label: 'System' },
+];
+
+async function fetchSent(): Promise<any[]> {
+  // Fetch sent with recipient names by joining to users on user_id
+  const { supabase } = await import('../../lib/supabase');
+  // 1) Pull basic sent rows
+  const { data: sent, error } = await supabase.rpc('list_sent_notifications');
+  if (error) throw error;
+  const rows = (sent || []) as any[];
+
+  if (rows.length === 0) return rows;
+
+  // 2) Collect unique recipient IDs
+  const recipientIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+
+  // 3) Fetch recipient user profiles (id, first_name, last_name, email)
+  let recipientsById: Record<string, { first_name: string; last_name: string; email: string }> = {};
+  if (recipientIds.length > 0) {
+    const { data: usersData, error: usersErr } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, email')
+      .in('id', recipientIds as string[]);
+    if (usersErr) throw usersErr;
+    (usersData || []).forEach((u: any) => {
+      recipientsById[u.id] = { first_name: u.first_name, last_name: u.last_name, email: u.email };
+    });
+  }
+
+  // 4) Enrich rows with recipient display name
+  const enriched = rows.map((r) => {
+    const rec = recipientsById[r.user_id] || null;
+    return {
+      ...r,
+      recipient_name: rec ? `${rec.first_name || ''} ${rec.last_name || ''}`.trim() : null,
+      recipient_email: rec ? rec.email : null,
+    };
+  });
+
+  return enriched;
+}
 
 export default function NotificationsInbox() {
-  const [items, setItems] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState<string>('');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [total, setTotal] = useState(0);
+  const { user } = useAuthStore();
+  const {
+    items,
+    unreadCount,
+    loading,
+    error,
+    hasMore,
+    filter,
+    setFilter,
+    fetch,
+    markAsRead,
+    markAllAsRead,
+    subscribeRealtime,
+    unsubscribeRealtime,
+  } = useNotificationStore();
 
-  const load = async () => {
-    setLoading(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-    let query = supabase
-      .from('notifications')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+  // Sent messages state
+  const [showSent, setShowSent] = useState(false);
+  const [sentItems, setSentItems] = useState<any[]>([]);
+  const [sentLoading, setSentLoading] = useState(false);
+  const [sentError, setSentError] = useState<string | null>(null);
 
-    if (category) query = query.eq('category', category);
-    if (search) query = query.ilike('title', `%${search}%`);
-
-    const { data, error, count } = await query;
-    if (!error) {
-      setItems((data ?? []) as Notification[]);
-      setTotal(count ?? 0);
+  const loadSent = async () => {
+    setSentLoading(true);
+    setSentError(null);
+    try {
+      const rows = await fetchSent();
+      setSentItems(rows);
+    } catch (e: any) {
+      setSentError(e?.message || 'Failed to load sent messages');
+    } finally {
+      setSentLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, page]);
+    if (!user) return;
+    fetch({ reset: true });
+    subscribeRealtime(user.id);
+    return () => unsubscribeRealtime();
+  }, [user, fetch, subscribeRealtime, unsubscribeRealtime]);
 
-  const unreadCount = useMemo(() => items.filter(n => !n.is_read && !n.is_archived).length, [items]);
+  useEffect(() => {
+    if (showSent) {
+      loadSent();
+    }
+  }, [showSent]);
 
-  const markRead = async (id: string, v: boolean) => {
-    const { error } = await supabase.from('notifications').update({ is_read: v }).eq('id', id);
-    if (!error) setItems(prev => prev.map(n => (n.id === id ? { ...n, is_read: v } : n)));
+  useEffect(() => {
+    // When filter changes, reload from page 1
+    fetch({ reset: true });
+  }, [filter, fetch]);
+
+  const filteredLabel = useMemo(
+    () => tabs.find((t) => t.key === filter)?.label || 'All',
+    [filter]
+  );
+
+  const loadMore = async () => {
+    if (loading || !hasMore) return;
+    // Increment page and fetch next slice
+    // We can't directly mutate page here since store manages it; call fetch with current page+1 by setting state via set()
+    // For simplicity, call fetch() to get next page by temporarily updating page locally:
+    // We'll implement a light workaround: increase internal page using fetch without reset and by reading existing page length
+    await fetch({ reset: false });
   };
 
-  const archive = async (id: string) => {
-    const { error } = await supabase.from('notifications').update({ is_archived: true }).eq('id', id);
-    if (!error) setItems(prev => prev.filter(n => n.id !== id));
+  const doRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetch({ reset: true });
+    } finally {
+      setRefreshing(false);
+    }
   };
-
-  const clearAll = async () => {
-    if (!confirm('Archive all notifications on current view?')) return;
-    const ids = items.map(n => n.id);
-    if (ids.length === 0) return;
-    const { error } = await supabase.from('notifications').update({ is_archived: true }).in('id', ids);
-    if (!error) load();
-  };
-
-  const pages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-semibold">Notifications</h1>
-          <div className="text-sm opacity-70">Unread: {unreadCount} · Total: {total}</div>
+          <h1 className="text-2xl font-semibold">Notifications</h1>
+          {!showSent ? (
+            <p className="text-sm text-gray-500">
+              {filteredLabel} • {items.length} shown • {unreadCount} unread
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500">Sent • {sentItems.length} messages</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={load} disabled={loading}>
-            {loading ? 'Loading...' : 'Reload'}
-          </Button>
-          <Button variant="destructive" onClick={clearAll} disabled={items.length === 0}>Archive All In View</Button>
+          {!showSent && (
+            <>
+              <button
+                onClick={doRefresh}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50"
+                title="Refresh"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={() => markAllAsRead()}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50"
+                title="Mark all as read"
+              >
+                <Check className="w-4 h-4" />
+                Mark all read
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setShowSent((s) => !s)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50"
+            title={showSent ? 'Show Inbox' : 'Show Sent'}
+          >
+            <SendHorizonal className="w-4 h-4" />
+            {showSent ? 'Inbox' : 'Sent'}
+          </button>
         </div>
       </div>
 
-      <div className="border rounded p-4 bg-white grid grid-cols-1 md:grid-cols-4 gap-3">
-        <input
-          className="border p-2 rounded md:col-span-2"
-          placeholder="Search by title..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              setPage(0);
-              load();
-            }
-          }}
-        />
-        <select
-          className="border p-2 rounded"
-          value={category}
-          onChange={(e) => {
-            setCategory(e.target.value);
-            setPage(0);
-          }}
-        >
-          <option value="">All categories</option>
-          <option value="compliance_change">Compliance changes</option>
-          <option value="policy_publish">Policy published</option>
-          <option value="assessment_due">Assessment due</option>
-          <option value="attestation_window">Attestation window</option>
-        </select>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => { setCategory(''); setSearch(''); setPage(0); load(); }}>
-            Reset
-          </Button>
-          <Button onClick={() => { setPage(0); load(); }}>Apply</Button>
-        </div>
-      </div>
-
-      <div className="border rounded bg-white divide-y">
-        {items.length === 0 && !loading ? (
-          <div className="p-6 text-sm opacity-70">No notifications.</div>
-        ) : null}
-        {items.map((n) => (
-          <div key={n.id} className={`p-4 ${n.is_read ? 'opacity-70' : ''}`}>
-            <div className="flex items-start justify-between">
-              <div className="pr-4">
-                <div className="text-sm uppercase tracking-wide opacity-60">{n.category || 'general'}</div>
-                <div className="font-semibold">{n.title}</div>
-                {n.message ? <div className="text-sm opacity-80 mt-1">{n.message}</div> : null}
-                {n.payload ? (
-                  <pre className="mt-2 text-xs bg-gray-50 border rounded p-2 overflow-auto max-h-40">
-                    {JSON.stringify(n.payload, null, 2)}
-                  </pre>
-                ) : null}
-                <div className="text-xs opacity-60 mt-1">{n.created_at}</div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button variant="outline" onClick={() => markRead(n.id, !n.is_read)}>
-                  {n.is_read ? 'Mark Unread' : 'Mark Read'}
-                </Button>
-                <Button variant="destructive" onClick={() => archive(n.id)}>Archive</Button>
-              </div>
-            </div>
+      {!showSent && (
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="w-4 h-4 text-gray-500" />
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setFilter(t.key)}
+                className={`px-3 py-1.5 rounded-full text-sm border ${
+                  filter === t.key ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-gray-50'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+      )}
+
+      {!showSent && error && (
+        <div className="mb-4 px-4 py-2 rounded bg-red-50 text-sm text-red-700 border border-red-200">
+          {error}
+        </div>
+      )}
+      {showSent && sentError && (
+        <div className="mb-4 px-4 py-2 rounded bg-red-50 text-sm text-red-700 border border-red-200">
+          {sentError}
+        </div>
+      )}
+
+      <div className="bg-white rounded-md border">
+        {!showSent ? (
+          loading && items.length === 0 ? (
+            <div className="p-6 text-sm text-gray-500">Loading...</div>
+          ) : items.length === 0 ? (
+            <div className="p-6 text-sm text-gray-500">No notifications</div>
+          ) : (
+            <ul className="divide-y">
+              {items.map((n) => (
+                <li key={n.id} className={`p-4 ${n.status === 'unread' ? 'bg-blue-50' : ''}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">{n.title}</div>
+                      {(n as any).body && <div className="text-sm text-gray-700 mt-1">{(n as any).body}</div>}
+                      {(n as any).message && <div className="text-sm text-gray-700 mt-1">{(n as any).message}</div>}
+                      <div className="mt-2 text-xs text-gray-500 flex items-center gap-2">
+                        <span>{new Date(n.created_at).toLocaleString()}</span>
+                        {n.type && <span className="px-1.5 py-0.5 rounded bg-gray-100">{n.type}</span>}
+                        {n.entity_type && n.entity_id && (
+                          <span className="px-1.5 py-0.5 rounded bg-gray-100">
+                            {n.entity_type} #{n.entity_id}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {n.status === 'unread' && (
+                      <button
+                        onClick={() => markAsRead(n.id)}
+                        className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded border text-xs hover:bg-gray-50"
+                      >
+                        <Check className="w-3.5 h-3.5" /> Mark read
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : sentLoading ? (
+          <div className="p-6 text-sm text-gray-500">Loading sent...</div>
+        ) : sentItems.length === 0 ? (
+          <div className="p-6 text-sm text-gray-500">No sent messages</div>
+        ) : (
+          <ul className="divide-y">
+            {sentItems.map((s) => (
+              <li key={s.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">{s.title}</div>
+                    {s.message && <div className="text-sm text-gray-700 mt-1">{s.message}</div>}
+                    <div className="mt-2 text-xs text-gray-500 flex items-center gap-2">
+                      <span>{new Date(s.created_at).toLocaleString()}</span>
+                      <span className="px-1.5 py-0.5 rounded bg-gray-100">
+                        recipient: {s.recipient_name || s.recipient_email || s.user_id}
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded ${
+                          s.is_read ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}
+                      >
+                        {s.is_read ? 'read' : 'unread'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      {pages > 1 && (
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Prev</Button>
-          <div className="text-sm opacity-70">Page {page + 1} / {pages}</div>
-          <Button variant="outline" onClick={() => setPage(p => Math.min(pages - 1, p + 1))} disabled={page >= pages - 1}>Next</Button>
+      {!showSent && (
+        <div className="flex justify-center">
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={loading}
+              className="mt-4 px-4 py-2 rounded-md border text-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              {loading ? 'Loading...' : 'Load more'}
+            </button>
+          )}
         </div>
       )}
     </div>

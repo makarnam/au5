@@ -3,8 +3,34 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "react-hot-toast";
 import { ArrowLeft, Save, Wand2 } from "lucide-react";
-import riskService, { CreateRiskData, RiskLevel, RiskStatus } from "../../services/riskService";
+import riskService, { RiskLevel, RiskStatus } from "../../services/riskService";
 import AIGenerator from "../../components/ai/AIGenerator";
+
+// Local type for the create payload to align with riskService.createRisk usage
+type CreateRiskData = {
+  title: string;
+  description?: string;
+  category: string;
+  business_unit_id?: string;
+  probability?: number;
+  impact?: number;
+  risk_level: RiskLevel;
+  mitigation_strategy?: string;
+  owner_id?: string;
+  status: RiskStatus;
+  risk_category_id?: string;
+  risk_matrix_id?: string;
+  risk_source?: string;
+  likelihood_trend?: "increasing" | "decreasing" | "stable";
+  impact_trend?: "increasing" | "decreasing" | "stable";
+  target_probability?: number;
+  target_impact?: number;
+  target_date?: string;
+  escalation_criteria?: string;
+  review_frequency?: "weekly" | "monthly" | "quarterly" | "semi_annually" | "annually";
+  tags?: string[];
+  external_reference?: string;
+};
 
 const levelOptions: RiskLevel[] = ["low", "medium", "high", "critical"];
 const statusOptions: RiskStatus[] = [
@@ -79,9 +105,9 @@ const CreateRiskPage: React.FC = () => {
     }
     try {
       setSaving(true);
-      const created = await riskService.createRisk(form);
+      const createdId = await riskService.createRisk(form);
       toast.success("Risk created");
-      navigate(`/risks/${created.id}`);
+      navigate(`/risks/${createdId}`);
     } catch (err: any) {
       console.error(err);
       toast.error(err?.message || "Failed to create risk");
