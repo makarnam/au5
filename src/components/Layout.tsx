@@ -231,6 +231,24 @@ const Layout: React.FC = () => {
       ]
      },
     {
+      name: "Privacy",
+      href: "/privacy/dpia",
+      icon: Shield,
+      current: location.pathname.startsWith("/privacy"),
+      roles: [
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        { name: "DPIA", href: "/privacy/dpia", current: location.pathname === "/privacy/dpia" },
+        { name: "RoPA Register", href: "/privacy/ropa", current: location.pathname === "/privacy/ropa" },
+      ],
+    },
+    {
       name: "Regulations (RCM)",
       href: "/regulations",
       icon: Shield,

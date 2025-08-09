@@ -30,6 +30,8 @@ import ProfilesList from './pages/compliance/ProfilesList';
 import BCPDashboard from './pages/bcp/BCPDashboard';
 import CreatePlanPage from './pages/bcp/CreatePlanPage';
 import PlanDetails from './pages/bcp/PlanDetails';
+import DPIAList from './pages/privacy/DPIAList';
+import RoPARegister from './pages/privacy/RoPARegister';
 
 const LazyWorkflowsHome = React.lazy(() => import('./pages/workflows/WorkflowsHome'));
 const LazyWorkflowInstance = React.lazy(() => import('./pages/workflows/WorkflowInstance'));
@@ -245,6 +247,11 @@ export default function App() {
           <Route path="compliance/attestations" element={<Placeholder title="Compliance Attestations" />} />
           <Route path="compliance/exceptions" element={<Placeholder title="Compliance Exceptions" />} />
           <Route path="compliance/posture" element={<Placeholder title="Compliance Posture" />} />
+
+          {/* Privacy */}
+          <Route path="privacy" element={<Navigate to="/privacy/dpia" replace />} />
+          <Route path="privacy/dpia" element={<DPIAList />} />
+          <Route path="privacy/ropa" element={<RoPARegister />} />
 
           {/* Governance */}
           <Route
