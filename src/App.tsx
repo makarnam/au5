@@ -1,11 +1,19 @@
 import React from 'react';
+// Normalize to a single lazy initializer for RiskDashboard to avoid redeclaration errors
+const RiskDashboardLazy = React.lazy(async () => {
+  const mod: any = await import('./pages/risks/RiskDashboard');
+  return { default: mod.default ?? mod };
+});
+const SecondRiskDashboardLazy = React.lazy(async () => {
+  const mod: any = await import('./pages/risks/SecondRiskDashboard');
+  return { default: mod.default ?? mod };
+});
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import AuditsList from './pages/audits/AuditsList';
 import FindingsList from './pages/findings/FindingsList';
 import ControlsList from './pages/controls/ControlsList';
-import Risks from './components/Risks';
 import RequirementsBrowser from './pages/compliance/RequirementsBrowser';
 import FrameworksList from './pages/compliance/FrameworksList';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -19,6 +27,9 @@ import CreateControlSetPage from './pages/controls/controlsets/CreateControlSetP
 import CreateRiskPage from './pages/risks/CreateRiskPage';
 import RisksList from './pages/risks/RisksList';
 import ProfilesList from './pages/compliance/ProfilesList';
+import BCPDashboard from './pages/bcp/BCPDashboard';
+import CreatePlanPage from './pages/bcp/CreatePlanPage';
+import PlanDetails from './pages/bcp/PlanDetails';
 
 const LazyWorkflowsHome = React.lazy(() => import('./pages/workflows/WorkflowsHome'));
 const LazyWorkflowInstance = React.lazy(() => import('./pages/workflows/WorkflowInstance'));
@@ -34,6 +45,9 @@ export default function App() {
         {/* Public auth routes */}
         <Route path="/auth/sign-in" element={<SignIn />} />
         <Route path="/auth/sign-up" element={<SignUp />} />
+        {/* Backward-compatible aliases */}
+        <Route path="/sign-in" element={<Navigate to="/auth/sign-in" replace />} />
+        <Route path="/sign-up" element={<Navigate to="/auth/sign-up" replace />} />
 
         {/* Protected app routes */}
         <Route
@@ -83,11 +97,26 @@ export default function App() {
           {/* Risks */}
           <Route path="risks" element={<RisksList />} />
           <Route path="risks/create" element={<CreateRiskPage />} />
+          {/* Risk Dashboard (lazy) */}
+          <Route
+            path="risks/dashboard"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Risk Dashboard" />}>
+                {React.createElement(
+                  React.lazy(async () => {
+                    const mod: any = await import('./pages/risks/RiskDashboard');
+                    return { default: mod.default ?? mod };
+                  }) as any
+                )}
+              </React.Suspense>
+            }
+          />
+          {/* Ensure CreateRiskWizard is imported to avoid runtime lazy misuse */}
           <Route
             path="risks/create-wizard"
             element={
               <React.Suspense fallback={<Placeholder title="Loading Wizard" />}>
-                {React.createElement(CreateRiskWizard as any)}
+                {React.createElement(React.lazy(() => import('./pages/risks/CreateRiskWizard')) as any)}
               </React.Suspense>
             }
           />
@@ -97,6 +126,24 @@ export default function App() {
             element={
               <React.Suspense fallback={<Placeholder title="Loading Risk" />}>
                 {React.createElement(React.lazy(() => import('./pages/risks/RiskDetails')) as any)}
+              </React.Suspense>
+            }
+          />
+          {/* Risk Dashboard */}
+          <Route
+            path="risks/dashboard"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Risk Dashboard" />}>
+                <RiskDashboardLazy />
+              </React.Suspense>
+            }
+          />
+          {/* Second Risk Dashboard */}
+          <Route
+            path="risks/dashboard-2"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Second Risk Dashboard" />}>
+                <SecondRiskDashboardLazy />
               </React.Suspense>
             }
           />
@@ -119,6 +166,11 @@ export default function App() {
 
           {/* AI */}
           <Route path="ai/assistant" element={<AIAssistant />} />
+
+          {/* Business Continuity Management (BCP) */}
+          <Route path="bcp" element={<BCPDashboard />} />
+          <Route path="bcp/create" element={<CreatePlanPage />} />
+          <Route path="bcp/:id" element={<PlanDetails />} />
 
           {/* Workflows Module */}
           <Route
@@ -155,6 +207,15 @@ export default function App() {
               </React.Suspense>
             }
           />
+          {/* Compliance Importer 2 */}
+          <Route
+            path="compliance/importer-2"
+            element={
+              <React.Suspense fallback={<Placeholder title="Loading Importer 2" />}>
+                {React.createElement(React.lazy(() => import('./pages/compliance/Importer2')) as any)}
+              </React.Suspense>
+            }
+          />
           {/* New: Requirement-Control Mapping */}
           <Route
             path="compliance/mapping"
@@ -164,6 +225,22 @@ export default function App() {
               </React.Suspense>
             }
           />
+          {/* Regulatory Change Management */}
+          <Route path="regulations" element={
+            <React.Suspense fallback={<Placeholder title="Loading Regulations" />}>
+              {React.createElement(React.lazy(() => import('./pages/regulations/RegulationList')) as any)}
+            </React.Suspense>
+          } />
+          <Route path="regulations/impact-dashboard" element={
+            <React.Suspense fallback={<Placeholder title="Loading Impact Dashboard" />}>
+              {React.createElement(React.lazy(() => import('./pages/regulations/ImpactDashboard')) as any)}
+            </React.Suspense>
+          } />
+          <Route path="regulations/:id" element={
+            <React.Suspense fallback={<Placeholder title="Loading Regulation" />}>
+              {React.createElement(React.lazy(() => import('./pages/regulations/RegulationDetail')) as any)}
+            </React.Suspense>
+          } />
           <Route path="compliance/assessments" element={<Placeholder title="Compliance Assessments" />} />
           <Route path="compliance/attestations" element={<Placeholder title="Compliance Attestations" />} />
           <Route path="compliance/exceptions" element={<Placeholder title="Compliance Exceptions" />} />

@@ -120,6 +120,28 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
+      children: [
+        {
+          name: "All Risks",
+          href: "/risks",
+          current: location.pathname === "/risks",
+        },
+        {
+          name: "Dashboard",
+          href: "/risks/dashboard",
+          current: location.pathname === "/risks/dashboard",
+        },
+        {
+          name: "Second Dashboard",
+          href: "/risks/dashboard-2",
+          current: location.pathname === "/risks/dashboard-2",
+        },
+        {
+          name: "Create",
+          href: "/risks/create",
+          current: location.pathname === "/risks/create",
+        }
+      ]
     },
     {
       name: t("navigation.findings"),
@@ -200,8 +222,32 @@ const Layout: React.FC = () => {
           href: "/compliance/import",
           current: location.pathname === "/compliance/import",
         }
+        ,
+        {
+          name: "Importer 2",
+          href: "/compliance/importer-2",
+          current: location.pathname === "/compliance/importer-2",
+        }
       ]
      },
+    {
+      name: "Regulations (RCM)",
+      href: "/regulations",
+      icon: Shield,
+      current: location.pathname.startsWith("/regulations"),
+      roles: [
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        { name: "All Regulations", href: "/regulations", current: location.pathname === "/regulations" },
+        { name: "Impact Dashboard", href: "/regulations/impact-dashboard", current: location.pathname === "/regulations/impact-dashboard" },
+      ]
+    },
     {
       name: "Governance",
       href: "/governance",
@@ -230,6 +276,37 @@ const Layout: React.FC = () => {
           current: location.pathname === "/governance/training",
         }
       ],
+    },
+    {
+      name: "Business Continuity Management",
+      href: "/bcp",
+      icon: Building2,
+      current: location.pathname.startsWith("/bcp"),
+      roles: [
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/bcp",
+          current: location.pathname === "/bcp",
+        },
+        {
+          name: "Create Plan",
+          href: "/bcp/create",
+          current: location.pathname === "/bcp/create",
+        },
+        {
+          name: "Plan Details",
+          href: "/bcp/placeholder",
+          current: location.pathname.startsWith("/bcp/") && location.pathname !== "/bcp" && location.pathname !== "/bcp/create",
+        }
+      ]
     },
     {
       name: "Advanced Analytics",

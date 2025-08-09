@@ -34,6 +34,10 @@ const levelColors: Record<RiskLevel, string> = {
   critical: "text-red-700 bg-red-50 ring-1 ring-red-200",
 };
 
+/**
+ * Extracted subcomponents to reduce file size and improve maintainability.
+ * Kept in-file to minimize churn; can be moved to separate files later.
+ */
 const SectionCard: React.FC<{ title: string; children: React.ReactNode; action?: React.ReactNode }> = ({
   title,
   children,
@@ -48,6 +52,70 @@ const SectionCard: React.FC<{ title: string; children: React.ReactNode; action?:
   </div>
 );
 
+const TabsNav: React.FC<{
+  active: "overview" | "assessments" | "treatments" | "controls" | "history";
+  onChange: (k: "overview" | "assessments" | "treatments" | "controls" | "history") => void;
+}> = ({ active, onChange }) => (
+  <div className="bg-white border border-gray-200 rounded-lg">
+    <div className="flex gap-1 px-2 py-2 border-b">
+      {[
+        { key: "overview", label: "Overview" },
+        { key: "assessments", label: "Assessments" },
+        { key: "treatments", label: "Treatments" },
+        { key: "controls", label: "Controls" },
+        { key: "history", label: "History" },
+      ].map((t) => (
+        <button
+          key={t.key}
+          onClick={() => onChange(t.key as any)}
+          className={cn(
+            "px-3 py-2 text-sm rounded",
+            active === (t.key as any) ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50",
+          )}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+/** History list merged from assessments and treatments */
+const HistoryList: React.FC<{
+  assessments: RiskAssessment[];
+  treatments: RiskTreatment[];
+}> = ({ assessments, treatments }) => {
+  const events = [
+    ...assessments.map((a) => ({
+      type: "assessment" as const,
+      date: a.assessment_date,
+      title: `Assessment ${a.risk_level} (${a.risk_score})`,
+      id: a.id,
+    })),
+    ...treatments.map((t) => ({
+      type: "treatment" as const,
+      date: (t.start_date || (t as any).created_at || ""),
+      title: `Treatment ${t.title} (${t.status})`,
+      id: t.id,
+    })),
+  ]
+    .filter((e) => !!e.date)
+    .sort((a, b) => (a.date! < b.date! ? 1 : -1));
+
+  if (events.length === 0) return <p className="text-sm text-gray-500">No history entries yet.</p>;
+  return (
+    <ul className="divide-y text-sm">
+      {events.map((e) => (
+        <li key={`${e.type}-${e.id}`} className="py-2 flex items-center justify-between">
+          <span className="capitalize">{e.type}</span>
+          <span className="text-gray-700">{e.title}</span>
+          <span className="text-gray-500">{e.date}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
 type RiskDetailModalProps = {
   title: string;
   open: boolean;
@@ -56,6 +124,73 @@ type RiskDetailModalProps = {
   submitLabel?: string;
   children: React.ReactNode;
   disabled?: boolean;
+};
+
+/** Lightweight inline Controls list component (self-managed state) */
+const ControlsInline: React.FC<{ riskId: string }> = ({ riskId }) => {
+  const [rows, setRows] = React.useState<Array<{ control_id: string; control_title: string; control_status?: string | null }>>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const list = await riskService.getLinkedControls(riskId);
+        if (mounted) setRows(list);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [riskId]);
+
+  if (loading) {
+    return <div className="py-4"><LoadingSpinner size="sm" text="Loading controls..." /></div>;
+  }
+  if (rows.length === 0) {
+    return <p className="text-sm text-gray-500">No controls linked.</p>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-gray-500 border-b">
+            <th className="py-2 pr-3">Control</th>
+            <th className="py-2 pr-3">Status</th>
+            <th className="py-2 pr-3 w-28">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.control_id} className="border-b last:border-0">
+              <td className="py-2 pr-3">{c.control_title || c.control_id}</td>
+              <td className="py-2 pr-3 capitalize">{(c.control_status ?? "").replace("_", " ") || "-"}</td>
+              <td className="py-2 pr-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await riskService.unlinkControl(riskId, c.control_id);
+                        setRows((prev) => prev.filter((x) => x.control_id !== c.control_id));
+                        toast.success("Control unlinked");
+                      } catch (e: any) {
+                        toast.error(e?.message || "Failed to unlink control");
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-700 text-xs"
+                    title="Unlink"
+                  >
+                    Unlink
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 };
 
 const RiskDetailModal: React.FC<RiskDetailModalProps> = ({
@@ -453,27 +588,6 @@ const RiskDetails: React.FC = () => {
   // Tabs
   const [activeTab, setActiveTab] = useState<"overview" | "assessments" | "treatments" | "controls" | "history">("overview");
 
-  const HistoryList: React.FC = () => {
-    const events = [
-      ...assessments.map((a) => ({ type: "assessment" as const, date: a.assessment_date, title: `Assessment ${a.risk_level} (${a.risk_score})`, id: a.id })),
-      ...treatments.map((t) => ({ type: "treatment" as const, date: (t.start_date || t.created_at || ""), title: `Treatment ${t.title} (${t.status})`, id: t.id })),
-    ]
-      .filter((e) => !!e.date)
-      .sort((a, b) => (a.date! < b.date! ? 1 : -1));
-    if (events.length === 0) return <p className="text-sm text-gray-500">No history entries yet.</p>;
-    return (
-      <ul className="divide-y text-sm">
-        {events.map((e) => (
-          <li key={`${e.type}-${e.id}`} className="py-2 flex items-center justify-between">
-            <span className="capitalize">{e.type}</span>
-            <span className="text-gray-700">{e.title}</span>
-            <span className="text-gray-500">{e.date}</span>
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
@@ -809,7 +923,7 @@ const RiskDetails: React.FC = () => {
 
           {activeTab === "history" && (
             <SectionCard title="History">
-              <HistoryList />
+              <HistoryList assessments={assessments} treatments={treatments} />
             </SectionCard>
           )}
         </div>
@@ -942,8 +1056,8 @@ const RiskDetails: React.FC = () => {
                 {reviews.map((r) => (
                   <tr key={r.id} className="border-b last:border-0">
                     <td className="py-2 pr-3">{r.review_date}</td>
-                    <td className="py-2 pr-3 capitalize">{r.review_type.replace("_", " ")}</td>
-                    <td className="py-2 pr-3 capitalize">{r.review_outcome.replace("_", " ")}</td>
+                    <td className="py-2 pr-3 capitalize">{(r.review_type ?? "").replace("_", " ") || "-"}</td>
+                    <td className="py-2 pr-3 capitalize">{(r.review_outcome ?? "").replace("_", " ") || "-"}</td>
                     <td className="py-2 pr-3">{r.next_review_date ?? "-"}</td>
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-2">
@@ -1001,9 +1115,8 @@ const RiskDetails: React.FC = () => {
           )
         }
       >
-        <p className="text-sm text-gray-500">
-          Display controls linked to this risk (via risk_controls). Linking modal available.
-        </p>
+        {/* Self-contained inline controls list to avoid external setter references */}
+        <ControlsInline riskId={risk!.id} />
       </SectionCard>
 
       {/* Modals */}
@@ -1133,97 +1246,33 @@ const RiskDetails: React.FC = () => {
         submitLabel={assessmentSaving ? "Saving..." : "Save"}
         disabled={assessmentSaving}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm text-gray-700">Date</label>
-            <input
-              type="date"
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={(assessmentForm as any).assessment_date || ""}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, assessment_date: e.target.value }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-700">Type</label>
-            <select
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={(assessmentForm as any).assessment_type || "periodic"}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, assessment_type: e.target.value as any }))
-              }
-            >
-              <option value="initial">Initial</option>
-              <option value="periodic">Periodic</option>
-              <option value="triggered">Triggered</option>
-              <option value="ad_hoc">Ad hoc</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-700">Probability</label>
-            <input
-              type="number"
-              min={1}
-              max={5}
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={(assessmentForm as any).probability ?? 3}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, probability: Number(e.target.value) }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-700">Impact</label>
-            <input
-              type="number"
-              min={1}
-              max={5}
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={(assessmentForm as any).impact ?? 3}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, impact: Number(e.target.value) }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-700">Score</label>
-            <input
-              type="number"
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={(assessmentForm as any).risk_score ?? 9}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, risk_score: Number(e.target.value) }))
-              }
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-700">Level</label>
-            <select
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={(assessmentForm as any).risk_level || "medium"}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, risk_level: e.target.value as any }))
-              }
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm text-gray-700">Notes</label>
-            <textarea
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              rows={3}
-              value={(assessmentForm as any).assessment_notes || ""}
-              onChange={(e) =>
-                setAssessmentForm((f) => ({ ...f, assessment_notes: e.target.value }))
-              }
-            />
-          </div>
-        </div>
+        <RiskAssessmentForm
+          value={{
+            assessment_date: (assessmentForm as any).assessment_date || new Date().toISOString().slice(0, 10),
+            assessment_type: ((assessmentForm as any).assessment_type || "periodic") as any,
+            probability: Number((assessmentForm as any).probability ?? 3),
+            impact: Number((assessmentForm as any).impact ?? 3),
+            risk_score: Number((assessmentForm as any).risk_score ?? 9),
+            risk_level: ((assessmentForm as any).risk_level || "medium") as any,
+            confidence_level: ((assessmentForm as any).confidence_level || "medium") as any,
+            assessment_notes: (assessmentForm as any).assessment_notes || "",
+          }}
+          onChange={(v) =>
+            setAssessmentForm((f) => ({
+              ...f,
+              assessment_date: v.assessment_date,
+              assessment_type: v.assessment_type,
+              probability: v.probability,
+              impact: v.impact,
+              risk_score: v.risk_score,
+              risk_level: v.risk_level,
+              confidence_level: v.confidence_level,
+              assessment_notes: v.assessment_notes,
+            }))
+          }
+          matrixSize={5}
+          disabled={assessmentSaving}
+        />
       </RiskDetailModal>
 
       <RiskDetailModal
@@ -1395,6 +1444,26 @@ const RiskDetails: React.FC = () => {
         </div>
       </RiskDetailModal>
 
+      {/* Linked Controls */}
+      <SectionCard
+        title="Linked Controls"
+        action={
+          canEdit && (
+            <button
+              onClick={() => setLinkControlOpen(true)}
+              className="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-700"
+            >
+              <LinkIcon className="w-4 h-4 mr-1" />
+              Link Control
+            </button>
+          )
+        }
+      >
+        {/* Self-contained inline controls list to avoid external setter references */}
+        <ControlsInline riskId={risk!.id} />
+      </SectionCard>
+
+      {/* Link Control Modal */}
       <RiskDetailModal
         title="Link Control"
         open={linkControlOpen}
@@ -1408,6 +1477,7 @@ const RiskDetails: React.FC = () => {
           try {
             setLinking(true);
             await riskService.linkControl(risk.id, controlId);
+            // ControlsInline will fetch again based on riskId; just close
             setLinkControlOpen(false);
             setControlId("");
             toast.success("Control linked");

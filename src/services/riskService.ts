@@ -183,6 +183,7 @@ const tableTreatments = "risk_treatments";
 const tableIncidents = "risk_incidents";
 const tableReviews = "risk_reviews";
 const tableRiskControls = "risk_controls";
+const tableControls = "controls";
 
 function applyRiskFilters(query: any, filter?: RiskFilter) {
   let q = query;
@@ -382,6 +383,30 @@ const riskService = {
       .from(tableRiskControls)
       .insert({ risk_id: riskId, control_id: controlId });
     if (error) throw error;
+  },
+
+  async unlinkControl(riskId: UUID, controlId: UUID): Promise<void> {
+    const { error } = await supabase
+      .from(tableRiskControls)
+      .delete()
+      .eq("risk_id", riskId)
+      .eq("control_id", controlId);
+    if (error) throw error;
+  },
+
+  async getLinkedControls(riskId: UUID): Promise<Array<{ control_id: UUID; control_title: string; control_status?: string | null }>> {
+    // Join risk_controls with controls to fetch basic info
+    const { data, error } = await supabase
+      .from(tableRiskControls)
+      .select("control_id, controls!inner(id, title, status)")
+      .eq("risk_id", riskId);
+    if (error) throw error;
+    const rows = (data as any[]) ?? [];
+    return rows.map((r) => ({
+      control_id: r.control_id ?? r.controls?.id,
+      control_title: r.controls?.title ?? "Control",
+      control_status: r.controls?.status ?? null,
+    }));
   },
 
   async getStats(filter?: RiskFilter): Promise<StatsResponse> {

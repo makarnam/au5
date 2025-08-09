@@ -9,6 +9,7 @@ import riskService, {
   RiskFilter,
   UUID,
 } from "../services/riskService";
+import { supabase } from "../lib/supabase";
 
 type LoadingState = {
   list: boolean;
@@ -70,6 +71,40 @@ type RiskStore = {
 
   linkControl: (riskId: UUID, controlId: UUID) => Promise<void>;
 };
+
+/** Utility: create in-app notification via RPC (non-blocking). */
+async function createAppNotification(params: {
+  user_id: string;
+  title: string;
+  body?: string | null;
+  type?: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  meta?: Record<string, any> | null;
+}) {
+  try {
+    const { error } = await supabase.rpc("create_notification", {
+      p_user_id: params.user_id,
+      p_title: params.title,
+      p_body: params.body ?? null,
+      p_type: params.type ?? "reminder",
+      p_entity_type: params.entity_type ?? "risk",
+      p_entity_id: params.entity_id ?? null,
+      p_meta: params.meta ?? null,
+    });
+    if (error) throw error;
+  } catch (e) {
+    // do not throw; notifications are best-effort
+    console.warn("create_notification failed:", e);
+  }
+}
+
+/** Utility: basic appetite mapper fallback; replace with backend map_score_to_appetite if exposed */
+function mapScoreToAppetite(score: number, _org: "org"): "green" | "amber" | "red" {
+  if (score >= 15) return "red";
+  if (score >= 9) return "amber";
+  return "green";
+}
 
 export const useRiskStore = create<RiskStore>()(
   devtools((set, get) => ({
@@ -172,6 +207,29 @@ export const useRiskStore = create<RiskStore>()(
         // refresh local list
         const a = await riskService.getAssessments(riskId);
         set({ assessments: a });
+
+        // Notifications: Appetite breach -> notify owner/assignee/BU
+        const selected = get().selectedRisk || (await riskService.getRisk(riskId));
+        const prob = payload.probability ?? 3;
+        const imp = payload.impact ?? 3;
+        const score = payload.risk_score ?? (prob * imp);
+        const appetite = mapScoreToAppetite(score, "org");
+        if (appetite === "red") {
+          const ownerId = (selected as Risk | null)?.owner_id;
+          if (ownerId) {
+            void createAppNotification({
+              user_id: ownerId,
+              title: "Risk appetite breach",
+              body: `Assessment score ${score} exceeded appetite for risk "${(selected as any)?.title ?? ""}"`,
+              type: "reminder",
+              entity_type: "risk",
+              entity_id: riskId,
+              meta: { risk_id: riskId, score, appetite },
+            });
+          }
+          // TODO: optionally notify assignee/BU when fields are available in schema/client
+        }
+
         return id;
       } catch (e: any) {
         set({ error: e?.message ?? "Failed to add assessment" });
@@ -221,6 +279,29 @@ export const useRiskStore = create<RiskStore>()(
         const id = await riskService.addTreatment(riskId, payload);
         const t = await riskService.getTreatments(riskId);
         set({ treatments: t });
+
+        // Notifications: due/overdue
+        const target = (payload as any)?.target_date as string | undefined;
+        const status = (payload as any)?.status;
+        if (target && status !== "completed") {
+          const today = new Date().toISOString().slice(0, 10);
+          if (target < today) {
+            const selected = get().selectedRisk || (await riskService.getRisk(riskId));
+            const ownerId = (selected as Risk | null)?.owner_id;
+            if (ownerId) {
+              void createAppNotification({
+                user_id: ownerId,
+                title: "Treatment overdue",
+                body: `Treatment "${(payload as any)?.title ?? ""}" target date ${target} has passed.`,
+                type: "reminder",
+                entity_type: "risk",
+                entity_id: riskId,
+                meta: { risk_id: riskId, treatment_id: id, target_date: target, status },
+              });
+            }
+          }
+        }
+
         return id;
       } catch (e: any) {
         set({ error: e?.message ?? "Failed to add treatment" });
@@ -238,6 +319,25 @@ export const useRiskStore = create<RiskStore>()(
         if (selected) {
           const t = await riskService.getTreatments(selected.id);
           set({ treatments: t });
+
+          // Notifications: due/overdue on update as well
+          const target = (payload as any)?.target_date as string | undefined;
+          const status = (payload as any)?.status;
+          const today = new Date().toISOString().slice(0, 10);
+          if (target && status !== "completed" && target < today) {
+            const ownerId = (selected as Risk | null)?.owner_id;
+            if (ownerId) {
+              void createAppNotification({
+                user_id: ownerId,
+                title: "Treatment overdue",
+                body: `Treatment update indicates overdue (target ${target}).`,
+                type: "reminder",
+                entity_type: "risk",
+                entity_id: selected.id,
+                meta: { risk_id: selected.id, treatment_id: id, target_date: target, status },
+              });
+            }
+          }
         }
       } catch (e: any) {
         set({ error: e?.message ?? "Failed to update treatment" });
