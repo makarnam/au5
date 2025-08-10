@@ -232,7 +232,7 @@ const Layout: React.FC = () => {
      },
     {
       name: "Privacy",
-      href: "/privacy/dpia",
+      href: "/privacy/dashboard",
       icon: Shield,
       current: location.pathname.startsWith("/privacy"),
       roles: [
@@ -244,6 +244,7 @@ const Layout: React.FC = () => {
         "super_admin",
       ],
       children: [
+        { name: "Dashboard", href: "/privacy/dashboard", current: location.pathname === "/privacy/dashboard" },
         { name: "DPIA", href: "/privacy/dpia", current: location.pathname === "/privacy/dpia" },
         { name: "RoPA Register", href: "/privacy/ropa", current: location.pathname === "/privacy/ropa" },
       ],

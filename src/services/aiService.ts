@@ -38,7 +38,11 @@ export interface AIGenerationRequest {
     | "scope"
     | "methodology"
     | "control_set_description"
-    | "control_generation";
+    | "control_generation"
+    | "dpia_description"
+    | "dpia_risk_assessment"
+    | "ropa_purpose"
+    | "ropa_legal_basis";
   auditData: {
     title?: string;
     audit_type?: string;
@@ -50,6 +54,14 @@ export interface AIGenerationRequest {
     framework?: string;
     audit_title?: string;
     audit_type?: string;
+  };
+  privacyData?: {
+    title?: string;
+    type?: "dpia" | "ropa";
+    industry?: string;
+    data_subjects?: string[];
+    data_categories?: string[];
+    risk_level?: string;
   };
   temperature?: number;
   maxTokens?: number;
@@ -552,6 +564,127 @@ Format your response as a JSON array of objects with the following structure:
 
 Generate only the JSON array, no additional text or formatting.`;
         break;
+
+      case "dpia_description":
+        const dpiaInfo = request.privacyData
+          ? `
+DPIA Information:
+- Title: ${request.privacyData.title || "Not specified"}
+- Industry: ${request.privacyData.industry || "Not specified"}
+- Data Subjects: ${request.privacyData.data_subjects?.join(", ") || "Not specified"}
+- Data Categories: ${request.privacyData.data_categories?.join(", ") || "Not specified"}
+- Risk Level: ${request.privacyData.risk_level || "Not specified"}
+        `.trim()
+          : "";
+
+        basePrompt = `You are a privacy expert specializing in Data Protection Impact Assessments (DPIAs) and GDPR compliance. Generate a comprehensive DPIA description based on the following information:
+
+${dpiaInfo}
+
+Context: ${context}
+
+Requirements:
+- Create a detailed, professional DPIA description
+- Ensure the description is specifically relevant to "${request.privacyData?.title}"
+- Include the purpose, scope, and key privacy considerations
+- Address the specific data subjects and categories mentioned
+- Consider the industry context and risk level
+- Use professional privacy and GDPR terminology
+- Keep it between 150-400 words
+- Make it specific to the processing activity and industry
+
+Generate only the description text, no additional formatting or explanations.`;
+        break;
+
+      case "dpia_risk_assessment":
+        const dpiaRiskInfo = request.privacyData
+          ? `
+DPIA Risk Assessment Information:
+- Title: ${request.privacyData.title || "Not specified"}
+- Industry: ${request.privacyData.industry || "Not specified"}
+- Data Subjects: ${request.privacyData.data_subjects?.join(", ") || "Not specified"}
+- Data Categories: ${request.privacyData.data_categories?.join(", ") || "Not specified"}
+- Current Risk Level: ${request.privacyData.risk_level || "Not specified"}
+        `.trim()
+          : "";
+
+        basePrompt = `You are a privacy expert specializing in Data Protection Impact Assessments (DPIAs) and GDPR compliance. Generate a comprehensive risk assessment for the DPIA "${request.privacyData?.title}" based on the following information:
+
+${dpiaRiskInfo}
+
+Context: ${context}
+
+Requirements:
+- Assess privacy risks based on the data subjects and categories
+- Consider industry-specific privacy challenges
+- Evaluate likelihood and impact of privacy breaches
+- Identify specific privacy risks and their potential consequences
+- Suggest risk mitigation strategies
+- Use professional privacy and GDPR terminology
+- Keep it between 200-500 words
+- Make it specific to the processing activity and industry context
+
+Generate only the risk assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "ropa_purpose":
+        const ropaInfo = request.privacyData
+          ? `
+RoPA Information:
+- Title: ${request.privacyData.title || "Not specified"}
+- Industry: ${request.privacyData.industry || "Not specified"}
+- Data Subjects: ${request.privacyData.data_subjects?.join(", ") || "Not specified"}
+- Data Categories: ${request.privacyData.data_categories?.join(", ") || "Not specified"}
+        `.trim()
+          : "";
+
+        basePrompt = `You are a privacy expert specializing in Records of Processing Activities (RoPA) and GDPR Article 30 compliance. Generate a comprehensive purpose description for the RoPA "${request.privacyData?.title}" based on the following information:
+
+${ropaInfo}
+
+Context: ${context}
+
+Requirements:
+- Create a detailed, professional purpose description
+- Ensure the description is specifically relevant to "${request.privacyData?.title}"
+- Explain why the data is being processed and the legitimate business purpose
+- Address the specific data subjects and categories mentioned
+- Consider the industry context and typical processing activities
+- Use professional privacy and GDPR terminology
+- Keep it between 100-300 words
+- Make it specific to the processing activity and industry
+
+Generate only the purpose text, no additional formatting or explanations.`;
+        break;
+
+      case "ropa_legal_basis":
+        const ropaLegalInfo = request.privacyData
+          ? `
+RoPA Legal Basis Information:
+- Title: ${request.privacyData.title || "Not specified"}
+- Industry: ${request.privacyData.industry || "Not specified"}
+- Data Subjects: ${request.privacyData.data_subjects?.join(", ") || "Not specified"}
+- Data Categories: ${request.privacyData.data_categories?.join(", ") || "Not specified"}
+        `.trim()
+          : "";
+
+        basePrompt = `You are a privacy expert specializing in Records of Processing Activities (RoPA) and GDPR Article 6 legal basis. Generate appropriate legal basis for the RoPA "${request.privacyData?.title}" based on the following information:
+
+${ropaLegalInfo}
+
+Context: ${context}
+
+Requirements:
+- Identify the most appropriate legal basis under GDPR Article 6
+- Consider the data subjects and processing purpose
+- Explain why this legal basis applies to this specific processing activity
+- Consider industry-specific legal requirements
+- Use professional privacy and GDPR terminology
+- Keep it between 100-250 words
+- Make it specific to the processing activity and industry context
+
+Generate only the legal basis text, no additional formatting or explanations.`;
+        break;
     }
 
     return basePrompt;
@@ -638,7 +771,6 @@ Generate only the JSON array, no additional text or formatting.`;
     const { provider, model, messages, apiKey, baseUrl, temperature, maxTokens } = request;
 
     // Fallback: if only a user message exists, re-route through generateContent using a generic prompt
-    const lastUser = [...messages].reverse().find(m => m.role === "user")?.content || "";
     const systemPrefix = messages.find(m => m.role === "system")?.content ||
       "You are a helpful AI assistant for governance, risk, audit, and any general topic. Respond clearly and provide actionable steps when relevant.";
 
@@ -1153,7 +1285,7 @@ Generate only the JSON array, no additional text or formatting.`;
         throw new Error("User not authenticated");
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("ai_configurations")
         .delete()
         .eq("id", configId)

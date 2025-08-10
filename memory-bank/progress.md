@@ -1,6 +1,10 @@
 # Progress
 
 Current Status:
+- ✅ Audit Templates: Complete CRUD functionality with template selection in AuditWizard
+- ✅ ErrorBoundary: Implemented global error handling component
+- ✅ Enhanced AuditWizard: Added template selection step and improved UX
+- ✅ SQL Migration: Created audit_templates table with RLS policies and sample data
 - TODO.md normalized with concrete tasks, references, and acceptance criteria
 - ActiveContext updated to reflect actionable next steps per module
 - Core modules present in codebase: audits, findings, risks, compliance, workflows
@@ -15,10 +19,24 @@ What Works:
 - Consistent templates aligned with memory-bank-rules.md
 - SQL-first migrations and module structure in sql/** verified
 - Service-layer pattern in place (src/services/*), Supabase client configured (src/lib/supabase.ts)
+- ✅ Audit Templates:
+  - AuditTemplateManager component with CRUD operations
+  - Template selection in AuditWizard
+  - SQL migration with RLS policies
+  - Sample templates for IT, Financial, and Compliance audits
+- ✅ Error Handling:
+  - ErrorBoundary component with retry and navigation
+  - Development error details display
+  - useErrorHandler hook and withErrorBoundary HOC
+- ✅ Enhanced AuditWizard:
+  - 4-step process with template selection
+  - Template pre-filling and validation
+  - Improved UI with animations and better UX
 
 In Progress:
 - Audit Management:
-  - AuditWizard + AuditForm validation and Supabase integration (src/components/audit/*, src/services/auditService.ts)
+  - ✅ AuditWizard + AuditForm validation and Supabase integration (src/components/audit/*, src/services/auditService.ts)
+  - ✅ Audit templates CRUD and selection flow
   - Scheduling approach design using sql/workflows/*
 - Findings:
   - UI wiring to findingsService and SQL policies (src/services/findingsService.ts, sql/findings/*)
@@ -27,7 +45,8 @@ In Progress:
 - Compliance:
   - Framework CRUD and control mapping UX (sql/compliance/*, src/components/controls/*)
 - UI/UX:
-  - Global ErrorBoundary, responsive audits of key screens, consistent loading states
+  - ✅ Global ErrorBoundary implemented
+  - Responsive audits of key screens, consistent loading states
 - Internationalization:
   - Language selector, key extraction, RTL support
 - Performance:
@@ -35,13 +54,14 @@ In Progress:
 - Deployment:
   - Draft CI workflow (lint, typecheck, test, build)
 
-What’s Next:
-- Implement acceptance criteria from TODO.md per module starting with Audit Wizard
-- Add audit_templates schema and CRUD UI
+What's Next:
+- Implement acceptance criteria from TODO.md per module starting with Findings management
+- Add audit scheduling functionality with workflow integration
 - Establish risk score history and dashboard KPIs
 - Add evidence upload flow via Supabase Storage and RLS gating
-- Introduce ErrorBoundary and wrap route tree
+- Introduce ErrorBoundary wrapping for route tree
 - Add language selector and persist preference
+- Create audit reporting views and export functionality
 
 Known Issues / Risks:
 - Pending decision on global state solution (Zustand vs hooks-only)
@@ -49,6 +69,10 @@ Known Issues / Risks:
 - CI/CD and automated migrations pipeline not yet documented
 
 Changelog:
+- [2025-01-27] Added: Complete audit templates functionality with CRUD operations
+- [2025-01-27] Added: ErrorBoundary component for global error handling
+- [2025-01-27] Enhanced: AuditWizard with template selection and improved UX
+- [2025-01-27] Added: SQL migration for audit_templates with RLS policies
 - [2025-08-04] Updated: TODO.md normalized with file/SQL references and AC
 - [2025-08-04] Updated: activeContext.md with module-specific next steps
 

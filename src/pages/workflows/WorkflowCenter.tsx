@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchAvailableWorkflows, fetchApprovalRequestsForEntity, fetchApprovalSteps, startApproval } from '../../services/workflows';
+import { listWorkflows, getInstances, getInstance, startWorkflow } from '../../services/workflows';
 import ApprovalTimeline from '../../components/workflows/ApprovalTimeline';
 
 type Workflow = {
@@ -36,10 +36,13 @@ export default function WorkflowCenter({ entityType, entityId }: Props) {
   async function load() {
     setErr(null);
     try {
-      const wf = await fetchAvailableWorkflows(entityType);
-      setWorkflows(wf as any);
-      const req = await fetchApprovalRequestsForEntity(entityType, entityId);
-      setRequests(req as any);
+      const wfResult = await listWorkflows({ entity_type: entityType });
+      if (wfResult.error) throw wfResult.error;
+      setWorkflows(wfResult.data || []);
+      
+      const reqResult = await getInstances({ entity_type: entityType });
+      if (reqResult.error) throw reqResult.error;
+      setRequests(reqResult.data || []);
     } catch (e) {
       console.error(e);
       setErr((e as any)?.message ?? 'Failed to load workflows');
@@ -59,8 +62,9 @@ export default function WorkflowCenter({ entityType, entityId }: Props) {
         return;
       }
       try {
-        const data = await fetchApprovalSteps(selectedRequestId);
-        setSteps(data as any);
+        const result = await getInstance(selectedRequestId);
+        if (result.error) throw result.error;
+        setSteps(result.data?.steps || []);
       } catch (e) {
         console.error(e);
       }
@@ -74,9 +78,14 @@ export default function WorkflowCenter({ entityType, entityId }: Props) {
     }
     try {
       setLoading(true);
-      const requestId = await startApproval({ entityType, entityId, workflowId: selectedWorkflowId });
+      const result = await startWorkflow({ 
+        entity_type: entityType, 
+        entity_id: entityId, 
+        workflow_id: selectedWorkflowId 
+      });
+      if (result.error) throw result.error;
       await load();
-      setSelectedRequestId(requestId);
+      setSelectedRequestId(result.data?.request_id || '');
     } catch (e) {
       console.error(e);
       alert((e as any)?.message ?? 'Start failed');

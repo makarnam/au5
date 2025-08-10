@@ -22,6 +22,33 @@ export interface UpdateAuditData extends Partial<CreateAuditData> {
   id: string;
 }
 
+export interface CreateAuditTemplateData {
+  name: string;
+  description?: string;
+  audit_type: string;
+  objectives: string[];
+  scope?: string;
+  methodology?: string;
+}
+
+export interface UpdateAuditTemplateData extends Partial<CreateAuditTemplateData> {
+  id: string;
+}
+
+export interface AuditTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  audit_type: string;
+  objectives: string[];
+  scope?: string;
+  methodology?: string;
+  is_active: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 class AuditService {
   async createAudit(auditData: CreateAuditData): Promise<Audit> {
     try {
@@ -406,6 +433,205 @@ class AuditService {
       console.log("Audit status updated successfully");
     } catch (error) {
       console.error("Error updating audit status:", error);
+      throw error;
+    }
+  }
+
+  // Audit Template Methods
+  async createAuditTemplate(templateData: CreateAuditTemplateData): Promise<AuditTemplate> {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      const templateToInsert = {
+        name: templateData.name,
+        description: templateData.description,
+        audit_type: templateData.audit_type,
+        objectives: templateData.objectives,
+        scope: templateData.scope,
+        methodology: templateData.methodology,
+        is_active: true,
+        created_by: user.id,
+      };
+
+      const { data, error } = await supabase
+        .from("audit_templates")
+        .insert([templateToInsert])
+        .select("*")
+        .single();
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return data as AuditTemplate;
+    } catch (error) {
+      console.error("Error creating audit template:", error);
+      throw error;
+    }
+  }
+
+  async updateAuditTemplate(templateData: UpdateAuditTemplateData): Promise<AuditTemplate> {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { id, ...updateData } = templateData;
+
+      const { data, error } = await supabase
+        .from("audit_templates")
+        .update({
+          ...updateData,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select("*")
+        .single();
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return data as AuditTemplate;
+    } catch (error) {
+      console.error("Error updating audit template:", error);
+      throw error;
+    }
+  }
+
+  async getAuditTemplate(id: string): Promise<AuditTemplate | null> {
+    try {
+      const { data, error } = await supabase
+        .from("audit_templates")
+        .select("*")
+        .eq("id", id)
+        .eq("is_active", true)
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          return null;
+        }
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return data as AuditTemplate;
+    } catch (error) {
+      console.error("Error fetching audit template:", error);
+      throw error;
+    }
+  }
+
+  async getAllAuditTemplates(): Promise<AuditTemplate[]> {
+    try {
+      const { data, error } = await supabase
+        .from("audit_templates")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return data as AuditTemplate[];
+    } catch (error) {
+      console.error("Error fetching audit templates:", error);
+      throw error;
+    }
+  }
+
+  async getAuditTemplatesByType(auditType: string): Promise<AuditTemplate[]> {
+    try {
+      const { data, error } = await supabase
+        .from("audit_templates")
+        .select("*")
+        .eq("audit_type", auditType)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return data as AuditTemplate[];
+    } catch (error) {
+      console.error("Error fetching audit templates by type:", error);
+      throw error;
+    }
+  }
+
+  async deleteAuditTemplate(id: string): Promise<void> {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { error } = await supabase
+        .from("audit_templates")
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+    } catch (error) {
+      console.error("Error deleting audit template:", error);
+      throw error;
+    }
+  }
+
+  async createAuditFromTemplate(templateId: string, auditData: Partial<CreateAuditData>): Promise<Audit> {
+    try {
+      const template = await this.getAuditTemplate(templateId);
+      if (!template) {
+        throw new Error("Template not found");
+      }
+
+      // Merge template data with provided audit data
+      const mergedAuditData: CreateAuditData = {
+        title: auditData.title || `Audit based on ${template.name}`,
+        description: auditData.description || template.description || "",
+        audit_type: auditData.audit_type || template.audit_type,
+        status: auditData.status || "draft",
+        business_unit_id: auditData.business_unit_id || "",
+        lead_auditor_id: auditData.lead_auditor_id || "",
+        team_members: auditData.team_members || [],
+        start_date: auditData.start_date || "",
+        end_date: auditData.end_date || "",
+        planned_hours: auditData.planned_hours || 40,
+        objectives: auditData.objectives || template.objectives || [],
+        scope: auditData.scope || template.scope || "",
+        methodology: auditData.methodology || template.methodology || "",
+        approval_status: auditData.approval_status || "draft",
+      };
+
+      return await this.createAudit(mergedAuditData);
+    } catch (error) {
+      console.error("Error creating audit from template:", error);
       throw error;
     }
   }

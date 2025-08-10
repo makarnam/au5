@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPendingApprovals, approve, reject, requestRevision, skipStep } from '../../services/workflows';
+import { getMyTasks, approveStep, rejectStep, requestRevision, skipStep } from '../../services/workflows';
 
 type PendingRow = {
   step_id: string;
@@ -24,8 +24,9 @@ export default function ApprovalInbox() {
   async function load() {
     setError(null);
     try {
-      const data = await fetchPendingApprovals();
-      setRows(data as any);
+      const result = await getMyTasks();
+      if (result.error) throw result.error;
+      setRows(result.data || []);
     } catch (e) {
       console.error(e);
       setError((e as any)?.message ?? 'Failed to load approvals');
@@ -39,10 +40,22 @@ export default function ApprovalInbox() {
   async function handleAction(requestId: string, action: 'approve' | 'reject' | 'revise' | 'skip') {
     try {
       setLoadingId(requestId);
-      if (action === 'approve') await approve(requestId);
-      if (action === 'reject') await reject(requestId, 'Rejected from inbox');
-      if (action === 'revise') await requestRevision(requestId, 'Revision requested from inbox');
-      if (action === 'skip') await skipStep(requestId, 'Skipped from inbox');
+      if (action === 'approve') {
+        const result = await approveStep({ request_id: requestId, comments: 'Approved from inbox' });
+        if (result.error) throw result.error;
+      }
+      if (action === 'reject') {
+        const result = await rejectStep({ request_id: requestId, comments: 'Rejected from inbox' });
+        if (result.error) throw result.error;
+      }
+      if (action === 'revise') {
+        const result = await requestRevision({ request_id: requestId, comments: 'Revision requested from inbox' });
+        if (result.error) throw result.error;
+      }
+      if (action === 'skip') {
+        const result = await skipStep({ request_id: requestId, comments: 'Skipped from inbox' });
+        if (result.error) throw result.error;
+      }
       await load();
     } catch (e) {
       console.error(e);

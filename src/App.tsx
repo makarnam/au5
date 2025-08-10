@@ -1,312 +1,287 @@
-import React from 'react';
-// Normalize to a single lazy initializer for RiskDashboard to avoid redeclaration errors
-const RiskDashboardLazy = React.lazy(async () => {
-  const mod: any = await import('./pages/risks/RiskDashboard');
-  return { default: mod.default ?? mod };
-});
-const SecondRiskDashboardLazy = React.lazy(async () => {
-  const mod: any = await import('./pages/risks/SecondRiskDashboard');
-  return { default: mod.default ?? mod };
-});
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import AuditsList from './pages/audits/AuditsList';
-import FindingsList from './pages/findings/FindingsList';
-import ControlsList from './pages/controls/ControlsList';
-import RequirementsBrowser from './pages/compliance/RequirementsBrowser';
-import FrameworksList from './pages/compliance/FrameworksList';
-import ProtectedRoute from './components/ProtectedRoute';
-import SignIn from './pages/auth/SignIn';
-import SignUp from './pages/auth/SignUp';
-import AIAssistant from './pages/ai/AIAssistant';
-import Settings from './components/Settings';
-import CreateAuditPage from './pages/audits/CreateAuditPage';
-import ScheduleAuditPage from './pages/audits/ScheduleAuditPage';
-import CreateControlSetPage from './pages/controls/controlsets/CreateControlSetPage';
-import CreateRiskPage from './pages/risks/CreateRiskPage';
-import RisksList from './pages/risks/RisksList';
-import ProfilesList from './pages/compliance/ProfilesList';
-import BCPDashboard from './pages/bcp/BCPDashboard';
-import CreatePlanPage from './pages/bcp/CreatePlanPage';
-import PlanDetails from './pages/bcp/PlanDetails';
-import DPIAList from './pages/privacy/DPIAList';
-import RoPARegister from './pages/privacy/RoPARegister';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-const LazyWorkflowsHome = React.lazy(() => import('./pages/workflows/WorkflowsHome'));
-const LazyWorkflowInstance = React.lazy(() => import('./pages/workflows/WorkflowInstance'));
+// Auth Pages
+import SignIn from "./pages/auth/SignIn";
+import SignUp from "./pages/auth/SignUp";
 
-function Placeholder({ title }: { title: string }) {
-  return <div className="p-6 text-lg font-semibold">{title} - Coming soon</div>;
-}
+// Main Pages
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
-export default function App() {
+// Audit Pages
+import AuditsList from "./pages/audits/AuditsList";
+import CreateAuditPage from "./pages/audits/CreateAuditPage";
+import EditAuditPage from "./pages/audits/EditAuditPage";
+import AuditDetails from "./pages/audits/AuditDetails";
+import ScheduleAuditPage from "./pages/audits/ScheduleAuditPage";
+import UpcomingSchedules from "./pages/audits/UpcomingSchedules";
+
+// Audit Planning Pages
+import AuditPlanningDashboard from "./pages/audit-planning/AuditPlanningDashboard";
+import AuditUniversePage from "./pages/audit-planning/AuditUniverse";
+import AuditPlans from "./pages/audit-planning/AuditPlans";
+import ResourceManagement from "./pages/audit-planning/ResourceManagement";
+import CreateAuditPlanPage from "./pages/audit-planning/CreatePlanPage";
+import PlanDetailsPage from "./pages/audit-planning/PlanDetailsPage";
+import CompetencyManagement from "./pages/audit-planning/CompetencyManagement";
+import TrainingNeeds from "./pages/audit-planning/TrainingNeeds";
+
+// Controls Pages
+import ControlsList from "./pages/controls/ControlsList";
+import CreateControlPage from "./pages/controls/CreateControlPage";
+import ControlDetails from "./pages/controls/ControlDetails";
+import ControlsTestPage from "./pages/controls/ControlsTestPage";
+import EnhancedControlsPage from "./pages/controls/EnhancedControlsPage";
+import EnhancedAIControlDemo from "./pages/controls/EnhancedAIControlDemo";
+
+// Control Sets Pages
+import CreateControlSetPage from "./pages/controls/controlsets/CreateControlSetPage";
+import EditControlSetPage from "./pages/controls/controlsets/EditControlSetPage";
+import AIGenerateControlSetPage from "./pages/controls/controlsets/AIGenerateControlSetPage";
+
+// Findings Pages
+import FindingsList from "./pages/findings/FindingsList";
+import CreateFindingPage from "./pages/findings/CreateFindingPage";
+import EditFindingPage from "./pages/findings/EditFindingPage";
+import FindingDetails from "./pages/findings/FindingDetails";
+
+// Risks Pages
+import RisksList from "./pages/risks/RisksList";
+import CreateRiskPage from "./pages/risks/CreateRiskPage";
+import EditRiskPage from "./pages/risks/EditRiskPage";
+import RiskDetails from "./pages/risks/RiskDetails";
+import RiskDashboard from "./pages/risks/RiskDashboard";
+import SecondRiskDashboard from "./pages/risks/SecondRiskDashboard";
+import CreateRiskWizard from "./pages/risks/CreateRiskWizard";
+
+// Risk Reviews Pages
+import CreateReviewPage from "./pages/risks/reviews/CreateReviewPage";
+import EditReviewPage from "./pages/risks/reviews/EditReviewPage";
+
+// Risk Treatments Pages
+import CreateTreatmentPage from "./pages/risks/treatments/CreateTreatmentPage";
+import EditTreatmentPage from "./pages/risks/treatments/EditTreatmentPage";
+
+// Compliance Pages
+import ComplianceFrameworks from "./pages/compliance/ComplianceFrameworks";
+import FrameworksList from "./pages/compliance/FrameworksList";
+import ImportCompliance from "./pages/compliance/ImportCompliance";
+import Importer2 from "./pages/compliance/Importer2";
+import ProfileEditor from "./pages/compliance/ProfileEditor";
+import ProfilesList from "./pages/compliance/ProfilesList";
+import RequirementControlMapping from "./pages/compliance/RequirementControlMapping";
+import RequirementsBrowser from "./pages/compliance/RequirementsBrowser";
+
+// Policies Pages
+import PoliciesList from "./pages/policies/PoliciesList";
+import PolicyEditor from "./pages/policies/PolicyEditor";
+import PolicyManagement from "./pages/policies/PolicyManagement";
+import PolicyVersions from "./pages/policies/PolicyVersions";
+
+// Privacy Pages
+import PrivacyDashboard from "./pages/privacy/PrivacyDashboard";
+import DPIAList from "./pages/privacy/DPIAList";
+import RoPARegister from "./pages/privacy/RoPARegister";
+
+// Regulations Pages
+import RegulationList from "./pages/regulations/RegulationList";
+import RegulationDetail from "./pages/regulations/RegulationDetail";
+import ImpactDashboard from "./pages/regulations/ImpactDashboard";
+
+// Workflows Pages
+import WorkflowsHome from "./pages/workflows/WorkflowsHome";
+import WorkflowsList from "./pages/workflows/WorkflowsList";
+import WorkflowCenter from "./pages/workflows/WorkflowCenter";
+import WorkflowCenterPage from "./pages/workflows/WorkflowCenterPage";
+import WorkflowDetails from "./pages/workflows/WorkflowDetails";
+import WorkflowInstance from "./pages/workflows/WorkflowInstance";
+import ApprovalInbox from "./pages/workflows/ApprovalInbox";
+
+// AI Pages
+import AIAssistant from "./pages/ai/AIAssistant";
+import RiskAIGeneration from "./pages/ai/RiskAIGeneration";
+
+// Other Pages
+import BCPDashboard from "./pages/bcp/BCPDashboard";
+import CreatePlanPage from "./pages/bcp/CreatePlanPage";
+import PlanDetails from "./pages/bcp/PlanDetails";
+import AssetManagement from "./pages/assets/AssetManagement";
+import DocumentManagement from "./pages/documents/DocumentManagement";
+import IncidentManagement from "./pages/incidents/IncidentManagement";
+import VendorManagement from "./pages/vendors/VendorManagement";
+import UserDetails from "./pages/users/UserDetails";
+import UsersList from "./pages/users/UsersList";
+import NotificationsInbox from "./pages/notifications/NotificationsInbox";
+import TrainingCertification from "./pages/training/TrainingCertification";
+import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
+
+// Admin Pages
+import ComingSoonAdmin from "./pages/admin/ComingSoonAdmin";
+
+// Governance Pages
+import GovernanceDashboard from "./pages/governance/Dashboard";
+import GovernanceCalendar from "./pages/governance/Calendar";
+import GovernanceReporting from "./pages/governance/Reporting";
+import GovernanceTraining from "./pages/governance/Training";
+
+function App() {
   return (
     <Router>
       <Routes>
-        {/* Public auth routes */}
+        {/* Public Routes */}
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/auth/sign-in" element={<SignIn />} />
         <Route path="/auth/sign-up" element={<SignUp />} />
-        {/* Backward-compatible aliases */}
-        <Route path="/sign-in" element={<Navigate to="/auth/sign-in" replace />} />
-        <Route path="/sign-up" element={<Navigate to="/auth/sign-up" replace />} />
 
-        {/* Protected app routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          {/* Dashboard and canonical redirect */}
+        {/* Protected Routes */}
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          {/* Dashboard */}
           <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Navigate to="/" replace />} />
 
-          {/* Core */}
+          {/* Profile & Settings */}
+          <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<Settings />} />
+
+          {/* Audits */}
           <Route path="audits" element={<AuditsList />} />
           <Route path="audits/create" element={<CreateAuditPage />} />
-          <Route path="audits/:auditId/schedule" element={<ScheduleAuditPage />} />
-          <Route path="findings" element={<FindingsList />} />
+          <Route path="audits/:id" element={<AuditDetails />} />
+          <Route path="audits/:id/edit" element={<EditAuditPage />} />
+          <Route path="audits/schedule" element={<ScheduleAuditPage />} />
+          <Route path="audits/schedules" element={<UpcomingSchedules />} />
+
+          {/* Audit Planning */}
+          <Route path="audit-planning" element={<AuditPlanningDashboard />} />
+          <Route path="audit-planning/universe" element={<AuditUniversePage />} />
+          <Route path="audit-planning/plans" element={<AuditPlans />} />
+          <Route path="audit-planning/plans/create" element={<CreateAuditPlanPage />} />
+          <Route path="audit-planning/plans/:id" element={<PlanDetailsPage />} />
+          <Route path="audit-planning/resources" element={<ResourceManagement />} />
+          <Route path="audit-planning/competencies" element={<CompetencyManagement />} />
+          <Route path="audit-planning/training" element={<TrainingNeeds />} />
+
+          {/* Controls */}
           <Route path="controls" element={<ControlsList />} />
-          <Route path="controls/create" element={<CreateControlSetPage />} />
-          {/* Policies */}
-          <Route
-            path="policies"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Policies" />}>
-                {React.createElement(React.lazy(() => import('./pages/policies/PoliciesList')) as any)}
-              </React.Suspense>
-            }
-          />
-          <Route
-            path="policies/:policyId"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Policy" />}>
-                {React.createElement(React.lazy(() => import('./pages/policies/PolicyEditor')) as any)}
-              </React.Suspense>
-            }
-          />
-          <Route
-            path="policies/:policyId/versions"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Versions" />}>
-                {React.createElement(React.lazy(() => import('./pages/policies/PolicyVersions')) as any)}
-              </React.Suspense>
-            }
-          />
+          <Route path="controls/create" element={<CreateControlPage />} />
+          <Route path="controls/:id" element={<ControlDetails />} />
+          <Route path="controls/test" element={<ControlsTestPage />} />
+          <Route path="controls/enhanced" element={<EnhancedControlsPage />} />
+          <Route path="controls/ai-demo" element={<EnhancedAIControlDemo />} />
+
+          {/* Control Sets */}
+          <Route path="controls/control-sets/create" element={<CreateControlSetPage />} />
+          <Route path="controls/control-sets/:id/edit" element={<EditControlSetPage />} />
+          <Route path="controls/control-sets/ai-generate" element={<AIGenerateControlSetPage />} />
+
+          {/* Findings */}
+          <Route path="findings" element={<FindingsList />} />
+          <Route path="findings/create" element={<CreateFindingPage />} />
+          <Route path="findings/:id" element={<FindingDetails />} />
+          <Route path="findings/:id/edit" element={<EditFindingPage />} />
+
           {/* Risks */}
           <Route path="risks" element={<RisksList />} />
           <Route path="risks/create" element={<CreateRiskPage />} />
-          {/* Risk Dashboard (lazy) */}
-          <Route
-            path="risks/dashboard"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Risk Dashboard" />}>
-                {React.createElement(
-                  React.lazy(async () => {
-                    const mod: any = await import('./pages/risks/RiskDashboard');
-                    return { default: mod.default ?? mod };
-                  }) as any
-                )}
-              </React.Suspense>
-            }
-          />
-          {/* Ensure CreateRiskWizard is imported to avoid runtime lazy misuse */}
-          <Route
-            path="risks/create-wizard"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Wizard" />}>
-                {React.createElement(React.lazy(() => import('./pages/risks/CreateRiskWizard')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* Risk Details (keep lazy to reduce bundle) */}
-          <Route
-            path="risks/:id"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Risk" />}>
-                {React.createElement(React.lazy(() => import('./pages/risks/RiskDetails')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* Risk Dashboard */}
-          <Route
-            path="risks/dashboard"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Risk Dashboard" />}>
-                <RiskDashboardLazy />
-              </React.Suspense>
-            }
-          />
-          {/* Second Risk Dashboard */}
-          <Route
-            path="risks/dashboard-2"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Second Risk Dashboard" />}>
-                <SecondRiskDashboardLazy />
-              </React.Suspense>
-            }
-          />
-          {/* Edit route placeholder to avoid 404s if page not yet implemented */}
-          <Route
-            path="risks/:id/edit"
-            element={<Placeholder title="Edit Risk" />}
-          />
+          <Route path="risks/create-wizard" element={<CreateRiskWizard />} />
+          <Route path="risks/:id" element={<RiskDetails />} />
+          <Route path="risks/:id/edit" element={<EditRiskPage />} />
+          <Route path="risks/dashboard" element={<RiskDashboard />} />
+          <Route path="risks/dashboard2" element={<SecondRiskDashboard />} />
 
-          {/* Scheduling */}
-          <Route
-            path="audits/schedules"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading" />}>
-                {/* Lazy import to avoid using require in ESM/Vite */}
-                {React.createElement(React.lazy(() => import('./pages/audits/UpcomingSchedules')) as any)}
-              </React.Suspense>
-            }
-          />
+          {/* Risk Reviews */}
+          <Route path="risks/:riskId/reviews/create" element={<CreateReviewPage />} />
+          <Route path="risks/:riskId/reviews/:reviewId/edit" element={<EditReviewPage />} />
+
+          {/* Risk Treatments */}
+          <Route path="risks/:riskId/treatments/create" element={<CreateTreatmentPage />} />
+          <Route path="risks/:riskId/treatments/:treatmentId/edit" element={<EditTreatmentPage />} />
+
+          {/* Compliance */}
+          <Route path="compliance" element={<ComplianceFrameworks />} />
+          <Route path="compliance/frameworks" element={<FrameworksList />} />
+          <Route path="compliance/import" element={<ImportCompliance />} />
+          <Route path="compliance/import2" element={<Importer2 />} />
+          <Route path="compliance/profiles" element={<ProfilesList />} />
+          <Route path="compliance/profiles/:id" element={<ProfileEditor />} />
+          <Route path="compliance/requirements" element={<RequirementsBrowser />} />
+          <Route path="compliance/mapping" element={<RequirementControlMapping />} />
+
+          {/* Policies */}
+          <Route path="policies" element={<PoliciesList />} />
+          <Route path="policies/create" element={<PolicyEditor />} />
+          <Route path="policies/:id" element={<PolicyManagement />} />
+          <Route path="policies/:id/edit" element={<PolicyEditor />} />
+          <Route path="policies/:id/versions" element={<PolicyVersions />} />
+
+          {/* Privacy */}
+          <Route path="privacy" element={<PrivacyDashboard />} />
+          <Route path="privacy/dpia" element={<DPIAList />} />
+          <Route path="privacy/ropa" element={<RoPARegister />} />
+
+          {/* Regulations */}
+          <Route path="regulations" element={<RegulationList />} />
+          <Route path="regulations/:id" element={<RegulationDetail />} />
+          <Route path="regulations/impact" element={<ImpactDashboard />} />
+
+          {/* Workflows */}
+          <Route path="workflows" element={<WorkflowsHome />} />
+          <Route path="workflows/list" element={<WorkflowsList />} />
+          <Route path="workflows/center" element={<WorkflowCenterPage />} />
+          <Route path="workflows/:id" element={<WorkflowDetails />} />
+          <Route path="workflows/:id/instance/:instanceId" element={<WorkflowInstance />} />
+          <Route path="workflows/approvals" element={<ApprovalInbox />} />
 
           {/* AI */}
-          <Route path="ai/assistant" element={<AIAssistant />} />
+          <Route path="ai" element={<AIAssistant />} />
+          <Route path="ai/risk-generation" element={<RiskAIGeneration />} />
 
-          {/* Business Continuity Management (BCP) */}
+          {/* BCP */}
           <Route path="bcp" element={<BCPDashboard />} />
           <Route path="bcp/create" element={<CreatePlanPage />} />
           <Route path="bcp/:id" element={<PlanDetails />} />
 
-          {/* Workflows Module */}
-          <Route
-            path="workflows/home"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading" />}>
-                <LazyWorkflowsHome />
-              </React.Suspense>
-            }
-          />
-          <Route
-            path="workflows/instances/:id"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading" />}>
-                {/*
-                  Lazy import WorkflowInstance to keep bundle smaller.
-                  File exists at src/pages/workflows/WorkflowInstance.tsx
-                */}
-                <LazyWorkflowInstance />
-              </React.Suspense>
-            }
-          />
+          {/* Assets */}
+          <Route path="assets" element={<AssetManagement />} />
 
-          {/* Compliance */}
-          <Route path="compliance/frameworks" element={<FrameworksList />} />
-          <Route path="compliance/requirements" element={<RequirementsBrowser />} />
-          <Route path="compliance/profiles" element={<ProfilesList />} />
-          {/* Compliance Import */}
-          <Route
-            path="compliance/import"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Import" />}>
-                {React.createElement(React.lazy(() => import('./pages/compliance/ImportCompliance')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* Compliance Importer 2 */}
-          <Route
-            path="compliance/importer-2"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Importer 2" />}>
-                {React.createElement(React.lazy(() => import('./pages/compliance/Importer2')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* New: Requirement-Control Mapping */}
-          <Route
-            path="compliance/mapping"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Mapping" />}>
-                {React.createElement(React.lazy(() => import('./pages/compliance/RequirementControlMapping')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* Regulatory Change Management */}
-          <Route path="regulations" element={
-            <React.Suspense fallback={<Placeholder title="Loading Regulations" />}>
-              {React.createElement(React.lazy(() => import('./pages/regulations/RegulationList')) as any)}
-            </React.Suspense>
-          } />
-          <Route path="regulations/impact-dashboard" element={
-            <React.Suspense fallback={<Placeholder title="Loading Impact Dashboard" />}>
-              {React.createElement(React.lazy(() => import('./pages/regulations/ImpactDashboard')) as any)}
-            </React.Suspense>
-          } />
-          <Route path="regulations/:id" element={
-            <React.Suspense fallback={<Placeholder title="Loading Regulation" />}>
-              {React.createElement(React.lazy(() => import('./pages/regulations/RegulationDetail')) as any)}
-            </React.Suspense>
-          } />
-          <Route path="compliance/assessments" element={<Placeholder title="Compliance Assessments" />} />
-          <Route path="compliance/attestations" element={<Placeholder title="Compliance Attestations" />} />
-          <Route path="compliance/exceptions" element={<Placeholder title="Compliance Exceptions" />} />
-          <Route path="compliance/posture" element={<Placeholder title="Compliance Posture" />} />
+          {/* Documents */}
+          <Route path="documents" element={<DocumentManagement />} />
 
-          {/* Privacy */}
-          <Route path="privacy" element={<Navigate to="/privacy/dpia" replace />} />
-          <Route path="privacy/dpia" element={<DPIAList />} />
-          <Route path="privacy/ropa" element={<RoPARegister />} />
+          {/* Incidents */}
+          <Route path="incidents" element={<IncidentManagement />} />
+
+          {/* Vendors */}
+          <Route path="vendors" element={<VendorManagement />} />
+
+          {/* Users */}
+          <Route path="users" element={<UsersList />} />
+          <Route path="users/:id" element={<UserDetails />} />
+
+          {/* Notifications */}
+          <Route path="notifications" element={<NotificationsInbox />} />
+
+          {/* Training */}
+          <Route path="training" element={<TrainingCertification />} />
+
+          {/* Analytics */}
+          <Route path="analytics" element={<AdvancedAnalytics />} />
 
           {/* Governance */}
-          <Route
-            path="governance/dashboard"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Dashboard" />}>
-                {React.createElement(React.lazy(() => import('./pages/governance/Dashboard')) as any)}
-              </React.Suspense>
-            }
-          />
-          <Route
-            path="governance/calendar"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Calendar" />}>
-                {React.createElement(React.lazy(() => import('./pages/governance/Calendar.tsx')) as any)}
-              </React.Suspense>
-            }
-          />
-          <Route
-            path="governance/reporting"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Reporting" />}>
-                {React.createElement(React.lazy(() => import('./pages/governance/Reporting.tsx')) as any)}
-              </React.Suspense>
-            }
-          />
-          <Route
-            path="governance/training"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Training" />}>
-                {React.createElement(React.lazy(() => import('./pages/governance/Training.tsx')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* Notifications */}
-          <Route
-            path="notifications"
-            element={
-              <React.Suspense fallback={<Placeholder title="Loading Notifications" />}>
-                {React.createElement(React.lazy(() => import('./pages/notifications/NotificationsInbox')) as any)}
-              </React.Suspense>
-            }
-          />
-          {/* Users and Settings */}
-          <Route path="users" element={<Placeholder title="Users" />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="governance" element={<GovernanceDashboard />} />
+          <Route path="governance/calendar" element={<GovernanceCalendar />} />
+          <Route path="governance/reporting" element={<GovernanceReporting />} />
+          <Route path="governance/training" element={<GovernanceTraining />} />
 
-          {/* Workflows */}
-          <Route path="workflows" element={<Navigate to="/workflows/home" replace />} />
-          <Route path="workflows/*" element={<Placeholder title="Workflow Center" />} />
+          {/* Admin */}
+          <Route path="admin" element={<ComingSoonAdmin />} />
         </Route>
-
-        {/* Fallback: redirect unknown to auth sign-in */}
-        <Route path="*" element={<Navigate to="/auth/sign-in" replace />} />
       </Routes>
     </Router>
   );
 }
+
+export default App;

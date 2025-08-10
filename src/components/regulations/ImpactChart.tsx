@@ -21,3 +21,4 @@ export default function ImpactChart({ data, title }: { data: Item[]; title?: str
 }
 
 
+

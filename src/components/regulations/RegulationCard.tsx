@@ -27,3 +27,4 @@ export default function RegulationCard({ item, onClick }: { item: Regulation; on
 }
 
 
+
