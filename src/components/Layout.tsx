@@ -520,6 +520,72 @@ const Layout: React.FC = () => {
       ]
     },
     {
+      name: "IT & Security Risk Management",
+      href: "/it-security",
+      icon: Shield,
+      current: location.pathname.startsWith("/it-security"),
+      roles: [
+        "business_unit_manager",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/it-security",
+          current: location.pathname === "/it-security",
+        },
+        {
+          name: "Security Incidents",
+          href: "/it-security/incidents",
+          current: location.pathname.startsWith("/it-security/incidents"),
+        },
+        {
+          name: "Vulnerabilities",
+          href: "/it-security/vulnerabilities",
+          current: location.pathname.startsWith("/it-security/vulnerabilities"),
+        },
+        {
+          name: "IT Controls",
+          href: "/it-security/controls",
+          current: location.pathname.startsWith("/it-security/controls"),
+        },
+        {
+          name: "Security Policies",
+          href: "/it-security/policies",
+          current: location.pathname.startsWith("/it-security/policies"),
+        },
+        {
+          name: "PCI Compliance",
+          href: "/it-security/pci",
+          current: location.pathname.startsWith("/it-security/pci"),
+        },
+        {
+          name: "ISO 27001 (ISMS)",
+          href: "/it-security/isms",
+          current: location.pathname.startsWith("/it-security/isms"),
+        },
+        {
+          name: "CMMC Management",
+          href: "/it-security/cmmc",
+          current: location.pathname.startsWith("/it-security/cmmc"),
+        },
+        {
+          name: "Security Monitoring",
+          href: "/it-security/monitoring",
+          current: location.pathname.startsWith("/it-security/monitoring"),
+        },
+        {
+          name: "Security Assets",
+          href: "/it-security/assets",
+          current: location.pathname.startsWith("/it-security/assets"),
+        },
+      ],
+    },
+    {
       name: "ESG Management",
       href: "/esg",
       icon: Globe,

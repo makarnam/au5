@@ -977,6 +977,14 @@ export interface ITSecurityFilterOptions {
   severity?: string[];
   priority?: string[];
   type?: string[];
+  category?: string[];
+  framework?: string[];
+  merchant_level?: string[];
+  target_level?: string[];
+  certification_status?: string[];
+  classification?: string[];
+  criticality?: string[];
+  control_id?: string[];
   business_unit?: string[];
   assigned_to?: string[];
   date_range?: {

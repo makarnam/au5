@@ -143,6 +143,34 @@ import ESGProgramsPage from "./pages/esg/ESGProgramsPage";
 import DoubleMaterialityPage from "./pages/esg/DoubleMaterialityPage";
 import ESGComprehensivePage from "./pages/esg/ESGComprehensivePage";
 
+// IT Security Management Pages
+import ITSecurityDashboard from "./pages/it-security/ITSecurityDashboard";
+import IncidentsList from "./pages/it-security/incidents/IncidentsList";
+import CreateIncidentPage from "./pages/it-security/incidents/CreateIncidentPage";
+import VulnerabilitiesList from "./pages/it-security/VulnerabilitiesList";
+import CreateVulnerabilityPage from "./pages/it-security/vulnerabilities/CreateVulnerabilityPage";
+import EditVulnerabilityPage from "./pages/it-security/vulnerabilities/EditVulnerabilityPage";
+import VulnerabilityDetails from "./pages/it-security/vulnerabilities/VulnerabilityDetails";
+import ControlsList from "./pages/it-security/ControlsList";
+import CreateControlPage from "./pages/it-security/controls/CreateControlPage";
+import EditControlPage from "./pages/it-security/controls/EditControlPage";
+import ControlDetails from "./pages/it-security/controls/ControlDetails";
+import PoliciesList from "./pages/it-security/PoliciesList";
+import PCICompliance from "./pages/it-security/PCICompliance";
+import CreatePCIAssessmentPage from "./pages/it-security/pci-compliance/CreatePCIAssessmentPage";
+import PCIAssessmentDetails from "./pages/it-security/pci-compliance/PCIAssessmentDetails";
+import EditPCIAssessmentPage from "./pages/it-security/pci-compliance/EditPCIAssessmentPage";
+import ISMSManagement from "./pages/it-security/ISMSManagement";
+import CreateISMSProgramPage from "./pages/it-security/isms/CreateISMSProgramPage";
+import ISMSProgramDetails from "./pages/it-security/isms/ISMSProgramDetails";
+import EditISMSProgramPage from "./pages/it-security/isms/EditISMSProgramPage";
+import CMMCManagement from "./pages/it-security/CMMCManagement";
+import CreateCMMCProgramPage from "./pages/it-security/cmmc/CreateCMMCProgramPage";
+import CMMCProgramDetails from "./pages/it-security/cmmc/CMMCProgramDetails";
+import EditCMMCProgramPage from "./pages/it-security/cmmc/EditCMMCProgramPage";
+import SecurityMonitoring from "./pages/it-security/SecurityMonitoring";
+import SecurityAssets from "./pages/it-security/SecurityAssets";
+
 // Admin Pages
 import ComingSoonAdmin from "./pages/admin/ComingSoonAdmin";
 
@@ -306,6 +334,42 @@ function App() {
           <Route path="esg/comprehensive" element={<ESGComprehensivePage />} />
           <Route path="esg/programs" element={<ESGProgramsPage />} />
           <Route path="esg/materiality" element={<DoubleMaterialityPage />} />
+
+          {/* IT Security Management */}
+          <Route path="it-security" element={<ITSecurityDashboard />} />
+          <Route path="it-security/incidents" element={<IncidentsList />} />
+          <Route path="it-security/incidents/create" element={<CreateIncidentPage />} />
+          <Route path="it-security/vulnerabilities" element={<VulnerabilitiesList />} />
+          <Route path="it-security/vulnerabilities/create" element={<CreateVulnerabilityPage />} />
+          <Route path="it-security/vulnerabilities/:id" element={<VulnerabilityDetails />} />
+          <Route path="it-security/vulnerabilities/:id/edit" element={<EditVulnerabilityPage />} />
+          <Route path="it-security/controls" element={<ControlsList />} />
+          <Route path="it-security/controls/create" element={<CreateControlPage />} />
+          <Route path="it-security/controls/:id" element={<ControlDetails />} />
+          <Route path="it-security/controls/:id/edit" element={<EditControlPage />} />
+          <Route path="it-security/policies" element={<PoliciesList />} />
+          
+          {/* PCI Compliance */}
+          <Route path="it-security/pci" element={<PCICompliance />} />
+          <Route path="it-security/pci-compliance" element={<PCICompliance />} />
+          <Route path="it-security/pci-compliance/create" element={<CreatePCIAssessmentPage />} />
+          <Route path="it-security/pci-compliance/:id" element={<PCIAssessmentDetails />} />
+          <Route path="it-security/pci-compliance/:id/edit" element={<EditPCIAssessmentPage />} />
+          
+          {/* ISMS Management */}
+          <Route path="it-security/isms" element={<ISMSManagement />} />
+          <Route path="it-security/isms/create" element={<CreateISMSProgramPage />} />
+          <Route path="it-security/isms/:id" element={<ISMSProgramDetails />} />
+          <Route path="it-security/isms/:id/edit" element={<EditISMSProgramPage />} />
+          
+          {/* CMMC Management */}
+          <Route path="it-security/cmmc" element={<CMMCManagement />} />
+          <Route path="it-security/cmmc/create" element={<CreateCMMCProgramPage />} />
+          <Route path="it-security/cmmc/:id" element={<CMMCProgramDetails />} />
+          <Route path="it-security/cmmc/:id/edit" element={<EditCMMCProgramPage />} />
+          
+          <Route path="it-security/monitoring" element={<SecurityMonitoring />} />
+          <Route path="it-security/assets" element={<SecurityAssets />} />
 
           {/* Users */}
           <Route path="users" element={<UsersList />} />
