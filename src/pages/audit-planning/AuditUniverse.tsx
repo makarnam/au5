@@ -42,7 +42,7 @@ const AuditUniverseModal: React.FC<AuditUniverseModalProps> = ({
   const [formData, setFormData] = useState<AuditUniverseFormData>({
     entity_name: '',
     entity_type: 'process',
-    business_unit_id: '',
+    business_unit_id: undefined,
     description: '',
     classification_category: 'operational',
     geography: '',
@@ -50,7 +50,7 @@ const AuditUniverseModal: React.FC<AuditUniverseModalProps> = ({
     inherent_risk_score: undefined,
     control_maturity_level: undefined,
     audit_frequency_months: 12,
-    parent_entity_id: ''
+    parent_entity_id: undefined
   });
 
   useEffect(() => {
@@ -58,7 +58,7 @@ const AuditUniverseModal: React.FC<AuditUniverseModalProps> = ({
       setFormData({
         entity_name: universe.entity_name,
         entity_type: universe.entity_type,
-        business_unit_id: universe.business_unit_id || '',
+        business_unit_id: universe.business_unit_id || undefined,
         description: universe.description || '',
         classification_category: universe.classification_category,
         geography: universe.geography || '',
@@ -66,13 +66,13 @@ const AuditUniverseModal: React.FC<AuditUniverseModalProps> = ({
         inherent_risk_score: universe.inherent_risk_score,
         control_maturity_level: universe.control_maturity_level,
         audit_frequency_months: universe.audit_frequency_months,
-        parent_entity_id: universe.parent_entity_id || ''
+        parent_entity_id: universe.parent_entity_id || undefined
       });
     } else {
       setFormData({
         entity_name: '',
         entity_type: 'process',
-        business_unit_id: '',
+        business_unit_id: undefined,
         description: '',
         classification_category: 'operational',
         geography: '',
@@ -80,14 +80,22 @@ const AuditUniverseModal: React.FC<AuditUniverseModalProps> = ({
         inherent_risk_score: undefined,
         control_maturity_level: undefined,
         audit_frequency_months: 12,
-        parent_entity_id: ''
+        parent_entity_id: undefined
       });
     }
   }, [universe]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Clean up UUID fields - convert empty strings to undefined
+    const cleanedFormData = {
+      ...formData,
+      business_unit_id: formData.business_unit_id || undefined,
+      parent_entity_id: formData.parent_entity_id || undefined
+    };
+    
+    onSave(cleanedFormData);
   };
 
   if (!isOpen) return null;
@@ -220,6 +228,36 @@ const AuditUniverseModal: React.FC<AuditUniverseModalProps> = ({
                   min="1"
                   value={formData.audit_frequency_months}
                   onChange={(e) => setFormData({ ...formData, audit_frequency_months: parseInt(e.target.value) })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Business Unit
+                </label>
+                <select
+                  value={formData.business_unit_id || ''}
+                  onChange={(e) => setFormData({ ...formData, business_unit_id: e.target.value || undefined })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select Business Unit</option>
+                  <option value="550e8400-e29b-41d4-a716-446655440001">IT Department</option>
+                  <option value="550e8400-e29b-41d4-a716-446655440002">Finance Department</option>
+                  <option value="550e8400-e29b-41d4-a716-446655440003">HR Department</option>
+                  <option value="550e8400-e29b-41d4-a716-446655440004">Operations Department</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Parent Entity ID
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter parent entity ID (optional)"
+                  value={formData.parent_entity_id || ''}
+                  onChange={(e) => setFormData({ ...formData, parent_entity_id: e.target.value || undefined })}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>

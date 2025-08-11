@@ -107,6 +107,52 @@ const Layout: React.FC = () => {
       ],
     },
     {
+      name: "Audit Planning",
+      href: "/audit-planning",
+      icon: BarChart3,
+      current: location.pathname.startsWith("/audit-planning"),
+      roles: [
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/audit-planning",
+          current: location.pathname === "/audit-planning",
+        },
+        {
+          name: "Audit Universe",
+          href: "/audit-planning/universe",
+          current: location.pathname === "/audit-planning/universe",
+        },
+        {
+          name: "Audit Plans",
+          href: "/audit-planning/plans",
+          current: location.pathname === "/audit-planning/plans",
+        },
+        {
+          name: "Resource Management",
+          href: "/audit-planning/resources",
+          current: location.pathname === "/audit-planning/resources",
+        },
+        {
+          name: "Competencies",
+          href: "/audit-planning/competencies",
+          current: location.pathname === "/audit-planning/competencies",
+        },
+        {
+          name: "Training Needs",
+          href: "/audit-planning/training",
+          current: location.pathname === "/audit-planning/training",
+        },
+      ],
+    },
+    {
       name: t("navigation.risks"),
       href: "/risks",
       icon: AlertTriangle,

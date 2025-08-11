@@ -16,11 +16,11 @@ export interface AuditUniverse {
   inherent_risk_score?: number;
   control_maturity_level?: number;
   last_audit_date?: string;
-  last_audit_findings_count: number;
-  audit_frequency_months: number;
-  is_active: boolean;
+  last_audit_findings_count?: number;
+  audit_frequency_months?: number;
+  is_active?: boolean;
   parent_entity_id?: string;
-  created_by: string;
+  created_by?: string;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -71,8 +71,8 @@ export interface AuditPlan {
   plan_year: number;
   description?: string;
   strategic_objectives?: string[];
-  total_planned_audits: number;
-  total_planned_hours: number;
+  total_planned_audits?: number;
+  total_planned_hours?: number;
   total_budget?: number;
   risk_based_coverage_percentage?: number;
   compliance_coverage_percentage?: number;
@@ -106,18 +106,18 @@ export interface AuditPlanItem {
   risk_score?: number;
   planned_start_date?: string;
   planned_end_date?: string;
-  planned_hours: number;
+  planned_hours?: number;
   lead_auditor_id?: string;
-  team_size: number;
+  team_size?: number;
   business_unit_id?: string;
   regulatory_requirement?: string;
-  audit_frequency_months: number;
+  audit_frequency_months?: number;
   dependencies?: string[];
   resource_requirements?: string[];
   status: 'planned' | 'in_progress' | 'completed' | 'deferred' | 'cancelled';
   actual_start_date?: string;
   actual_end_date?: string;
-  actual_hours: number;
+  actual_hours?: number;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -341,7 +341,7 @@ export interface AuditUniverseFormData {
   regulatory_requirements?: string[];
   inherent_risk_score?: number;
   control_maturity_level?: number;
-  audit_frequency_months: number;
+  audit_frequency_months?: number;
   parent_entity_id?: string;
 }
 
@@ -365,12 +365,12 @@ export interface AuditPlanItemFormData {
   risk_score?: number;
   planned_start_date?: string;
   planned_end_date?: string;
-  planned_hours: number;
+  planned_hours?: number;
   lead_auditor_id?: string;
-  team_size: number;
+  team_size?: number;
   business_unit_id?: string;
   regulatory_requirement?: string;
-  audit_frequency_months: number;
+  audit_frequency_months?: number;
   dependencies?: string[];
   resource_requirements?: string[];
 }

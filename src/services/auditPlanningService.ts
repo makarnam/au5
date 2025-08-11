@@ -704,7 +704,7 @@ class AuditPlanningService {
       // Get planned audits
       const { data: planItemsData, error: planItemsError } = await supabase
         .from("audit_plan_items")
-        .select("planned_hours, status");
+        .select("planned_hours, status, planned_start_date");
 
       if (planItemsError) {
         throw new Error(`Database error: ${planItemsError.message}`);
@@ -728,7 +728,7 @@ class AuditPlanningService {
         new Date(item.planned_start_date) < new Date()
       ).length || 0;
       const plannedAudits = planItemsData?.filter(item => item.status === "planned").length || 0;
-      const totalAuditHours = planItemsData?.reduce((sum, item) => sum + (item.planned_hours || 0), 0) || 0;
+      const totalAuditHours = planItemsData?.reduce((sum, item) => sum + (Number(item.planned_hours) || 0), 0) || 0;
       const trainingNeedsCount = trainingData?.length || 0;
 
       return {
@@ -749,15 +749,64 @@ class AuditPlanningService {
 
   async getCoverageAnalysis(): Promise<CoverageAnalysis[]> {
     try {
+      // Use a direct query instead of RPC to avoid type issues
       const { data, error } = await supabase
-        .rpc('get_audit_coverage_analysis');
+        .from('audit_universe')
+        .select(`
+          business_units(name),
+          id,
+          last_audit_date,
+          inherent_risk_score
+        `)
+        .eq('is_active', true);
 
       if (error) {
         console.error("Supabase error:", error);
         throw new Error(`Database error: ${error.message}`);
       }
 
-      return data as CoverageAnalysis[];
+      // Group by business unit and calculate metrics
+      const businessUnitMap = new Map<string, { total: number; audited: number; riskScores: number[] }>();
+      
+      data?.forEach((item: any) => {
+        const businessUnit = item.business_units?.name || 'Unknown';
+        const current = businessUnitMap.get(businessUnit) || { total: 0, audited: 0, riskScores: [] };
+        
+        current.total += 1;
+        if (item.last_audit_date) {
+          current.audited += 1;
+        }
+        if (item.inherent_risk_score) {
+          current.riskScores.push(item.inherent_risk_score);
+        }
+        
+        businessUnitMap.set(businessUnit, current);
+      });
+
+      // Convert to CoverageAnalysis format
+      const result: CoverageAnalysis[] = Array.from(businessUnitMap.entries()).map(([businessUnit, metrics]) => {
+        const coveragePercentage = metrics.total > 0 ? (metrics.audited / metrics.total) * 100 : 0;
+        const avgRiskScore = metrics.riskScores.length > 0 
+          ? metrics.riskScores.reduce((sum, score) => sum + score, 0) / metrics.riskScores.length 
+          : 0;
+        
+        let riskLevel = 'Low';
+        if (coveragePercentage < 50) {
+          riskLevel = 'High';
+        } else if (coveragePercentage < 80) {
+          riskLevel = 'Medium';
+        }
+
+        return {
+          business_unit: businessUnit,
+          total_entities: metrics.total,
+          audited_entities: metrics.audited,
+          coverage_percentage: Number(Math.round(coveragePercentage * 100) / 100),
+          risk_level: riskLevel
+        };
+      });
+
+      return result.sort((a, b) => a.coverage_percentage - b.coverage_percentage);
     } catch (error) {
       console.error("Error fetching coverage analysis:", error);
       throw error;
@@ -766,15 +815,38 @@ class AuditPlanningService {
 
   async getResourceUtilization(): Promise<ResourceUtilization[]> {
     try {
+      // Use a direct query instead of RPC to avoid type issues
       const { data, error } = await supabase
-        .rpc('get_resource_utilization');
+        .from('users')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          audit_resource_allocation(allocated_hours)
+        `)
+        .eq('is_active', true);
 
       if (error) {
         console.error("Supabase error:", error);
         throw new Error(`Database error: ${error.message}`);
       }
 
-      return data as ResourceUtilization[];
+      // Convert to ResourceUtilization format
+      return (data || []).map((user: any) => {
+        const allocatedHours = user.audit_resource_allocation?.reduce((sum: number, allocation: any) => 
+          sum + (Number(allocation.allocated_hours) || 0), 0) || 0;
+        const availableHours = 160; // Assuming 160 hours per month
+        const utilizationPercentage = availableHours > 0 ? (allocatedHours / availableHours) * 100 : 0;
+
+        return {
+          user_id: user.id,
+          user_name: `${user.first_name} ${user.last_name}`,
+          allocated_hours: allocatedHours,
+          available_hours: availableHours,
+          utilization_percentage: Math.round(utilizationPercentage * 100) / 100,
+          skills: ['Financial Audit', 'IT Audit', 'Compliance'] // Mock skills for now
+        };
+      }).sort((a, b) => b.utilization_percentage - a.utilization_percentage);
     } catch (error) {
       console.error("Error fetching resource utilization:", error);
       throw error;

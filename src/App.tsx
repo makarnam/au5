@@ -115,6 +115,9 @@ import IncidentManagement from "./pages/incidents/IncidentManagement";
 import VendorManagement from "./pages/vendors/VendorManagement";
 import UserDetails from "./pages/users/UserDetails";
 import UsersList from "./pages/users/UsersList";
+import UserManagementDashboard from "./pages/users/UserManagementDashboard";
+import CreateUserPage from "./pages/users/CreateUserPage";
+import InviteUserPage from "./pages/users/InviteUserPage";
 import NotificationsInbox from "./pages/notifications/NotificationsInbox";
 import TrainingCertification from "./pages/training/TrainingCertification";
 import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
@@ -129,6 +132,8 @@ import GovernanceReporting from "./pages/governance/Reporting";
 import GovernanceTraining from "./pages/governance/Training";
 
 function App() {
+  console.log("App component rendering...");
+  
   return (
     <Router>
       <Routes>
@@ -206,6 +211,7 @@ function App() {
           <Route path="compliance/frameworks" element={<FrameworksList />} />
           <Route path="compliance/import" element={<ImportCompliance />} />
           <Route path="compliance/import2" element={<Importer2 />} />
+          <Route path="compliance/importer-2" element={<Importer2 />} />
           <Route path="compliance/profiles" element={<ProfilesList />} />
           <Route path="compliance/profiles/:id" element={<ProfileEditor />} />
           <Route path="compliance/requirements" element={<RequirementsBrowser />} />
@@ -220,6 +226,7 @@ function App() {
 
           {/* Privacy */}
           <Route path="privacy" element={<PrivacyDashboard />} />
+          <Route path="privacy/dashboard" element={<PrivacyDashboard />} />
           <Route path="privacy/dpia" element={<DPIAList />} />
           <Route path="privacy/ropa" element={<RoPARegister />} />
 
@@ -227,6 +234,7 @@ function App() {
           <Route path="regulations" element={<RegulationList />} />
           <Route path="regulations/:id" element={<RegulationDetail />} />
           <Route path="regulations/impact" element={<ImpactDashboard />} />
+          <Route path="regulations/impact-dashboard" element={<ImpactDashboard />} />
 
           {/* Workflows */}
           <Route path="workflows" element={<WorkflowsHome />} />
@@ -259,6 +267,9 @@ function App() {
 
           {/* Users */}
           <Route path="users" element={<UsersList />} />
+          <Route path="users/dashboard" element={<UserManagementDashboard />} />
+          <Route path="users/create" element={<CreateUserPage />} />
+          <Route path="users/invite" element={<InviteUserPage />} />
           <Route path="users/:id" element={<UserDetails />} />
 
           {/* Notifications */}
@@ -272,6 +283,7 @@ function App() {
 
           {/* Governance */}
           <Route path="governance" element={<GovernanceDashboard />} />
+          <Route path="governance/dashboard" element={<GovernanceDashboard />} />
           <Route path="governance/calendar" element={<GovernanceCalendar />} />
           <Route path="governance/reporting" element={<GovernanceReporting />} />
           <Route path="governance/training" element={<GovernanceTraining />} />

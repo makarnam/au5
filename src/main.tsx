@@ -7,6 +7,8 @@ import { Toaster } from "react-hot-toast";
 // Ensure apikey header is present for any rare direct REST calls
 import "./lib/fetchWithSupabaseHeaders";
 
+console.log("main.tsx: Starting app initialization...");
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <>
@@ -15,3 +17,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </>
   </React.StrictMode>,
 );
+
+console.log("main.tsx: App rendered to DOM");
