@@ -628,3 +628,6 @@ export interface LanguageOption {
 
 // Re-export ESG types
 export * from './esg';
+
+// Re-export IT Security types
+export * from './itSecurity';
