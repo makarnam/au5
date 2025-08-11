@@ -277,6 +277,37 @@ const Layout: React.FC = () => {
       onClick: () => navigate("/ai/assistant"),
     },
     {
+      name: "AI Governance",
+      href: "/ai-governance",
+      icon: Bot,
+      current: location.pathname.startsWith("/ai-governance"),
+      roles: [
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/ai-governance/dashboard",
+          current: location.pathname === "/ai-governance/dashboard",
+        },
+        {
+          name: "AI Models",
+          href: "/ai-governance/models",
+          current: location.pathname === "/ai-governance/models",
+        },
+        {
+          name: "Controls Library",
+          href: "/ai-governance/controls",
+          current: location.pathname === "/ai-governance/controls",
+        },
+      ],
+    },
+    {
       name: "Compliance",
       href: "/compliance/frameworks",
       icon: Shield,

@@ -105,6 +105,11 @@ import ApprovalInbox from "./pages/workflows/ApprovalInbox";
 import AIAssistant from "./pages/ai/AIAssistant";
 import RiskAIGeneration from "./pages/ai/RiskAIGeneration";
 
+// AI Governance Pages
+import AIGovernanceDashboard from "./pages/ai-governance/AIGovernanceDashboard";
+import AIModelsList from "./pages/ai-governance/AIModelsList";
+import AIControlsList from "./pages/ai-governance/AIControlsList";
+
 // Other Pages
 import BCPDashboard from "./pages/bcp/BCPDashboard";
 import CreatePlanPage from "./pages/bcp/CreatePlanPage";
@@ -305,6 +310,12 @@ function App() {
           {/* AI */}
           <Route path="ai" element={<AIAssistant />} />
           <Route path="ai/risk-generation" element={<RiskAIGeneration />} />
+
+          {/* AI Governance */}
+          <Route path="ai-governance" element={<AIGovernanceDashboard />} />
+          <Route path="ai-governance/dashboard" element={<AIGovernanceDashboard />} />
+          <Route path="ai-governance/models" element={<AIModelsList />} />
+          <Route path="ai-governance/controls" element={<AIControlsList />} />
 
           {/* BCP */}
           <Route path="bcp" element={<BCPDashboard />} />
