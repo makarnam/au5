@@ -109,6 +109,15 @@ import RiskAIGeneration from "./pages/ai/RiskAIGeneration";
 import BCPDashboard from "./pages/bcp/BCPDashboard";
 import CreatePlanPage from "./pages/bcp/CreatePlanPage";
 import PlanDetails from "./pages/bcp/PlanDetails";
+
+// Resilience Management
+import ResilienceDashboard from "./pages/resilience/ResilienceDashboard";
+import BusinessImpactAnalysis from "./pages/resilience/BusinessImpactAnalysis";
+import BusinessImpactAnalysisList from "./pages/resilience/BusinessImpactAnalysisList";
+import ResilienceIncidentManagement from "./pages/resilience/IncidentManagement";
+import CrisisManagement from "./pages/resilience/CrisisManagement";
+import ScenarioAnalysis from "./pages/resilience/ScenarioAnalysis";
+import ResilienceMetrics from "./pages/resilience/ResilienceMetrics";
 import AssetManagement from "./pages/assets/AssetManagement";
 import DocumentManagement from "./pages/documents/DocumentManagement";
 import IncidentManagement from "./pages/incidents/IncidentManagement";
@@ -301,6 +310,15 @@ function App() {
           <Route path="bcp" element={<BCPDashboard />} />
           <Route path="bcp/create" element={<CreatePlanPage />} />
           <Route path="bcp/:id" element={<PlanDetails />} />
+
+          {/* Resilience Management */}
+          <Route path="resilience" element={<ResilienceDashboard />} />
+          <Route path="resilience/bia" element={<BusinessImpactAnalysisList />} />
+          <Route path="resilience/bia/:id" element={<BusinessImpactAnalysis />} />
+          <Route path="resilience/incidents" element={<ResilienceIncidentManagement />} />
+          <Route path="resilience/crisis" element={<CrisisManagement />} />
+          <Route path="resilience/scenarios" element={<ScenarioAnalysis />} />
+          <Route path="resilience/metrics" element={<ResilienceMetrics />} />
 
           {/* Assets */}
           <Route path="assets" element={<AssetManagement />} />

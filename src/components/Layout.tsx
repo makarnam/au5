@@ -190,6 +190,53 @@ const Layout: React.FC = () => {
       ]
     },
     {
+      name: "Resilience Management",
+      href: "/resilience",
+      icon: Shield,
+      current: location.pathname.startsWith("/resilience"),
+      roles: [
+        "business_unit_manager",
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/resilience",
+          current: location.pathname === "/resilience",
+        },
+        {
+          name: "Incident Management",
+          href: "/resilience/incidents",
+          current: location.pathname === "/resilience/incidents",
+        },
+        {
+          name: "Business Impact Analysis",
+          href: "/resilience/bia",
+          current: location.pathname.startsWith("/resilience/bia"),
+        },
+        {
+          name: "Crisis Management",
+          href: "/resilience/crisis",
+          current: location.pathname === "/resilience/crisis",
+        },
+        {
+          name: "Scenario Analysis",
+          href: "/resilience/scenarios",
+          current: location.pathname === "/resilience/scenarios",
+        },
+        {
+          name: "Metrics Dashboard",
+          href: "/resilience/metrics",
+          current: location.pathname === "/resilience/metrics",
+        }
+      ]
+    },
+    {
       name: t("navigation.findings"),
       href: "/findings",
       icon: Search,
