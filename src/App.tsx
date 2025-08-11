@@ -151,11 +151,11 @@ import VulnerabilitiesList from "./pages/it-security/VulnerabilitiesList";
 import CreateVulnerabilityPage from "./pages/it-security/vulnerabilities/CreateVulnerabilityPage";
 import EditVulnerabilityPage from "./pages/it-security/vulnerabilities/EditVulnerabilityPage";
 import VulnerabilityDetails from "./pages/it-security/vulnerabilities/VulnerabilityDetails";
-import ControlsList from "./pages/it-security/ControlsList";
-import CreateControlPage from "./pages/it-security/controls/CreateControlPage";
-import EditControlPage from "./pages/it-security/controls/EditControlPage";
-import ControlDetails from "./pages/it-security/controls/ControlDetails";
-import PoliciesList from "./pages/it-security/PoliciesList";
+import ITSecurityControlsList from "./pages/it-security/ControlsList";
+import ITSecurityCreateControlPage from "./pages/it-security/controls/CreateControlPage";
+import ITSecurityEditControlPage from "./pages/it-security/controls/EditControlPage";
+import ITSecurityControlDetails from "./pages/it-security/controls/ControlDetails";
+import ITSecurityPoliciesList from "./pages/it-security/PoliciesList";
 import PCICompliance from "./pages/it-security/PCICompliance";
 import CreatePCIAssessmentPage from "./pages/it-security/pci-compliance/CreatePCIAssessmentPage";
 import PCIAssessmentDetails from "./pages/it-security/pci-compliance/PCIAssessmentDetails";
@@ -168,7 +168,7 @@ import CMMCManagement from "./pages/it-security/CMMCManagement";
 import CreateCMMCProgramPage from "./pages/it-security/cmmc/CreateCMMCProgramPage";
 import CMMCProgramDetails from "./pages/it-security/cmmc/CMMCProgramDetails";
 import EditCMMCProgramPage from "./pages/it-security/cmmc/EditCMMCProgramPage";
-import SecurityMonitoring from "./pages/it-security/SecurityMonitoring";
+import ITSecurityMonitoring from "./pages/it-security/SecurityMonitoring";
 import SecurityAssets from "./pages/it-security/SecurityAssets";
 
 // Admin Pages
@@ -343,11 +343,11 @@ function App() {
           <Route path="it-security/vulnerabilities/create" element={<CreateVulnerabilityPage />} />
           <Route path="it-security/vulnerabilities/:id" element={<VulnerabilityDetails />} />
           <Route path="it-security/vulnerabilities/:id/edit" element={<EditVulnerabilityPage />} />
-          <Route path="it-security/controls" element={<ControlsList />} />
-          <Route path="it-security/controls/create" element={<CreateControlPage />} />
-          <Route path="it-security/controls/:id" element={<ControlDetails />} />
-          <Route path="it-security/controls/:id/edit" element={<EditControlPage />} />
-          <Route path="it-security/policies" element={<PoliciesList />} />
+          <Route path="it-security/controls" element={<ITSecurityControlsList />} />
+          <Route path="it-security/controls/create" element={<ITSecurityCreateControlPage />} />
+          <Route path="it-security/controls/:id" element={<ITSecurityControlDetails />} />
+          <Route path="it-security/controls/:id/edit" element={<ITSecurityEditControlPage />} />
+          <Route path="it-security/policies" element={<ITSecurityPoliciesList />} />
           
           {/* PCI Compliance */}
           <Route path="it-security/pci" element={<PCICompliance />} />
@@ -368,7 +368,7 @@ function App() {
           <Route path="it-security/cmmc/:id" element={<CMMCProgramDetails />} />
           <Route path="it-security/cmmc/:id/edit" element={<EditCMMCProgramPage />} />
           
-          <Route path="it-security/monitoring" element={<SecurityMonitoring />} />
+          <Route path="it-security/monitoring" element={<ITSecurityMonitoring />} />
           <Route path="it-security/assets" element={<SecurityAssets />} />
 
           {/* Users */}
