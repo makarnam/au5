@@ -27,6 +27,7 @@ import {
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
 import { motion, AnimatePresence } from "framer-motion";
+import ErrorBoundary from "./common/ErrorBoundary";
  // Ensure NotificationBell is statically imported to work with Vite/ESM
  import NotificationBell from "./notifications/NotificationBell";
  import ComposeNotificationModal from "./notifications/ComposeNotificationModal";
@@ -457,7 +458,6 @@ const Layout: React.FC = () => {
       icon: BarChart3,
       current: location.pathname.startsWith("/analytics"),
       roles: ["reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
-      comingSoon: true,
     },
     {
       name: "Document Management",
@@ -472,7 +472,6 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
     },
     {
       name: "Policies",
@@ -514,7 +513,6 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
     },
     {
       name: "Vendor Management",
@@ -529,7 +527,6 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
     },
     {
       name: "Third Party Risk Management",
@@ -739,7 +736,6 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
     },
     {
       name: "Asset Management",
@@ -754,7 +750,6 @@ const Layout: React.FC = () => {
         "admin",
         "super_admin",
       ],
-      comingSoon: true,
     },
     {
       name: t("navigation.users"),
@@ -850,11 +845,6 @@ const Layout: React.FC = () => {
                     aria-hidden="true"
                   />
                   <span className="flex-1">{item.name}</span>
-                  {item.comingSoon && (
-                    <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                      Coming Soon
-                    </span>
-                  )}
                 </div>
                 {hasChildren && (
                   <ChevronDown
@@ -1103,7 +1093,9 @@ const Layout: React.FC = () => {
 
         {/* Main content area */}
         <main className="flex-1 overflow-auto bg-gray-50">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
       {/* Compose Notification Modal */}

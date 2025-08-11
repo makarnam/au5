@@ -312,7 +312,7 @@ export const resilienceService = {
     crisis_type?: string;
   }): Promise<Crisis[]> {
     let query = supabase
-      .from('crises')
+      .from('crisis_management')
       .select('*')
       .order('declared_at', { ascending: false });
 
@@ -337,7 +337,7 @@ export const resilienceService = {
 
   async getCrisisById(id: string): Promise<Crisis | null> {
     const { data, error } = await supabase
-      .from('crises')
+      .from('crisis_management')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -351,7 +351,7 @@ export const resilienceService = {
 
   async createCrisis(crisis: Omit<Crisis, 'id'>): Promise<Crisis> {
     const { data, error } = await supabase
-      .from('crises')
+      .from('crisis_management')
       .insert([crisis])
       .select()
       .single();
@@ -365,7 +365,7 @@ export const resilienceService = {
 
   async updateCrisis(id: string, crisis: Partial<Crisis>): Promise<Crisis> {
     const { data, error } = await supabase
-      .from('crises')
+      .from('crisis_management')
       .update(crisis)
       .eq('id', id)
       .select()

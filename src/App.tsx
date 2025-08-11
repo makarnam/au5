@@ -125,6 +125,8 @@ import ScenarioAnalysis from "./pages/resilience/ScenarioAnalysis";
 import ResilienceMetrics from "./pages/resilience/ResilienceMetrics";
 import AssetManagement from "./pages/assets/AssetManagement";
 import DocumentManagement from "./pages/documents/DocumentManagement";
+import DocumentManagementTest from "./pages/documents/DocumentManagementTest";
+
 import IncidentManagement from "./pages/incidents/IncidentManagement";
 import VendorManagement from "./pages/vendors/VendorManagement";
 import UserDetails from "./pages/users/UserDetails";
@@ -336,6 +338,8 @@ function App() {
 
           {/* Documents */}
           <Route path="documents" element={<DocumentManagement />} />
+          <Route path="documents/test" element={<DocumentManagementTest />} />
+          <Route path="documents/full" element={<DocumentManagement />} />
 
           {/* Incidents */}
           <Route path="incidents" element={<IncidentManagement />} />

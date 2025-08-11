@@ -236,3 +236,103 @@ export const createUserMention = (user?: {
   const name = formatUserName(user);
   return `@${name}`;
 };
+
+/**
+ * Formats file size in bytes to human readable format
+ * @param bytes - File size in bytes
+ * @param decimals - Number of decimal places (default: 2)
+ * @returns Formatted file size string
+ */
+export const formatBytes = (bytes: number, decimals: number = 2): string => {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+/**
+ * Formats a date string to a readable format
+ * @param dateString - ISO date string
+ * @param options - Intl.DateTimeFormatOptions for formatting
+ * @returns Formatted date string
+ */
+export const formatDate = (
+  dateString: string,
+  options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }
+): string => {
+  if (!dateString) return 'Unknown date';
+
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, options);
+  } catch (error) {
+    return 'Invalid date';
+  }
+};
+
+/**
+ * Formats a date and time string
+ * @param dateString - ISO date string
+ * @returns Formatted date and time string
+ */
+export const formatDateTime = (dateString: string): string => {
+  if (!dateString) return 'Unknown date';
+
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch (error) {
+    return 'Invalid date';
+  }
+};
+
+/**
+ * Gets relative time string (e.g., "2 hours ago")
+ * @param dateString - ISO date string
+ * @returns Relative time string
+ */
+export const getRelativeTime = (dateString: string): string => {
+  if (!dateString) return 'Unknown time';
+
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 2592000) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 31536000) {
+      const months = Math.floor(diffInSeconds / 2592000);
+      return `${months} month${months > 1 ? 's' : ''} ago`;
+    } else {
+      const years = Math.floor(diffInSeconds / 31536000);
+      return `${years} year${years > 1 ? 's' : ''} ago`;
+    }
+  } catch (error) {
+    return 'Invalid date';
+  }
+};
