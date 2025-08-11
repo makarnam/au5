@@ -122,6 +122,27 @@ import NotificationsInbox from "./pages/notifications/NotificationsInbox";
 import TrainingCertification from "./pages/training/TrainingCertification";
 import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
 
+// Third Party Risk Management Pages
+import ThirdPartyRiskManagementDashboard from "./pages/third-party-risk-management/ThirdPartyRiskManagementDashboard";
+import ThirdPartyCatalog from "./pages/third-party-risk-management/ThirdPartyCatalog";
+import CreateThirdPartyPage from "./pages/third-party-risk-management/CreateThirdPartyPage";
+import ThirdPartyAssessments from "./pages/third-party-risk-management/ThirdPartyAssessments";
+import CreateAssessmentPage from "./pages/third-party-risk-management/CreateAssessmentPage";
+import ThirdPartyIncidentManagement from "./pages/third-party-risk-management/IncidentManagement";
+import ContractManagement from "./pages/third-party-risk-management/ContractManagement";
+import PerformanceMonitoring from "./pages/third-party-risk-management/PerformanceMonitoring";
+import SecurityMonitoring from "./pages/third-party-risk-management/SecurityMonitoring";
+import DueDiligenceWorkflow from "./pages/third-party-risk-management/DueDiligenceWorkflow";
+import EngagementManagement from "./pages/third-party-risk-management/EngagementManagement";
+import CreateEngagementPage from "./pages/third-party-risk-management/CreateEngagementPage";
+import EditEngagementPage from "./pages/third-party-risk-management/EditEngagementPage";
+
+// ESG Management Pages
+import ESGDashboardPage from "./pages/esg/ESGDashboardPage";
+import ESGProgramsPage from "./pages/esg/ESGProgramsPage";
+import DoubleMaterialityPage from "./pages/esg/DoubleMaterialityPage";
+import ESGComprehensivePage from "./pages/esg/ESGComprehensivePage";
+
 // Admin Pages
 import ComingSoonAdmin from "./pages/admin/ComingSoonAdmin";
 
@@ -264,6 +285,27 @@ function App() {
 
           {/* Vendors */}
           <Route path="vendors" element={<VendorManagement />} />
+
+          {/* Third Party Risk Management */}
+          <Route path="third-party-risk-management" element={<ThirdPartyRiskManagementDashboard />} />
+          <Route path="third-party-risk-management/catalog" element={<ThirdPartyCatalog />} />
+          <Route path="third-party-risk-management/create" element={<CreateThirdPartyPage />} />
+          <Route path="third-party-risk-management/assessments" element={<ThirdPartyAssessments />} />
+          <Route path="third-party-risk-management/assessments/create" element={<CreateAssessmentPage />} />
+          <Route path="third-party-risk-management/engagements" element={<EngagementManagement />} />
+          <Route path="third-party-risk-management/engagements/create" element={<CreateEngagementPage />} />
+          <Route path="third-party-risk-management/engagements/:id/edit" element={<EditEngagementPage />} />
+          <Route path="third-party-risk-management/incidents" element={<ThirdPartyIncidentManagement />} />
+          <Route path="third-party-risk-management/contracts" element={<ContractManagement />} />
+          <Route path="third-party-risk-management/performance" element={<PerformanceMonitoring />} />
+          <Route path="third-party-risk-management/security" element={<SecurityMonitoring />} />
+          <Route path="third-party-risk-management/due-diligence" element={<DueDiligenceWorkflow />} />
+
+          {/* ESG Management */}
+          <Route path="esg" element={<ESGDashboardPage />} />
+          <Route path="esg/comprehensive" element={<ESGComprehensivePage />} />
+          <Route path="esg/programs" element={<ESGProgramsPage />} />
+          <Route path="esg/materiality" element={<DoubleMaterialityPage />} />
 
           {/* Users */}
           <Route path="users" element={<UsersList />} />

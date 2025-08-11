@@ -454,6 +454,133 @@ const Layout: React.FC = () => {
       comingSoon: true,
     },
     {
+      name: "Third Party Risk Management",
+      href: "/third-party-risk-management",
+      icon: Building2,
+      current: location.pathname.startsWith("/third-party-risk-management"),
+      roles: [
+        "business_unit_manager",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/third-party-risk-management",
+          current: location.pathname === "/third-party-risk-management",
+        },
+        {
+          name: "Third Party Catalog",
+          href: "/third-party-risk-management/catalog",
+          current: location.pathname === "/third-party-risk-management/catalog",
+        },
+        {
+          name: "Create Third Party",
+          href: "/third-party-risk-management/create",
+          current: location.pathname === "/third-party-risk-management/create",
+        },
+        {
+          name: "Assessments",
+          href: "/third-party-risk-management/assessments",
+          current: location.pathname === "/third-party-risk-management/assessments",
+        },
+        {
+          name: "Engagements",
+          href: "/third-party-risk-management/engagements",
+          current: location.pathname.startsWith("/third-party-risk-management/engagements"),
+        },
+        {
+          name: "Incident Management",
+          href: "/third-party-risk-management/incidents",
+          current: location.pathname === "/third-party-risk-management/incidents",
+        },
+        {
+          name: "Contract Management",
+          href: "/third-party-risk-management/contracts",
+          current: location.pathname === "/third-party-risk-management/contracts",
+        },
+        {
+          name: "Performance Monitoring",
+          href: "/third-party-risk-management/performance",
+          current: location.pathname === "/third-party-risk-management/performance",
+        },
+        {
+          name: "Security Monitoring",
+          href: "/third-party-risk-management/security",
+          current: location.pathname === "/third-party-risk-management/security",
+        },
+        {
+          name: "Due Diligence Workflow",
+          href: "/third-party-risk-management/due-diligence",
+          current: location.pathname === "/third-party-risk-management/due-diligence",
+        },
+      ]
+    },
+    {
+      name: "ESG Management",
+      href: "/esg",
+      icon: Globe,
+      current: location.pathname.startsWith("/esg"),
+      roles: [
+        "business_unit_manager",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+      children: [
+        {
+          name: "Dashboard",
+          href: "/esg",
+          current: location.pathname === "/esg",
+        },
+        {
+          name: "Comprehensive ESG",
+          href: "/esg/comprehensive",
+          current: location.pathname === "/esg/comprehensive",
+        },
+        {
+          name: "Programs",
+          href: "/esg/programs",
+          current: location.pathname === "/esg/programs",
+        },
+        {
+          name: "Carbon Management",
+          href: "/esg/carbon",
+          current: location.pathname === "/esg/carbon",
+        },
+        {
+          name: "Disclosures",
+          href: "/esg/disclosures",
+          current: location.pathname === "/esg/disclosures",
+        },
+        {
+          name: "Portfolio Assessment",
+          href: "/esg/portfolio",
+          current: location.pathname === "/esg/portfolio",
+        },
+        {
+          name: "Goals Management",
+          href: "/esg/goals",
+          current: location.pathname === "/esg/goals",
+        },
+        {
+          name: "Stakeholder Engagement",
+          href: "/esg/stakeholders",
+          current: location.pathname === "/esg/stakeholders",
+        },
+        {
+          name: "Materiality Calculator",
+          href: "/esg/materiality",
+          current: location.pathname === "/esg/materiality",
+        },
+      ],
+    },
+    {
       name: "Training & Certification",
       href: "/training",
       icon: GraduationCap,

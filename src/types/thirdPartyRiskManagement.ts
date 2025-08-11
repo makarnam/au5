@@ -359,9 +359,9 @@ export interface ThirdPartyFormData {
   country?: string;
   registration_number?: string;
   tax_id?: string;
-  annual_revenue?: number;
-  employee_count?: number;
-  founded_year?: number;
+  annual_revenue?: number | null;
+  employee_count?: number | null;
+  founded_year?: number | null;
   certifications?: string[];
   compliance_frameworks?: string[];
   data_processing_activities?: string[];
@@ -369,7 +369,7 @@ export interface ThirdPartyFormData {
   contract_start_date?: string;
   contract_end_date?: string;
   renewal_date?: string;
-  contract_value?: number;
+  contract_value?: number | null;
   currency: string;
   payment_terms?: string;
   sla_requirements?: string;
@@ -385,12 +385,16 @@ export interface ThirdPartyAssessmentFormData {
   assessment_type: 'initial' | 'periodic' | 'incident_based' | 'contract_renewal';
   assessment_date: string;
   assessor_id?: string;
-  financial_risk_score?: number;
-  operational_risk_score?: number;
-  compliance_risk_score?: number;
-  security_risk_score?: number;
-  reputational_risk_score?: number;
-  strategic_risk_score?: number;
+  financial_risk_score?: number | null;
+  operational_risk_score?: number | null;
+  compliance_risk_score?: number | null;
+  security_risk_score?: number | null;
+  reputational_risk_score?: number | null;
+  strategic_risk_score?: number | null;
+  overall_risk_score?: number | null;
+  risk_level?: 'low' | 'medium' | 'high' | 'critical';
+  status?: 'draft' | 'in_progress' | 'completed' | 'approved' | 'rejected';
+  approval_status?: 'pending' | 'approved' | 'rejected';
   findings_summary?: string;
   recommendations?: string;
   mitigation_actions?: string;
@@ -504,4 +508,31 @@ export interface ThirdPartyIncidentFilters {
   date_from?: string;
   date_to?: string;
   business_unit_id?: string;
+}
+
+export interface ThirdPartyDueDiligenceFormData {
+  third_party_id: string;
+  due_diligence_type: 'financial' | 'legal' | 'operational' | 'security' | 'compliance' | 'comprehensive';
+  due_diligence_date: string;
+  status?: 'planned' | 'in_progress' | 'completed' | 'approved' | 'rejected';
+  responsible_person_id?: string;
+  review_team?: string[];
+  financial_review_completed?: boolean;
+  legal_review_completed?: boolean;
+  operational_review_completed?: boolean;
+  security_review_completed?: boolean;
+  compliance_review_completed?: boolean;
+  financial_risk_score?: number | null;
+  legal_risk_score?: number | null;
+  operational_risk_score?: number | null;
+  security_risk_score?: number | null;
+  compliance_risk_score?: number | null;
+  overall_risk_score?: number | null;
+  risk_level?: 'low' | 'medium' | 'high' | 'critical';
+  findings_summary?: string;
+  recommendations?: string;
+  approval_decision?: 'approved' | 'approved_with_conditions' | 'rejected' | 'requires_further_review';
+  approval_conditions?: string[];
+  approval_date?: string;
+  approved_by?: string;
 }

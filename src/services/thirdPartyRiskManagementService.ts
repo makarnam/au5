@@ -13,6 +13,7 @@ import {
   ThirdPartyFormData,
   ThirdPartyAssessmentFormData,
   ThirdPartyEngagementFormData,
+  ThirdPartyDueDiligenceFormData,
   ThirdPartyDashboardStats,
   ThirdPartyRiskDistribution,
   ThirdPartyAssessmentTrend,
@@ -34,7 +35,8 @@ export class ThirdPartyRiskManagementService {
       // Apply filters
       if (filters) {
         if (filters.search) {
-          query = query.or(`name.ilike.%${filters.search}%,legal_name.ilike.%${filters.search}%,vendor_id.ilike.%${filters.search}%`);
+          // Use a simpler search approach to avoid URL encoding issues
+          query = query.or(`name.ilike.%${filters.search}%,legal_name.ilike.%${filters.search}%`);
         }
         if (filters.risk_classification && filters.risk_classification.length > 0) {
           query = query.in('risk_classification', filters.risk_classification);
@@ -88,14 +90,53 @@ export class ThirdPartyRiskManagementService {
 
   async createThirdParty(thirdParty: ThirdPartyFormData): Promise<{ data: ThirdParty | null; error: any }> {
     try {
+      // Clean up the data before sending to database
+      const cleanData = {
+        ...thirdParty,
+        // Convert empty strings to null for optional fields
+        legal_name: thirdParty.legal_name || null,
+        vendor_id: thirdParty.vendor_id || null,
+        industry: thirdParty.industry || null,
+        business_unit_id: thirdParty.business_unit_id || null,
+        contact_person: thirdParty.contact_person || null,
+        contact_email: thirdParty.contact_email || null,
+        contact_phone: thirdParty.contact_phone || null,
+        website: thirdParty.website || null,
+        address: thirdParty.address || null,
+        country: thirdParty.country || null,
+        registration_number: thirdParty.registration_number || null,
+        tax_id: thirdParty.tax_id || null,
+        payment_terms: thirdParty.payment_terms || null,
+        sla_requirements: thirdParty.sla_requirements || null,
+        insurance_coverage: thirdParty.insurance_coverage || null,
+        financial_stability_rating: thirdParty.financial_stability_rating || null,
+        credit_rating: thirdParty.credit_rating || null,
+        notes: thirdParty.notes || null,
+        // Handle date fields
+        contract_start_date: thirdParty.contract_start_date || null,
+        contract_end_date: thirdParty.contract_end_date || null,
+        renewal_date: thirdParty.renewal_date || null,
+        // Handle array fields - ensure they're not empty arrays
+        certifications: thirdParty.certifications?.length ? thirdParty.certifications : null,
+        compliance_frameworks: thirdParty.compliance_frameworks?.length ? thirdParty.compliance_frameworks : null,
+        data_processing_activities: thirdParty.data_processing_activities?.length ? thirdParty.data_processing_activities : null,
+        critical_services: thirdParty.critical_services?.length ? thirdParty.critical_services : null,
+      };
+
       const { data, error } = await supabase
         .from('third_parties')
-        .insert([thirdParty])
+        .insert([cleanData])
         .select()
         .single();
 
-      return { data, error };
+      if (error) {
+        console.error('Supabase error:', error);
+        return { data: null, error };
+      }
+
+      return { data, error: null };
     } catch (error) {
+      console.error('Service error:', error);
       return { data: null, error };
     }
   }
@@ -131,9 +172,11 @@ export class ThirdPartyRiskManagementService {
   // Third Party Assessment Operations
   async getAssessments(filters?: ThirdPartyAssessmentFilters, page = 1, limit = 10): Promise<{ data: ThirdPartyAssessment[]; total: number; error: any }> {
     try {
+      console.log('getAssessments called with filters:', filters, 'page:', page, 'limit:', limit);
+      
       let query = supabase
         .from('third_party_assessments')
-        .select('*, third_parties(name), users(email)', { count: 'exact' });
+        .select('*', { count: 'exact' });
 
       if (filters) {
         if (filters.third_party_id) {
@@ -160,26 +203,64 @@ export class ThirdPartyRiskManagementService {
       }
 
       const offset = (page - 1) * limit;
+      console.log('Executing query with offset:', offset, 'limit:', limit);
+      
       const { data, error, count } = await query
         .order('assessment_date', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      return { data: data || [], total: count || 0, error };
+      console.log('Query result:', { data: data?.length || 0, error, count });
+
+      if (error) {
+        console.error('Supabase getAssessments error:', error);
+        return { data: [], total: 0, error };
+      }
+
+      return { data: data || [], total: count || 0, error: null };
     } catch (error) {
+      console.error('Service getAssessments error:', error);
       return { data: [], total: 0, error };
     }
   }
 
   async createAssessment(assessment: ThirdPartyAssessmentFormData): Promise<{ data: ThirdPartyAssessment | null; error: any }> {
     try {
+      // Clean up the data before sending to database
+      const cleanData = {
+        ...assessment,
+        // Convert empty strings to null for optional fields
+        assessor_id: assessment.assessor_id || null,
+        findings_summary: assessment.findings_summary || null,
+        recommendations: assessment.recommendations || null,
+        mitigation_actions: assessment.mitigation_actions || null,
+        follow_up_date: assessment.follow_up_date || null,
+        // Handle numeric fields
+        financial_risk_score: assessment.financial_risk_score || null,
+        operational_risk_score: assessment.operational_risk_score || null,
+        compliance_risk_score: assessment.compliance_risk_score || null,
+        security_risk_score: assessment.security_risk_score || null,
+        reputational_risk_score: assessment.reputational_risk_score || null,
+        strategic_risk_score: assessment.strategic_risk_score || null,
+        overall_risk_score: assessment.overall_risk_score || null,
+        risk_level: assessment.risk_level || null,
+        status: assessment.status || 'draft',
+        approval_status: assessment.approval_status || 'pending'
+      };
+
       const { data, error } = await supabase
         .from('third_party_assessments')
-        .insert([assessment])
+        .insert([cleanData])
         .select()
         .single();
 
-      return { data, error };
+      if (error) {
+        console.error('Supabase error:', error);
+        return { data: null, error };
+      }
+
+      return { data, error: null };
     } catch (error) {
+      console.error('Service error:', error);
       return { data: null, error };
     }
   }
@@ -232,6 +313,48 @@ export class ThirdPartyRiskManagementService {
       return { data, error };
     } catch (error) {
       return { data: null, error };
+    }
+  }
+
+  async getEngagementById(id: string): Promise<{ data: ThirdPartyEngagement | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('third_party_engagements')
+        .select('*, third_parties(name), business_units(name)')
+        .eq('id', id)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+
+  async updateEngagement(id: string, updates: Partial<ThirdPartyEngagementFormData>): Promise<{ data: ThirdPartyEngagement | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('third_party_engagements')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+
+  async deleteEngagement(id: string): Promise<{ error: any }> {
+    try {
+      const { error } = await supabase
+        .from('third_party_engagements')
+        .delete()
+        .eq('id', id);
+
+      return { error };
+    } catch (error) {
+      return { error };
     }
   }
 
@@ -603,6 +726,235 @@ export class ThirdPartyRiskManagementService {
         .from('third_parties')
         .update({ risk_score: riskScore })
         .eq('id', thirdPartyId);
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  }
+
+  // Due Diligence Operations
+  async getDueDiligence(filters?: {
+    third_party_id?: string;
+    status?: string[];
+    due_diligence_type?: string[];
+    date_from?: string;
+    date_to?: string;
+  }, page = 1, limit = 10): Promise<{ data: ThirdPartyDueDiligence[]; total: number; error: any }> {
+    try {
+      let query = supabase
+        .from('third_party_due_diligence')
+        .select(`
+          *,
+          third_parties(name, legal_name),
+          responsible_person:users!responsible_person_id(email, first_name, last_name),
+          approved_by_user:users!approved_by(email, first_name, last_name),
+          created_by_user:users!created_by(email, first_name, last_name),
+          updated_by_user:users!updated_by(email, first_name, last_name)
+        `, { count: 'exact' });
+
+      // Apply filters
+      if (filters) {
+        if (filters.third_party_id) {
+          query = query.eq('third_party_id', filters.third_party_id);
+        }
+        if (filters.status && filters.status.length > 0) {
+          query = query.in('status', filters.status);
+        }
+        if (filters.due_diligence_type && filters.due_diligence_type.length > 0) {
+          query = query.in('due_diligence_type', filters.due_diligence_type);
+        }
+        if (filters.date_from) {
+          query = query.gte('due_diligence_date', filters.date_from);
+        }
+        if (filters.date_to) {
+          query = query.lte('due_diligence_date', filters.date_to);
+        }
+      }
+
+      const offset = (page - 1) * limit;
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      return { data: data || [], total: count || 0, error };
+    } catch (error) {
+      return { data: [], total: 0, error };
+    }
+  }
+
+  async getDueDiligenceById(id: string): Promise<{ data: ThirdPartyDueDiligence | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from('third_party_due_diligence')
+        .select(`
+          *,
+          third_parties(name, legal_name),
+          responsible_person:users!responsible_person_id(email, first_name, last_name),
+          approved_by_user:users!approved_by(email, first_name, last_name),
+          created_by_user:users!created_by(email, first_name, last_name),
+          updated_by_user:users!updated_by(email, first_name, last_name)
+        `)
+        .eq('id', id)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+
+  async createDueDiligence(dueDiligence: ThirdPartyDueDiligenceFormData): Promise<{ data: ThirdPartyDueDiligence | null; error: any }> {
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Clean up the data before sending to database
+      const cleanData = {
+        ...dueDiligence,
+        // Convert empty strings to null for optional fields
+        responsible_person_id: dueDiligence.responsible_person_id || null,
+        review_team: dueDiligence.review_team || [],
+        financial_review_completed: dueDiligence.financial_review_completed || false,
+        legal_review_completed: dueDiligence.legal_review_completed || false,
+        operational_review_completed: dueDiligence.operational_review_completed || false,
+        security_review_completed: dueDiligence.security_review_completed || false,
+        compliance_review_completed: dueDiligence.compliance_review_completed || false,
+        financial_risk_score: dueDiligence.financial_risk_score || null,
+        legal_risk_score: dueDiligence.legal_risk_score || null,
+        operational_risk_score: dueDiligence.operational_risk_score || null,
+        security_risk_score: dueDiligence.security_risk_score || null,
+        compliance_risk_score: dueDiligence.compliance_risk_score || null,
+        overall_risk_score: dueDiligence.overall_risk_score || null,
+        risk_level: dueDiligence.risk_level || null,
+        findings_summary: dueDiligence.findings_summary || null,
+        recommendations: dueDiligence.recommendations || null,
+        approval_decision: dueDiligence.approval_decision || null,
+        approval_conditions: dueDiligence.approval_conditions || [],
+        approval_date: dueDiligence.approval_date || null,
+        approved_by: dueDiligence.approved_by || null,
+        created_by: user.id,
+        updated_by: user.id,
+      };
+
+      const { data, error } = await supabase
+        .from('third_party_due_diligence')
+        .insert([cleanData])
+        .select(`
+          *,
+          third_parties(name, legal_name),
+          responsible_person:users!responsible_person_id(email, first_name, last_name),
+          approved_by_user:users!approved_by(email, first_name, last_name),
+          created_by_user:users!created_by(email, first_name, last_name),
+          updated_by_user:users!updated_by(email, first_name, last_name)
+        `)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+
+  async updateDueDiligence(id: string, updates: Partial<ThirdPartyDueDiligence>): Promise<{ data: ThirdPartyDueDiligence | null; error: any }> {
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      const updateData = {
+        ...updates,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from('third_party_due_diligence')
+        .update(updateData)
+        .eq('id', id)
+        .select(`
+          *,
+          third_parties(name, legal_name),
+          responsible_person:users!responsible_person_id(email, first_name, last_name),
+          approved_by_user:users!approved_by(email, first_name, last_name),
+          created_by_user:users!created_by(email, first_name, last_name),
+          updated_by_user:users!updated_by(email, first_name, last_name)
+        `)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }
+
+  async deleteDueDiligence(id: string): Promise<{ error: any }> {
+    try {
+      const { error } = await supabase
+        .from('third_party_due_diligence')
+        .delete()
+        .eq('id', id);
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  }
+
+  async calculateDueDiligenceRiskScore(dueDiligenceId: string): Promise<{ data: number; error: any }> {
+    try {
+      const { data: dueDiligence } = await this.getDueDiligenceById(dueDiligenceId);
+      
+      if (!dueDiligence) {
+        return { data: 0, error: 'Due diligence record not found' };
+      }
+
+      // Calculate weighted average of risk scores
+      const scores = [
+        dueDiligence.financial_risk_score,
+        dueDiligence.legal_risk_score,
+        dueDiligence.operational_risk_score,
+        dueDiligence.security_risk_score,
+        dueDiligence.compliance_risk_score
+      ].filter(score => score !== null && score !== undefined);
+
+      if (scores.length === 0) {
+        return { data: 0, error: null };
+      }
+
+      const averageScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+      return { data: averageScore, error: null };
+    } catch (error) {
+      return { data: 0, error };
+    }
+  }
+
+  async updateDueDiligenceRiskScore(dueDiligenceId: string): Promise<{ error: any }> {
+    try {
+      const { data: riskScore } = await this.calculateDueDiligenceRiskScore(dueDiligenceId);
+      
+      // Determine risk level based on score
+      let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
+      if (riskScore >= 80) {
+        riskLevel = 'critical';
+      } else if (riskScore >= 60) {
+        riskLevel = 'high';
+      } else if (riskScore >= 40) {
+        riskLevel = 'medium';
+      }
+
+      const { error } = await supabase
+        .from('third_party_due_diligence')
+        .update({ 
+          overall_risk_score: riskScore,
+          risk_level: riskLevel
+        })
+        .eq('id', dueDiligenceId);
 
       return { error };
     } catch (error) {

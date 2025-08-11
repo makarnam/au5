@@ -625,3 +625,6 @@ export interface LanguageOption {
   name: string;
   flag: string;
 }
+
+// Re-export ESG types
+export * from './esg';
