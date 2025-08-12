@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { aiGovernanceService } from '../../services/aiGovernanceService';
 import { AIModel, AIControl, AIRiskAssessment, AIModelMonitoring, AIModelControl } from '../../types/aiGovernance';
 import { 

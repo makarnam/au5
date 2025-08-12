@@ -120,13 +120,24 @@ export const aiGovernanceService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Sanitize optional UUID fields to avoid sending empty strings
+      const sanitizeOptionalUuid = (value?: string) => {
+        if (value === undefined || value === null) return null;
+        if (typeof value === 'string' && value.trim() === '') return null;
+        return value;
+      };
+
+      const payload = {
+        ...formData,
+        business_unit_id: sanitizeOptionalUuid(formData.business_unit_id),
+        owner_id: sanitizeOptionalUuid(formData.owner_id),
+        created_by: user.id,
+        last_updated: new Date().toISOString()
+      } as const;
+
       const { data, error } = await supabase
         .from('ai_models')
-        .insert({
-          ...formData,
-          created_by: user.id,
-          last_updated: new Date().toISOString()
-        })
+        .insert(payload)
         .select()
         .single();
 
@@ -150,12 +161,28 @@ export const aiGovernanceService = {
 
   async updateAIModel(id: string, formData: Partial<AIModelFormData>): Promise<ApiResponse<AIModel>> {
     try {
+      // Sanitize optional UUID fields if present on update
+      const sanitizeOptionalUuid = (value?: string) => {
+        if (value === undefined || value === null) return null;
+        if (typeof value === 'string' && value.trim() === '') return null;
+        return value;
+      };
+
+      const updates: Record<string, any> = {
+        ...formData,
+        last_updated: new Date().toISOString()
+      };
+
+      if ('business_unit_id' in formData) {
+        updates.business_unit_id = sanitizeOptionalUuid(formData.business_unit_id);
+      }
+      if ('owner_id' in formData) {
+        updates.owner_id = sanitizeOptionalUuid(formData.owner_id);
+      }
+
       const { data, error } = await supabase
         .from('ai_models')
-        .update({
-          ...formData,
-          last_updated: new Date().toISOString()
-        })
+        .update(updates)
         .eq('id', id)
         .select()
         .single();

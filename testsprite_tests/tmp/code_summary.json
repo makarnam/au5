@@ -1,0 +1,151 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React",
+    "Vite",
+    "TailwindCSS",
+    "Zustand",
+    "React Router",
+    "@tanstack/react-query",
+    "Supabase JS SDK",
+    "i18next",
+    "ESLint",
+    "PostCSS"
+  ],
+  "features": [
+    {
+      "name": "Authentication Pages",
+      "description": "Sign in and sign up routes, protected routing, and user loading debug utilities.",
+      "files": [
+        "src/pages/auth/SignIn.tsx",
+        "src/pages/auth/SignUp.tsx",
+        "src/components/ProtectedRoute.tsx",
+        "src/components/DebugUserLoading.tsx",
+        "src/store/authStore.ts",
+        "src/lib/supabase.ts"
+      ]
+    },
+    {
+      "name": "AI Governance",
+      "description": "AI governance dashboards, models, incidents, and risk assessments with service layer.",
+      "files": [
+        "src/pages/ai-governance/AIGovernanceDashboard.tsx",
+        "src/pages/ai-governance/AIModelsList.tsx",
+        "src/pages/ai-governance/AIModelDetails.tsx",
+        "src/pages/ai-governance/AIIncidentsList.tsx",
+        "src/pages/ai-governance/AIRiskAssessmentsList.tsx",
+        "src/pages/ai-governance/CreateEditAIModel.tsx",
+        "src/pages/ai-governance/AICompliancePage.tsx",
+        "src/services/aiGovernanceService.ts",
+        "src/types/aiGovernance.ts"
+      ]
+    },
+    {
+      "name": "Audit Management",
+      "description": "Audit planning, templates, schedules, and details with forms and service layer.",
+      "files": [
+        "src/pages/audits/AuditsList.tsx",
+        "src/pages/audits/AuditDetails.tsx",
+        "src/pages/audits/CreateAuditPage.tsx",
+        "src/pages/audits/EditAuditPage.tsx",
+        "src/pages/audits/ScheduleAuditPage.tsx",
+        "src/pages/audits/UpcomingSchedules.tsx",
+        "src/pages/audit-planning/AuditPlanningDashboard.tsx",
+        "src/pages/audit-planning/AuditPlans.tsx",
+        "src/pages/audit-planning/AuditUniverse.tsx",
+        "src/pages/audit-planning/CreatePlanPage.tsx",
+        "src/services/auditService.ts",
+        "src/services/auditPlanningService.ts",
+        "src/types/auditPlanning.ts"
+      ]
+    },
+    {
+      "name": "Controls Management",
+      "description": "Controls CRUD, control sets, AI control generator, and related components.",
+      "files": [
+        "src/pages/controls/ControlsList.tsx",
+        "src/pages/controls/CreateControlPage.tsx",
+        "src/pages/controls/EnhancedControlsPage.tsx",
+        "src/pages/controls/controlsets/CreateControlSetPage.tsx",
+        "src/pages/controls/controlsets/EditControlSetPage.tsx",
+        "src/components/controls/AIControlGenerator.tsx",
+        "src/components/controls/EnhancedAIControlGenerator.tsx",
+        "src/components/controls/ControlEditor.tsx",
+        "src/services/controlService.ts",
+        "src/services/controlService-fixed.ts",
+        "src/types/compliance.ts"
+      ]
+    },
+    {
+      "name": "Documents Management",
+      "description": "Upload, list, and manage documents.",
+      "files": [
+        "src/pages/documents/DocumentManagement.tsx",
+        "src/pages/documents/UploadDocument.tsx",
+        "src/pages/documents/DocumentDetails.tsx",
+        "src/services/documentManagementService.ts",
+        "src/types/documentManagement.ts"
+      ]
+    },
+    {
+      "name": "Risk Management",
+      "description": "Risk creation, editing, listing, and dashboards.",
+      "files": [
+        "src/pages/risks/RisksList.tsx",
+        "src/pages/risks/CreateRiskPage.tsx",
+        "src/pages/risks/EditRiskPage.tsx",
+        "src/pages/risks/RiskDashboard.tsx",
+        "src/services/riskService.ts",
+        "src/store/riskStore.ts"
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Compose and view notifications, with bell component.",
+      "files": [
+        "src/pages/notifications/NotificationsInbox.tsx",
+        "src/components/notifications/ComposeNotificationModal.tsx",
+        "src/components/notifications/NotificationBell.tsx",
+        "src/services/notificationService.ts",
+        "src/store/notificationStore.ts"
+      ]
+    },
+    {
+      "name": "ESG Module",
+      "description": "ESG dashboards, programs, and double materiality tools.",
+      "files": [
+        "src/pages/esg/ESGDashboardPage.tsx",
+        "src/pages/esg/ESGProgramsPage.tsx",
+        "src/pages/esg/DoubleMaterialityPage.tsx",
+        "src/components/esg/ESGDashboard.tsx",
+        "src/components/esg/DoubleMaterialityCalculator.tsx",
+        "src/services/esgService.ts",
+        "src/types/esg.ts"
+      ]
+    },
+    {
+      "name": "Supabase Integration",
+      "description": "Shared Supabase client, header injection, and utilities.",
+      "files": [
+        "src/lib/supabase.ts",
+        "src/lib/fetchWithSupabaseHeaders.ts",
+        "src/lib/utils.ts",
+        "src/services/userService.ts"
+      ]
+    },
+    {
+      "name": "Routing and Layout",
+      "description": "Main app router, layout, sidebar and shared UI.",
+      "files": [
+        "src/App.tsx",
+        "src/components/Layout.tsx",
+        "src/components/Sidebar.tsx",
+        "src/components/ui/button.tsx",
+        "src/components/ui/card.tsx",
+        "src/components/common/ErrorBoundary.tsx"
+      ]
+    }
+  ]
+}
+
+

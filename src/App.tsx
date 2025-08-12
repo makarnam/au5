@@ -48,6 +48,7 @@ import FindingsList from "./pages/findings/FindingsList";
 import CreateFindingPage from "./pages/findings/CreateFindingPage";
 import EditFindingPage from "./pages/findings/EditFindingPage";
 import FindingDetails from "./pages/findings/FindingDetails";
+import FindingsDashboard from "./pages/findings/FindingsDashboard";
 
 // Risks Pages
 import RisksList from "./pages/risks/RisksList";
@@ -57,6 +58,9 @@ import RiskDetails from "./pages/risks/RiskDetails";
 import RiskDashboard from "./pages/risks/RiskDashboard";
 import SecondRiskDashboard from "./pages/risks/SecondRiskDashboard";
 import CreateRiskWizard from "./pages/risks/CreateRiskWizard";
+import LossEventManagement from "./pages/risks/LossEventManagement";
+import KeyIndicatorManagement from "./pages/risks/KeyIndicatorManagement";
+import OperationalRiskManagement from "./pages/risks/OperationalRiskManagement";
 
 // Risk Reviews Pages
 import CreateReviewPage from "./pages/risks/reviews/CreateReviewPage";
@@ -109,6 +113,11 @@ import RiskAIGeneration from "./pages/ai/RiskAIGeneration";
 import AIGovernanceDashboard from "./pages/ai-governance/AIGovernanceDashboard";
 import AIModelsList from "./pages/ai-governance/AIModelsList";
 import AIControlsList from "./pages/ai-governance/AIControlsList";
+import AIModelDetails from "./pages/ai-governance/AIModelDetails";
+import CreateEditAIModel from "./pages/ai-governance/CreateEditAIModel";
+import AIRiskAssessmentsList from "./pages/ai-governance/AIRiskAssessmentsList";
+import AIIncidentsList from "./pages/ai-governance/AIIncidentsList";
+import AICompliancePage from "./pages/ai-governance/AICompliancePage";
 
 // Other Pages
 import BCPDashboard from "./pages/bcp/BCPDashboard";
@@ -212,6 +221,7 @@ function App() {
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           {/* Dashboard */}
           <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
 
           {/* Profile & Settings */}
           <Route path="profile" element={<Profile />} />
@@ -250,6 +260,7 @@ function App() {
 
           {/* Findings */}
           <Route path="findings" element={<FindingsList />} />
+          <Route path="findings/dashboard" element={<FindingsDashboard />} />
           <Route path="findings/create" element={<CreateFindingPage />} />
           <Route path="findings/:id" element={<FindingDetails />} />
           <Route path="findings/:id/edit" element={<EditFindingPage />} />
@@ -262,6 +273,9 @@ function App() {
           <Route path="risks/:id/edit" element={<EditRiskPage />} />
           <Route path="risks/dashboard" element={<RiskDashboard />} />
           <Route path="risks/dashboard2" element={<SecondRiskDashboard />} />
+          <Route path="risks/loss-events" element={<LossEventManagement />} />
+          <Route path="risks/key-indicators" element={<KeyIndicatorManagement />} />
+          <Route path="risks/operational-risk" element={<OperationalRiskManagement />} />
 
           {/* Risk Reviews */}
           <Route path="risks/:riskId/reviews/create" element={<CreateReviewPage />} />
@@ -317,7 +331,13 @@ function App() {
           <Route path="ai-governance" element={<AIGovernanceDashboard />} />
           <Route path="ai-governance/dashboard" element={<AIGovernanceDashboard />} />
           <Route path="ai-governance/models" element={<AIModelsList />} />
+          <Route path="ai-governance/models/create" element={<CreateEditAIModel />} />
+          <Route path="ai-governance/models/:id" element={<AIModelDetails />} />
+          <Route path="ai-governance/models/:id/edit" element={<CreateEditAIModel />} />
           <Route path="ai-governance/controls" element={<AIControlsList />} />
+          <Route path="ai-governance/assessments" element={<AIRiskAssessmentsList />} />
+          <Route path="ai-governance/incidents" element={<AIIncidentsList />} />
+          <Route path="ai-governance/compliance" element={<AICompliancePage />} />
 
           {/* BCP */}
           <Route path="bcp" element={<BCPDashboard />} />

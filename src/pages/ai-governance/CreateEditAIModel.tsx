@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { aiGovernanceService } from '../../services/aiGovernanceService';
 import { AIModelFormData, AIModelType, AIProvider, DeploymentEnvironment, RiskLevel } from '../../types/aiGovernance';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';

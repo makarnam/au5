@@ -1,0 +1,205 @@
+{
+  "meta": {
+    "project": "RSA GRC Platform",
+    "date": "2025-08-08",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "RSA GRC Platform is an integrated governance, risk, and compliance solution suite covering 10 core areas with multiple specialized use cases. It provides organizations with comprehensive management capabilities for audit, ESG, IT and security risks, enterprise risk, compliance, resilience, third-party risk, public sector compliance, document governance, and AI-enhanced analytics and automation.",
+  "core_goals": [
+    "Provide comprehensive audit management from planning to remediation tracking.",
+    "Enable holistic ESG program management aligned with regulatory requirements.",
+    "Deliver IT and cybersecurity risk management capabilities.",
+    "Support enterprise-wide risk management including strategic and operational risks.",
+    "Facilitate regulatory and corporate compliance management across business functions.",
+    "Enhance organizational resilience and business continuity capabilities.",
+    "Offer end-to-end third-party risk management solutions.",
+    "Support public sector-specific compliance and security requirements.",
+    "Integrate AI and machine learning for compliance and risk optimization.",
+    "Provide advanced analytics and business intelligence across risk and compliance domains."
+  ],
+  "key_features": [
+    "Audit Management including issue tracking, engagement workflows, planning, and quality assurance.",
+    "ESG Management with carbon tracking, disclosure, portfolio assessment, and double materiality tools.",
+    "IT Security Risk Management covering incident response, policy management, vulnerability tracking, regulatory compliance, and controls assurance.",
+    "Enterprise Risk Management with risk catalog, assessment, loss event tracking, and KPI monitoring.",
+    "Regulatory & Corporate Compliance modules including AI governance, data governance, privacy, policy management, and financial controls.",
+    "Resilience Management for business impact analysis, incident response, continuity planning, and crisis management.",
+    "Third Party Risk Management with vendor catalog, risk assessments, governance, and security monitoring.",
+    "Public Sector Solutions addressing federal compliance processes, continuous monitoring, and POA&M management.",
+    "AI-Enhanced Compliance and Risk modules employing predictive analytics, natural language processing, and machine learning.",
+    "Advanced Analytics platform offering real-time dashboards, forecasting, and data visualization."
+  ],
+  "user_flow_summary": [
+    "Users authenticate via secure sign-in and sign-up flows with protected routing.",
+    "Users navigate through the main app layout and sidebar to access solution areas.",
+    "Audit teams plan, create, and track audits and findings using audit modules.",
+    "Risk managers create, assess, and monitor enterprise and IT risks via dashboards and lists.",
+    "Compliance officers manage policies, AI governance, and corporate obligations workflows.",
+    "ESG teams access dashboards, manage programs, and use the double materiality calculator.",
+    "Resilience teams perform impact analysis, incident management, and continuity planning.",
+    "Third-party managers maintain the vendor catalog, conduct risk assessments, and monitor security posture.",
+    "Notification and communication are handled through a compose and inbox notification flow with alert bell.",
+    "AI and analytics users leverage insights dashboards and AI-driven compliance tools for operational optimization."
+  ],
+  "validation_criteria": [
+    "Successful user authentication and protected access to authorized modules.",
+    "Accurate creation, editing, and listing of audits, risks, and compliance items.",
+    "Functional ESG management including program oversight and reporting capabilities.",
+    "Effective IT and security incident response workflows and vulnerability tracking.",
+    "Comprehensive risk assessment, monitoring, and dashboard visualization.",
+    "Operational resilience scenarios and incident management capabilities.",
+    "Full lifecycle third-party risk management with security monitoring.",
+    "Correct operation of AI governance and AI-enhanced compliance features.",
+    "Responsive and accurate notification delivery and management.",
+    "Seamless integration and data flow across solution areas supporting workflow automation."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "React",
+      "Vite",
+      "TailwindCSS",
+      "Zustand",
+      "React Router",
+      "@tanstack/react-query",
+      "Supabase JS SDK",
+      "i18next",
+      "ESLint",
+      "PostCSS"
+    ],
+    "features": [
+      {
+        "name": "Authentication Pages",
+        "description": "Sign in and sign up routes, protected routing, and user loading debug utilities.",
+        "files": [
+          "src/pages/auth/SignIn.tsx",
+          "src/pages/auth/SignUp.tsx",
+          "src/components/ProtectedRoute.tsx",
+          "src/components/DebugUserLoading.tsx",
+          "src/store/authStore.ts",
+          "src/lib/supabase.ts"
+        ]
+      },
+      {
+        "name": "AI Governance",
+        "description": "AI governance dashboards, models, incidents, and risk assessments with service layer.",
+        "files": [
+          "src/pages/ai-governance/AIGovernanceDashboard.tsx",
+          "src/pages/ai-governance/AIModelsList.tsx",
+          "src/pages/ai-governance/AIModelDetails.tsx",
+          "src/pages/ai-governance/AIIncidentsList.tsx",
+          "src/pages/ai-governance/AIRiskAssessmentsList.tsx",
+          "src/pages/ai-governance/CreateEditAIModel.tsx",
+          "src/pages/ai-governance/AICompliancePage.tsx",
+          "src/services/aiGovernanceService.ts",
+          "src/types/aiGovernance.ts"
+        ]
+      },
+      {
+        "name": "Audit Management",
+        "description": "Audit planning, templates, schedules, and details with forms and service layer.",
+        "files": [
+          "src/pages/audits/AuditsList.tsx",
+          "src/pages/audits/AuditDetails.tsx",
+          "src/pages/audits/CreateAuditPage.tsx",
+          "src/pages/audits/EditAuditPage.tsx",
+          "src/pages/audits/ScheduleAuditPage.tsx",
+          "src/pages/audits/UpcomingSchedules.tsx",
+          "src/pages/audit-planning/AuditPlanningDashboard.tsx",
+          "src/pages/audit-planning/AuditPlans.tsx",
+          "src/pages/audit-planning/AuditUniverse.tsx",
+          "src/pages/audit-planning/CreatePlanPage.tsx",
+          "src/services/auditService.ts",
+          "src/services/auditPlanningService.ts",
+          "src/types/auditPlanning.ts"
+        ]
+      },
+      {
+        "name": "Controls Management",
+        "description": "Controls CRUD, control sets, AI control generator, and related components.",
+        "files": [
+          "src/pages/controls/ControlsList.tsx",
+          "src/pages/controls/CreateControlPage.tsx",
+          "src/pages/controls/EnhancedControlsPage.tsx",
+          "src/pages/controls/controlsets/CreateControlSetPage.tsx",
+          "src/pages/controls/controlsets/EditControlSetPage.tsx",
+          "src/components/controls/AIControlGenerator.tsx",
+          "src/components/controls/EnhancedAIControlGenerator.tsx",
+          "src/components/controls/ControlEditor.tsx",
+          "src/services/controlService.ts",
+          "src/services/controlService-fixed.ts",
+          "src/types/compliance.ts"
+        ]
+      },
+      {
+        "name": "Documents Management",
+        "description": "Upload, list, and manage documents.",
+        "files": [
+          "src/pages/documents/DocumentManagement.tsx",
+          "src/pages/documents/UploadDocument.tsx",
+          "src/pages/documents/DocumentDetails.tsx",
+          "src/services/documentManagementService.ts",
+          "src/types/documentManagement.ts"
+        ]
+      },
+      {
+        "name": "Risk Management",
+        "description": "Risk creation, editing, listing, and dashboards.",
+        "files": [
+          "src/pages/risks/RisksList.tsx",
+          "src/pages/risks/CreateRiskPage.tsx",
+          "src/pages/risks/EditRiskPage.tsx",
+          "src/pages/risks/RiskDashboard.tsx",
+          "src/services/riskService.ts",
+          "src/store/riskStore.ts"
+        ]
+      },
+      {
+        "name": "Notifications",
+        "description": "Compose and view notifications, with bell component.",
+        "files": [
+          "src/pages/notifications/NotificationsInbox.tsx",
+          "src/components/notifications/ComposeNotificationModal.tsx",
+          "src/components/notifications/NotificationBell.tsx",
+          "src/services/notificationService.ts",
+          "src/store/notificationStore.ts"
+        ]
+      },
+      {
+        "name": "ESG Module",
+        "description": "ESG dashboards, programs, and double materiality tools.",
+        "files": [
+          "src/pages/esg/ESGDashboardPage.tsx",
+          "src/pages/esg/ESGProgramsPage.tsx",
+          "src/pages/esg/DoubleMaterialityPage.tsx",
+          "src/components/esg/ESGDashboard.tsx",
+          "src/components/esg/DoubleMaterialityCalculator.tsx",
+          "src/services/esgService.ts",
+          "src/types/esg.ts"
+        ]
+      },
+      {
+        "name": "Supabase Integration",
+        "description": "Shared Supabase client, header injection, and utilities.",
+        "files": [
+          "src/lib/supabase.ts",
+          "src/lib/fetchWithSupabaseHeaders.ts",
+          "src/lib/utils.ts",
+          "src/services/userService.ts"
+        ]
+      },
+      {
+        "name": "Routing and Layout",
+        "description": "Main app router, layout, sidebar and shared UI.",
+        "files": [
+          "src/App.tsx",
+          "src/components/Layout.tsx",
+          "src/components/Sidebar.tsx",
+          "src/components/ui/button.tsx",
+          "src/components/ui/card.tsx",
+          "src/components/common/ErrorBoundary.tsx"
+        ]
+      }
+    ]
+  }
+}

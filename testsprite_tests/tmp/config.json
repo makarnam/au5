@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "loginUser": "depommh@gmail.com",
+  "loginPassword": "Password123",
+  "executionArgs": {
+    "projectName": "au5",
+    "projectPath": "/Users/mhuyut/Desktop/au5",
+    "testIds": [],
+    "additionalInstruction": "Use port 5173 for local server. App is React+Vite. Start app if not running. Login flow required; create test users via Supabase APIs if needed but do not modify auth.users directly; prefer application sign-up flow. Focus smoke tests across main dashboards and auth sign-in. ",
+    "envs": {
+      "API_KEY": "sk-user-xb2UVk1bCC4Ibv1D50Zm6uhJSQmjUWmwE8_f_y8D8Kd6KI1G-qPb3_bY6UM5EY-NoMICZK6FhtYcTa2oZyJkvHP0uv7IzGXRqJGBcjM1Kxk9MVm_AGrJdc9Q7FaRA8Dx-9M"
+    }
+  },
+  "proxy": "http://a2355c27-97b0-4065-86b8-57d7df332dd1:RrvS7xdpCFhSdDel3wZJgygKdcMHHMGO@tun.testsprite.com:8080"
+}

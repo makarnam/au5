@@ -1,0 +1,29 @@
+[
+  {
+    "id": "au5_frontend_smoke",
+    "title": "AU5 Frontend Smoke",
+    "description": "Load public auth pages to verify app renders.",
+    "config": { "baseUrl": "http://localhost:5173" },
+    "steps": [
+      {
+        "id": "visit_signin",
+        "actions": [
+          { "type": "navigate", "to": "/auth/sign-in" }
+        ],
+        "assertions": [
+          { "type": "assertText", "value": "Sign in" }
+        ]
+      },
+      {
+        "id": "visit_signup",
+        "actions": [
+          { "type": "navigate", "to": "/auth/sign-up" }
+        ],
+        "assertions": [
+          { "type": "assertText", "value": "Sign up" }
+        ]
+      }
+    ]
+  }
+]
+

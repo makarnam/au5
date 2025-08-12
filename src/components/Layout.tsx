@@ -184,6 +184,21 @@ const Layout: React.FC = () => {
           current: location.pathname === "/risks/dashboard-2",
         },
         {
+          name: "Loss Event Management",
+          href: "/risks/loss-events",
+          current: location.pathname === "/risks/loss-events",
+        },
+        {
+          name: "Key Indicator Management",
+          href: "/risks/key-indicators",
+          current: location.pathname === "/risks/key-indicators",
+        },
+        {
+          name: "Operational Risk Management",
+          href: "/risks/operational-risk",
+          current: location.pathname === "/risks/operational-risk",
+        },
+        {
           name: "Create",
           href: "/risks/create",
           current: location.pathname === "/risks/create",
@@ -249,6 +264,11 @@ const Layout: React.FC = () => {
         "cro",
         "admin",
         "super_admin",
+      ],
+      children: [
+        { name: "All Findings", href: "/findings", current: location.pathname === "/findings" },
+        { name: "Dashboard", href: "/findings/dashboard", current: location.pathname === "/findings/dashboard" },
+        { name: "Create", href: "/findings/create", current: location.pathname === "/findings/create" },
       ],
     },
     {
