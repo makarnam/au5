@@ -26,6 +26,7 @@ import riskService, {
 import RiskAssessmentForm, { AssessmentFormValue } from "../../components/risks/RiskAssessmentForm";
 import { useAuthStore } from "../../store/authStore";
 import { cn } from "../../utils";
+import RiskWorkflowManager from "../workflows/RiskWorkflowManager";
 
 const levelColors: Record<RiskLevel, string> = {
   low: "text-green-700 bg-green-50 ring-1 ring-green-200",
@@ -53,8 +54,8 @@ const SectionCard: React.FC<{ title: string; children: React.ReactNode; action?:
 );
 
 const TabsNav: React.FC<{
-  active: "overview" | "assessments" | "treatments" | "controls" | "history";
-  onChange: (k: "overview" | "assessments" | "treatments" | "controls" | "history") => void;
+  active: "overview" | "assessments" | "treatments" | "controls" | "history" | "workflow";
+  onChange: (k: "overview" | "assessments" | "treatments" | "controls" | "history" | "workflow") => void;
 }> = ({ active, onChange }) => (
   <div className="bg-white border border-gray-200 rounded-lg">
     <div className="flex gap-1 px-2 py-2 border-b">
@@ -64,6 +65,7 @@ const TabsNav: React.FC<{
         { key: "treatments", label: "Treatments" },
         { key: "controls", label: "Controls" },
         { key: "history", label: "History" },
+        { key: "workflow", label: "Onay Süreci" },
       ].map((t) => (
         <button
           key={t.key}
@@ -586,7 +588,7 @@ const RiskDetails: React.FC = () => {
   }
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<"overview" | "assessments" | "treatments" | "controls" | "history">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "assessments" | "treatments" | "controls" | "history" | "workflow">("overview");
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -1502,6 +1504,13 @@ const RiskDetails: React.FC = () => {
           </div>
         </div>
       </RiskDetailModal>
+
+      {/* Workflow Tab Content */}
+      {activeTab === "workflow" && (
+        <div className="mt-6">
+          <RiskWorkflowManager riskId={risk?.id} />
+        </div>
+      )}
     </div>
   );
 };

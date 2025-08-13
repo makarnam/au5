@@ -42,6 +42,9 @@ export async function listWorkflows(params?: PaginationParams): Promise<QueryRes
   return { data, error };
 }
 
+// Alias for backward compatibility
+export const getWorkflows = listWorkflows;
+
 export async function getWorkflow(id: UUID): Promise<QueryResult<WorkflowTemplate & { steps: WorkflowStepTemplate[] }>> {
   const { data: wf, error } = await supabase.from('workflows').select('*').eq('id', id).single();
   if (error || !wf) return { data: null, error };
@@ -213,4 +216,41 @@ export async function getMyTasks(): Promise<QueryResult<PendingApprovalView[]>> 
   // v_pending_approvals already filters by pending step; RLS limits visibility
   const { data, error } = await supabase.from('v_pending_approvals').select('*').order('step_order', { ascending: true });
   return { data: data as PendingApprovalView[] | null, error };
+}
+
+// Workflow step management functions
+export async function getWorkflowSteps(workflowId: UUID): Promise<QueryResult<WorkflowStepTemplate[]>> {
+  const { data, error } = await supabase
+    .from('workflow_steps')
+    .select('*')
+    .eq('workflow_id', workflowId)
+    .order('step_order', { ascending: true });
+  return { data: data as WorkflowStepTemplate[] | null, error };
+}
+
+export async function createWorkflowStep(step: Partial<WorkflowStepTemplate>): Promise<QueryResult<WorkflowStepTemplate>> {
+  const { data, error } = await supabase
+    .from('workflow_steps')
+    .insert(step)
+    .select('*')
+    .single();
+  return { data: data as WorkflowStepTemplate | null, error };
+}
+
+export async function updateWorkflowStep(stepId: UUID, updates: Partial<WorkflowStepTemplate>): Promise<QueryResult<WorkflowStepTemplate>> {
+  const { data, error } = await supabase
+    .from('workflow_steps')
+    .update(updates)
+    .eq('id', stepId)
+    .select('*')
+    .single();
+  return { data: data as WorkflowStepTemplate | null, error };
+}
+
+export async function deleteWorkflowStep(stepId: UUID): Promise<QueryResult<null>> {
+  const { error } = await supabase
+    .from('workflow_steps')
+    .delete()
+    .eq('id', stepId);
+  return { data: null, error };
 }

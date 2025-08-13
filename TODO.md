@@ -1,163 +1,121 @@
-# Dashboard Real Data Integration - TODO
+# AU5 TODO List
 
-## Supabase MCP Test Results - ✅ COMPLETED
+## ✅ Completed Tasks
 
-**Date:** December 19, 2024  
-**Status:** ✅ SUCCESS - All MCP functions working correctly
+### Workflow Management System (2024-12-19)
+- ✅ Risk workflow yönetimi için yeni bileşenler oluşturuldu
+- ✅ RiskWorkflowManager bileşeni eklendi
+- ✅ WorkflowStepManager bileşeni eklendi
+- ✅ RiskApprovalDashboard bileşeni eklendi
+- ✅ Risk detay sayfasına workflow sekmesi eklendi
+- ✅ Risk oluşturma sürecine otomatik workflow başlatma eklendi
+- ✅ Varsayılan risk workflow'ları veritabanında oluşturuldu:
+  - Yüksek Risk Onay Süreci (4 adım)
+  - Orta Risk Onay Süreci (2 adım)
+  - Düşük Risk Onay Süreci (1 adım)
+- ✅ Workflow servisleri güncellendi ve yeni fonksiyonlar eklendi
+- ✅ Risk onay süreçleri için dashboard oluşturuldu
 
-### Test Summary
-Successfully tested all major Supabase MCP functions:
-
-1. **Database Schema Inspection** ✅
-   - Retrieved all schemas (public, auth, realtime, storage, vault, etc.)
-   - Public schema contains 161 tables with comprehensive GRC data
-
-2. **Table Operations** ✅
-   - Listed all tables in public schema with metadata
-   - Retrieved table schemas (tested with users table)
-   - Verified foreign key relationships and constraints
-
-3. **SQL Query Execution** ✅
-   - Simple COUNT queries work correctly
-   - Complex JOIN queries with multiple tables
-   - Proper result formatting and data types
-
-4. **Migration Management** ✅
-   - Retrieved recent migrations (5 most recent)
-   - Proper version tracking and naming
-
-5. **Management API** ✅
-   - Retrieved API specifications for Projects domain
-   - Proper endpoint documentation
-
-6. **Auth Admin Methods** ✅
-   - Retrieved complete Auth Admin SDK specification
-   - All user management methods documented
-
-### Database Overview
-- **Total Tables:** 161 in public schema
-- **Key Tables:** users (12 records), audits (18 records), controls (55 records), risks (16 records)
-- **Active Users:** 12 users with various roles (super_admin, auditor, reviewer)
-- **Recent Activity:** Multiple migrations in December 2024
-
-### Next Steps
-- [ ] Test write operations (INSERT, UPDATE, DELETE) with unsafe mode
-- [ ] Test Auth Admin method calls
-- [ ] Test Management API requests
-- [ ] Create comprehensive database documentation
-
----
-
-## ✅ Completed
-
-### Database Integration
-- [x] Created `dashboardService.ts` with comprehensive data fetching methods
-- [x] Integrated Supabase MCP for real database queries
-- [x] Updated Dashboard component to use real data instead of mock data
-- [x] Added proper TypeScript interfaces for all dashboard data types
-- [x] Implemented parallel data fetching for better performance
-
-### Data Sources Connected
-- [x] **Audits**: Real audit counts, status distribution, and metrics
-- [x] **Findings**: Real finding counts and critical findings
-- [x] **Controls**: Real control counts and effectiveness metrics
-- [x] **Risks**: Real risk counts and critical risks
-- [x] **Compliance**: Real compliance framework data
-- [x] **Recent Activities**: Real audit and finding activities
-- [x] **Upcoming Tasks**: Real audit and finding due dates
-- [x] **Risk Heatmap**: Real risk matrix data
-- [x] **Module Overview**: Real metrics for each module
-- [x] **GRC Metrics**: Calculated GRC performance scores
-
-### Database Views Utilized
-- [x] `v_audit_status_dashboard` - Audit status distribution
-- [x] `v_monthly_audit_metrics` - Monthly audit trends
-- [x] `v_risk_heatmap` - Risk matrix data
-- [x] `v_risk_dashboard` - Risk metrics by business unit
+### Risk Management Enhancements
+- ✅ Risk oluşturma wizard'ına workflow entegrasyonu
+- ✅ Yüksek ve kritik riskler için otomatik onay süreci başlatma
+- ✅ Risk detay sayfasında onay süreci yönetimi
+- ✅ Workflow adımlarını görüntüleme ve düzenleme
 
 ## 🔄 In Progress
 
-### Data Enhancement
-- [ ] **Historical Trend Calculations**: Need to implement proper change percentage calculations
-- [ ] **User Information**: Need to join with users table to get real user names
-- [ ] **Business Unit Integration**: Need to properly map business units to metrics
-- [ ] **Time-based Filtering**: Need to implement period-based data filtering
-
-### Performance Optimization
-- [ ] **Caching Strategy**: Implement data caching for better performance
-- [ ] **Pagination**: Add pagination for large datasets
-- [ ] **Real-time Updates**: Consider real-time data updates for critical metrics
+### Workflow System Improvements
+- 🔄 Workflow adımlarında kullanıcı seçimi için dropdown
+- 🔄 Workflow şablonları için CRUD işlemleri
+- 🔄 Workflow geçmişi ve audit trail
+- 🔄 Email bildirimleri entegrasyonu
 
 ## 📋 Next Actions
 
-### Immediate (High Priority)
-1. **Fix Historical Data**: Implement proper trend calculations for metric changes
-2. **User Integration**: Join with users table to display real user names in activities
-3. **Error Handling**: Add better error handling and fallback data
-4. **Loading States**: Improve loading states for individual components
+### Immediate (Next 1-2 days)
+1. **Workflow Kullanıcı Arayüzü İyileştirmeleri**
+   - Workflow adımlarında kullanıcı seçimi için dropdown menü
+   - Workflow şablonları için yönetim sayfası
+   - Workflow geçmişi görüntüleme
 
-### Short Term (Medium Priority)
-1. **Data Validation**: Add data validation for all metrics
-2. **Performance Monitoring**: Add performance monitoring for database queries
-3. **Caching**: Implement intelligent caching for frequently accessed data
-4. **Real-time Updates**: Add WebSocket support for real-time dashboard updates
+2. **Bildirim Sistemi**
+   - Workflow adımları için email bildirimleri
+   - In-app notification sistemi
+   - Dashboard'da bildirim göstergeleri
 
-### Long Term (Low Priority)
-1. **Advanced Analytics**: Implement predictive analytics and insights
-2. **Custom Dashboards**: Allow users to create custom dashboard views
-3. **Export Functionality**: Add dashboard data export capabilities
-4. **Mobile Optimization**: Optimize dashboard for mobile devices
+3. **Workflow Analytics**
+   - Workflow performans metrikleri
+   - Onay süreleri analizi
+   - Bottleneck tespiti
+
+### Short Term (Next 1-2 weeks)
+1. **Diğer Entity'ler için Workflow**
+   - Audit workflow'ları
+   - Finding workflow'ları
+   - Control workflow'ları
+
+2. **Advanced Workflow Features**
+   - Conditional workflow adımları
+   - Parallel approval paths
+   - Workflow templates
+
+3. **Integration Improvements**
+   - Calendar integration
+   - Document management integration
+   - Reporting integration
+
+### Medium Term (Next 1-2 months)
+1. **Advanced Workflow Engine**
+   - Dynamic workflow creation
+   - Workflow versioning
+   - Workflow migration tools
+
+2. **Compliance Features**
+   - Regulatory workflow templates
+   - Compliance reporting
+   - Audit trail enhancements
 
 ## 🐛 Known Issues
 
-1. **Trend Data**: Currently using placeholder trend data - need real historical calculations
-2. **User Names**: Activities show "System" instead of real user names
-3. **Performance**: Some queries might be slow with large datasets
-4. **Error Handling**: Limited error handling for failed data fetches
+### Workflow System
+- Workflow adımlarında kullanıcı seçimi için daha iyi UI gerekli
+- Workflow geçmişi görüntüleme eksik
+- Email bildirimleri henüz entegre edilmedi
 
-## 📊 Database Tables Used
+### Risk Management
+- Risk workflow'ları için daha detaylı konfigürasyon gerekli
+- Workflow performans metrikleri eksik
 
-### Primary Tables
-- `audits` - Main audit records
-- `findings` - Audit findings
-- `controls` - Control management
-- `risks` - Risk register
-- `compliance_frameworks` - Compliance frameworks
-- `users` - User information (needs better integration)
+## 📝 Notes
 
-### Views
-- `v_audit_status_dashboard` - Audit status metrics
-- `v_monthly_audit_metrics` - Monthly trends
-- `v_risk_heatmap` - Risk matrix
-- `v_risk_dashboard` - Risk metrics
+### Workflow Architecture
+- Workflow sistemi modüler yapıda tasarlandı
+- Her entity type için ayrı workflow'lar destekleniyor
+- Role-based approval sistemi mevcut
+- Workflow adımları sıralı ve paralel olarak çalışabilir
 
-## 🔧 Technical Notes
+### Database Schema
+- `workflows` tablosu: Workflow şablonları
+- `workflow_steps` tablosu: Workflow adımları
+- `approval_requests` tablosu: Workflow instance'ları
+- `approval_request_steps` tablosu: Instance adımları
+- `approval_actions` tablosu: Onay aksiyonları
 
-### Service Architecture
-- `dashboardService.ts` handles all data fetching
-- Uses Supabase client for database queries
-- Implements parallel data fetching for performance
-- Proper TypeScript interfaces for type safety
+### Security Considerations
+- Role-based access control (RBAC) uygulandı
+- Workflow adımları için permission kontrolü
+- Audit trail tüm aksiyonlar için mevcut
 
-### Component Updates
-- Dashboard component now uses real data from state
-- All mock data has been removed
-- Proper loading states implemented
-- Error handling added
+## 🎯 Goals
 
-### Database Queries
-- Uses existing database views where available
-- Implements proper filtering and sorting
-- Handles null values appropriately
-- Uses efficient queries with proper indexing
+### Q1 2025
+- Complete workflow management system
+- Implement notification system
+- Add workflow analytics
+- Integrate with other modules
 
-## 🎯 Success Metrics
-
-- [x] Dashboard loads real data from database
-- [x] All metrics display actual values
-- [x] Charts show real data distributions
-- [x] Activities show real audit/finding events
-- [x] Tasks show real due dates
-- [ ] Performance meets requirements (< 2s load time)
-- [ ] Error handling works properly
-- [ ] User experience is smooth and responsive
+### Q2 2025
+- Advanced workflow features
+- Compliance workflow templates
+- Performance optimization
+- User experience improvements

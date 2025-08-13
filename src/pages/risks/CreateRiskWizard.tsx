@@ -112,6 +112,29 @@ const CreateRiskWizard: React.FC = () => {
     try {
       setSaving(true);
       const createdId = await riskService.createRisk(form);
+      
+      // Risk oluşturulduktan sonra otomatik olarak workflow başlat
+      if (form.risk_level === 'high' || form.risk_level === 'critical') {
+        try {
+          // Yüksek risk seviyesi için otomatik onay süreci başlat
+          const { workflows } = await import('../../services/workflows');
+          const availableWorkflows = await workflows.getWorkflows({ entity_type: 'risk' });
+          
+          if (availableWorkflows.data && availableWorkflows.data.length > 0) {
+            // İlk uygun workflow'u kullan
+            const workflow = availableWorkflows.data[0];
+            await workflows.startWorkflow({
+              entity_type: 'risk',
+              entity_id: createdId,
+              workflow_id: workflow.id
+            });
+          }
+        } catch (workflowError) {
+          console.warn('Workflow başlatılamadı:', workflowError);
+          // Workflow hatası risk oluşturmayı engellemez
+        }
+      }
+      
       navigate(`/risks/${createdId}`);
     } finally {
       setSaving(false);
