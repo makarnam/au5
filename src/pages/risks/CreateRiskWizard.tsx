@@ -117,7 +117,7 @@ const CreateRiskWizard: React.FC = () => {
       if (form.risk_level === 'high' || form.risk_level === 'critical') {
         try {
           // Yüksek risk seviyesi için otomatik onay süreci başlat
-          const { workflows } = await import('../../services/workflows');
+          const workflows = await import('../../services/workflows');
           const availableWorkflows = await workflows.getWorkflows({ entity_type: 'risk' });
           
           if (availableWorkflows.data && availableWorkflows.data.length > 0) {

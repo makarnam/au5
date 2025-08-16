@@ -225,14 +225,59 @@ const riskService = {
     },
 
   async createRisk(payload: Partial<Risk>): Promise<UUID> {
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error("User not authenticated");
+    }
+
     const { data, error } = await supabase
       .from(tableRisks)
-      .insert(payload)
+      .insert({
+        ...payload,
+        created_by: user.id,
+      })
       .select("id")
       .single();
     if (error) throw error;
     // Ensure we always return the primitive UUID (string), not an object
     return (data as any)?.id as UUID;
+  },
+
+  async deleteRisk(id: UUID): Promise<void> {
+    // Get current user for audit purposes
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check if risk exists and user has permission to delete
+    const { data: risk, error: fetchError } = await supabase
+      .from(tableRisks)
+      .select("id, title, created_by")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      throw new Error("Risk not found");
+    }
+
+    // Optional: Check if user is the creator or has admin permissions
+    // This can be enhanced based on your permission system
+    if (risk.created_by !== user.id) {
+      // You might want to check for admin permissions here
+      // For now, we'll allow deletion if the risk exists
+    }
+
+    // Delete the risk
+    const { error } = await supabase
+      .from(tableRisks)
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`Failed to delete risk: ${error.message}`);
+    }
   },
 
   async getAssessments(riskId: UUID): Promise<RiskAssessment[]> {
@@ -382,7 +427,13 @@ const riskService = {
     const { error } = await supabase
       .from(tableRiskControls)
       .insert({ risk_id: riskId, control_id: controlId });
-    if (error) throw error;
+    if (error) {
+      // Handle unique constraint violation gracefully
+      if (error.code === '23505' && error.message.includes('risk_controls_risk_id_control_id_key')) {
+        throw new Error('This control is already linked to this risk');
+      }
+      throw error;
+    }
   },
 
   async unlinkControl(riskId: UUID, controlId: UUID): Promise<void> {
@@ -394,18 +445,52 @@ const riskService = {
     if (error) throw error;
   },
 
-  async getLinkedControls(riskId: UUID): Promise<Array<{ control_id: UUID; control_title: string; control_status?: string | null }>> {
-    // Join risk_controls with controls to fetch basic info
+  async getLinkedControls(riskId: UUID): Promise<Array<{ 
+    control_id: UUID; 
+    control_title: string; 
+    control_code: string;
+    control_description: string;
+    control_type: string;
+    control_status?: string | null;
+    effectiveness?: string | null;
+    process_area: string;
+    frequency: string;
+    last_tested_date?: string | null;
+    next_test_date?: string | null;
+  }>> {
+    // Join risk_controls with controls to fetch detailed info
     const { data, error } = await supabase
       .from(tableRiskControls)
-      .select("control_id, controls!inner(id, title, status)")
+      .select(`
+        control_id, 
+        controls!inner(
+          id, 
+          title, 
+          control_code,
+          description,
+          control_type,
+          effectiveness,
+          process_area,
+          frequency,
+          last_tested_date,
+          next_test_date
+        )
+      `)
       .eq("risk_id", riskId);
     if (error) throw error;
     const rows = (data as any[]) ?? [];
     return rows.map((r) => ({
       control_id: r.control_id ?? r.controls?.id,
       control_title: r.controls?.title ?? "Control",
-      control_status: r.controls?.status ?? null,
+      control_code: r.controls?.control_code ?? "",
+      control_description: r.controls?.description ?? "",
+      control_type: r.controls?.control_type ?? "",
+      control_status: null, // controls table doesn't have a status column
+      effectiveness: r.controls?.effectiveness ?? null,
+      process_area: r.controls?.process_area ?? "",
+      frequency: r.controls?.frequency ?? "",
+      last_tested_date: r.controls?.last_tested_date ?? null,
+      next_test_date: r.controls?.next_test_date ?? null,
     }));
   },
 

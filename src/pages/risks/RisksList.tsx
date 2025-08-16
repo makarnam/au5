@@ -15,6 +15,7 @@ import {
   Layers,
   ChevronDown,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "../../store/authStore";
@@ -538,12 +539,34 @@ const RisksList: React.FC = () => {
                           View
                         </button>
                         {checkPermission(["auditor", "supervisor_auditor", "admin", "super_admin"]) && (
-                          <button
-                            onClick={() => navigate(`/risks/${risk.id}/edit`)}
-                            className="text-gray-500 hover:text-blue-600 text-sm"
-                          >
-                            Edit
-                          </button>
+                          <>
+                            <button
+                              onClick={() => navigate(`/risks/${risk.id}/edit`)}
+                              className="text-gray-500 hover:text-blue-600 text-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`Are you sure you want to delete the risk "${risk.title}"? This action cannot be undone.`)) {
+                                  return;
+                                }
+                                try {
+                                  await riskService.deleteRisk(risk.id);
+                                  toast.success("Risk deleted successfully");
+                                  // Refresh the list
+                                  loadData();
+                                } catch (err: any) {
+                                  console.error(err);
+                                  toast.error(err?.message || "Failed to delete risk");
+                                }
+                              }}
+                              className="text-gray-500 hover:text-red-600 text-sm"
+                              title="Delete risk"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>

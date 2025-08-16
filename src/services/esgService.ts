@@ -1,121 +1,246 @@
 import { supabase } from '../lib/supabase';
-import {
-  ESGProgram,
-  ESGProgramFormData,
-  ESGMetric,
-  ESGMetricFormData,
-  ESGDataCollection,
-  ESGDataCollectionFormData,
-  CarbonManagement,
-  CarbonManagementFormData,
-  ESGDisclosure,
-  ESGDisclosureFormData,
-  ESGPortfolioAssessment,
-  ESGPortfolioAssessmentFormData,
-  DoubleMaterialityAssessment,
-  DoubleMaterialityAssessmentFormData,
-  ESGGoal,
-  ESGGoalFormData,
-  ESGStakeholderEngagement,
-  ESGStakeholderEngagementFormData,
-  ESGDashboardMetrics,
-  ESGCarbonSummary,
-  ESGMaterialityMatrix,
-  ESGSearchParams,
-  ESGFilterOptions,
-  ApiResponse,
-  PaginatedResponse,
-} from '../types';
+
+interface ESGMetrics {
+  environmental: {
+    carbonFootprint: number;
+    energyConsumption: number;
+    waterUsage: number;
+    wasteGenerated: number;
+    renewableEnergyPercentage: number;
+    recyclingRate: number;
+  };
+  social: {
+    employeeSatisfaction: number;
+    diversityPercentage: number;
+    trainingHours: number;
+    communityInvestment: number;
+    healthSafetyIncidents: number;
+    supplierDiversity: number;
+  };
+  governance: {
+    boardDiversity: number;
+    executiveCompensationRatio: number;
+    ethicsComplianceScore: number;
+    transparencyScore: number;
+    stakeholderEngagement: number;
+    riskManagementScore: number;
+  };
+}
+
+interface ESGGoal {
+  id: string;
+  category: 'environmental' | 'social' | 'governance';
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  unit: string;
+  deadline: string;
+  status: 'on-track' | 'at-risk' | 'behind' | 'completed';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  created_at: string;
+  updated_at: string;
+}
+
+interface ESGProgram {
+  id: string;
+  name: string;
+  category: 'environmental' | 'social' | 'governance';
+  description: string;
+  status: 'active' | 'planned' | 'completed' | 'paused';
+  budget: number;
+  spent: number;
+  startDate: string;
+  endDate: string;
+  impact: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CarbonData {
+  id: string;
+  scope: 'scope1' | 'scope2' | 'scope3';
+  category: string;
+  value: number;
+  unit: string;
+  year: number;
+  month?: number;
+  source: string;
+  verification_status: 'pending' | 'verified' | 'rejected';
+  created_at: string;
+}
+
+interface MaterialityAssessment {
+  id: string;
+  topic_name: string;
+  category: 'environmental' | 'social' | 'governance';
+  impact_score: number;
+  financial_score: number;
+  combined_score: number;
+  materiality_level: 'critical' | 'high' | 'medium' | 'low';
+  stakeholder_priority: number;
+  created_at: string;
+}
 
 class ESGService {
-  // ESG Programs
-  async getESGPrograms(params?: ESGSearchParams): Promise<PaginatedResponse<ESGProgram>> {
+  // Metrics Management
+  async getMetrics(timeframe: string = 'current'): Promise<ESGMetrics> {
     try {
-      let query = supabase
-        .from('esg_programs')
-        .select(`
-          *,
-          owner:users!esg_programs_owner_id_fkey(first_name, last_name, email),
-          business_unit:business_units!esg_programs_business_unit_id_fkey(name, code)
-        `);
+      // In a real implementation, this would fetch from the database
+      // For now, return mock data
+      return {
+        environmental: {
+          carbonFootprint: 2847,
+          energyConsumption: 15.2,
+          waterUsage: 8450,
+          wasteGenerated: 1234,
+          renewableEnergyPercentage: 45,
+          recyclingRate: 78,
+        },
+        social: {
+          employeeSatisfaction: 87,
+          diversityPercentage: 42,
+          trainingHours: 32.5,
+          communityInvestment: 2400000,
+          healthSafetyIncidents: 0.8,
+          supplierDiversity: 28,
+        },
+        governance: {
+          boardDiversity: 45,
+          executiveCompensationRatio: 45,
+          ethicsComplianceScore: 94,
+          transparencyScore: 88,
+          stakeholderEngagement: 92,
+          riskManagementScore: 89,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching ESG metrics:', error);
+      throw error;
+    }
+  }
 
-      if (params?.query) {
-        query = query.or(`name.ilike.%${params.query}%,description.ilike.%${params.query}%`);
-      }
+  async updateMetrics(metrics: Partial<ESGMetrics>): Promise<void> {
+    try {
+      // Update metrics in the database
+      const { error } = await supabase
+        .from('esg_metrics')
+        .upsert({
+          ...metrics,
+          updated_at: new Date().toISOString(),
+        });
 
-      if (params?.filters) {
-        if (params.filters.program_type?.length) {
-          query = query.in('program_type', params.filters.program_type);
-        }
-        if (params.filters.status?.length) {
-          query = query.in('status', params.filters.status);
-        }
-        if (params.filters.business_unit?.length) {
-          query = query.in('business_unit_id', params.filters.business_unit);
-        }
-      }
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating ESG metrics:', error);
+      throw error;
+    }
+  }
 
-      if (params?.sort_by) {
-        query = query.order(params.sort_by, { ascending: params.sort_order === 'asc' });
-      } else {
-        query = query.order('created_at', { ascending: false });
-      }
-
-      const page = params?.page || 1;
-      const pageSize = params?.page_size || 10;
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data, error, count } = await query.range(from, to);
+  // Goals Management
+  async getGoals(): Promise<ESGGoal[]> {
+    try {
+      const { data, error } = await supabase
+        .from('esg_goals')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return {
-        data: data || [],
-        total: count || 0,
-        page,
-        pageSize,
-        totalPages: Math.ceil((count || 0) / pageSize),
-      };
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching ESG goals:', error);
+      throw error;
+    }
+  }
+
+  async createGoal(goal: Omit<ESGGoal, 'id' | 'created_at' | 'updated_at'>): Promise<ESGGoal> {
+    try {
+      const { data, error } = await supabase
+        .from('esg_goals')
+        .insert({
+          ...goal,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error creating ESG goal:', error);
+      throw error;
+    }
+  }
+
+  async updateGoal(id: string, updates: Partial<ESGGoal>): Promise<ESGGoal> {
+    try {
+      const { data, error } = await supabase
+        .from('esg_goals')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error updating ESG goal:', error);
+      throw error;
+    }
+  }
+
+  async deleteGoal(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('esg_goals')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting ESG goal:', error);
+      throw error;
+    }
+  }
+
+  // Programs Management
+  async getPrograms(): Promise<ESGProgram[]> {
+    try {
+      const { data, error } = await supabase
+        .from('esg_programs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
     } catch (error) {
       console.error('Error fetching ESG programs:', error);
       throw error;
     }
   }
 
-  async getESGProgram(id: string): Promise<ESGProgram> {
+  async createProgram(program: Omit<ESGProgram, 'id' | 'created_at' | 'updated_at'>): Promise<ESGProgram> {
     try {
       const { data, error } = await supabase
         .from('esg_programs')
-        .select(`
-          *,
-          owner:users!esg_programs_owner_id_fkey(first_name, last_name, email),
-          business_unit:business_units!esg_programs_business_unit_id_fkey(name, code)
-        `)
-        .eq('id', id)
+        .insert({
+          ...program,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
         .single();
 
       if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error fetching ESG program:', error);
-      throw error;
-    }
-  }
 
-  async createESGProgram(formData: ESGProgramFormData): Promise<ESGProgram> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_programs')
-        .insert([formData])
-        .select(`
-          *,
-          owner:users!esg_programs_owner_id_fkey(first_name, last_name, email),
-          business_unit:business_units!esg_programs_business_unit_id_fkey(name, code)
-        `)
-        .single();
-
-      if (error) throw error;
       return data;
     } catch (error) {
       console.error('Error creating ESG program:', error);
@@ -123,20 +248,20 @@ class ESGService {
     }
   }
 
-  async updateESGProgram(id: string, formData: Partial<ESGProgramFormData>): Promise<ESGProgram> {
+  async updateProgram(id: string, updates: Partial<ESGProgram>): Promise<ESGProgram> {
     try {
       const { data, error } = await supabase
         .from('esg_programs')
-        .update({ ...formData, updated_at: new Date().toISOString() })
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', id)
-        .select(`
-          *,
-          owner:users!esg_programs_owner_id_fkey(first_name, last_name, email),
-          business_unit:business_units!esg_programs_business_unit_id_fkey(name, code)
-        `)
+        .select()
         .single();
 
       if (error) throw error;
+
       return data;
     } catch (error) {
       console.error('Error updating ESG program:', error);
@@ -144,7 +269,7 @@ class ESGService {
     }
   }
 
-  async deleteESGProgram(id: string): Promise<void> {
+  async deleteProgram(id: string): Promise<void> {
     try {
       const { error } = await supabase
         .from('esg_programs')
@@ -158,294 +283,171 @@ class ESGService {
     }
   }
 
-  // ESG Metrics
-  async getESGMetrics(programId?: string, params?: ESGSearchParams): Promise<PaginatedResponse<ESGMetric>> {
-    try {
-      let query = supabase
-        .from('esg_metrics')
-        .select(`
-          *,
-          program:esg_programs!esg_metrics_program_id_fkey(name, program_type)
-        `);
-
-      if (programId) {
-        query = query.eq('program_id', programId);
-      }
-
-      if (params?.filters?.category?.length) {
-        query = query.in('category', params.filters.category);
-      }
-
-      const { data, error, count } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
-      };
-    } catch (error) {
-      console.error('Error fetching ESG metrics:', error);
-      throw error;
-    }
-  }
-
-  async createESGMetric(formData: ESGMetricFormData): Promise<ESGMetric> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_metrics')
-        .insert([formData])
-        .select(`
-          *,
-          program:esg_programs!esg_metrics_program_id_fkey(name, program_type)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating ESG metric:', error);
-      throw error;
-    }
-  }
-
-  async updateESGMetric(id: string, formData: Partial<ESGMetricFormData>): Promise<ESGMetric> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_metrics')
-        .update({ ...formData, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select(`
-          *,
-          program:esg_programs!esg_metrics_program_id_fkey(name, program_type)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error updating ESG metric:', error);
-      throw error;
-    }
-  }
-
-  // ESG Data Collection
-  async getESGDataCollection(metricId?: string, params?: ESGSearchParams): Promise<PaginatedResponse<ESGDataCollection>> {
-    try {
-      let query = supabase
-        .from('esg_data_collection')
-        .select(`
-          *,
-          metric:esg_metrics!esg_data_collection_metric_id_fkey(metric_name, metric_code, category, unit_of_measure),
-          verified_by_user:users!esg_data_collection_verified_by_fkey(first_name, last_name)
-        `);
-
-      if (metricId) {
-        query = query.eq('metric_id', metricId);
-      }
-
-      if (params?.filters?.verification_status?.length) {
-        query = query.in('verification_status', params.filters.verification_status);
-      }
-
-      const { data, error, count } = await query.order('reporting_period', { ascending: false });
-
-      if (error) throw error;
-
-      return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
-      };
-    } catch (error) {
-      console.error('Error fetching ESG data collection:', error);
-      throw error;
-    }
-  }
-
-  async createESGDataCollection(formData: ESGDataCollectionFormData): Promise<ESGDataCollection> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_data_collection')
-        .insert([formData])
-        .select(`
-          *,
-          metric:esg_metrics!esg_data_collection_metric_id_fkey(metric_name, metric_code, category, unit_of_measure),
-          verified_by_user:users!esg_data_collection_verified_by_fkey(first_name, last_name)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating ESG data collection:', error);
-      throw error;
-    }
-  }
-
-  async verifyESGDataCollection(id: string, verifiedBy: string): Promise<ESGDataCollection> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_data_collection')
-        .update({
-          verification_status: 'verified',
-          verified_by: verifiedBy,
-          verified_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select(`
-          *,
-          metric:esg_metrics!esg_data_collection_metric_id_fkey(metric_name, metric_code, category, unit_of_measure),
-          verified_by_user:users!esg_data_collection_verified_by_fkey(first_name, last_name)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error verifying ESG data collection:', error);
-      throw error;
-    }
-  }
-
   // Carbon Management
-  async getCarbonManagement(programId?: string, params?: ESGSearchParams): Promise<PaginatedResponse<CarbonManagement>> {
+  async getCarbonData(year?: number): Promise<CarbonData[]> {
     try {
       let query = supabase
         .from('carbon_management')
-        .select(`
-          *,
-          program:esg_programs!carbon_management_program_id_fkey(name, program_type),
-          business_unit:business_units!carbon_management_business_unit_id_fkey(name, code)
-        `);
+        .select('*')
+        .order('year', { ascending: false });
 
-      if (programId) {
-        query = query.eq('program_id', programId);
+      if (year) {
+        query = query.eq('year', year);
       }
 
-      if (params?.filters?.verification_status?.length) {
-        query = query.in('verification_status', params.filters.verification_status);
-      }
-
-      const { data, error, count } = await query.order('reporting_period', { ascending: false });
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
-      };
+      return data || [];
     } catch (error) {
-      console.error('Error fetching carbon management data:', error);
+      console.error('Error fetching carbon data:', error);
       throw error;
     }
   }
 
-  async createCarbonManagement(formData: CarbonManagementFormData): Promise<CarbonManagement> {
+  async addCarbonData(carbonData: Omit<CarbonData, 'id' | 'created_at'>): Promise<CarbonData> {
     try {
       const { data, error } = await supabase
         .from('carbon_management')
-        .insert([formData])
-        .select(`
-          *,
-          program:esg_programs!carbon_management_program_id_fkey(name, program_type),
-          business_unit:business_units!carbon_management_business_unit_id_fkey(name, code)
-        `)
+        .insert({
+          ...carbonData,
+          created_at: new Date().toISOString(),
+        })
+        .select()
         .single();
 
       if (error) throw error;
+
       return data;
     } catch (error) {
-      console.error('Error creating carbon management record:', error);
+      console.error('Error adding carbon data:', error);
       throw error;
     }
   }
 
-  async getCarbonSummary(): Promise<ESGCarbonSummary> {
+  async updateCarbonData(id: string, updates: Partial<CarbonData>): Promise<CarbonData> {
     try {
       const { data, error } = await supabase
         .from('carbon_management')
-        .select('scope, co2_equivalent, reporting_period');
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      const scope1Total = data?.filter(d => d.scope === 'scope1').reduce((sum, d) => sum + (d.co2_equivalent || 0), 0) || 0;
-      const scope2Total = data?.filter(d => d.scope === 'scope2').reduce((sum, d) => sum + (d.co2_equivalent || 0), 0) || 0;
-      const scope3Total = data?.filter(d => d.scope === 'scope3').reduce((sum, d) => sum + (d.co2_equivalent || 0), 0) || 0;
-
-      return {
-        scope1_total: scope1Total,
-        scope2_total: scope2Total,
-        scope3_total: scope3Total,
-        total_emissions: scope1Total + scope2Total + scope3Total,
-        year_over_year_change: 0, // Calculate based on historical data
-        reduction_target: 0, // Set based on company goals
-        progress_percentage: 0, // Calculate based on target vs current
-      };
+      return data;
     } catch (error) {
-      console.error('Error calculating carbon summary:', error);
+      console.error('Error updating carbon data:', error);
+      throw error;
+    }
+  }
+
+  // Materiality Assessment
+  async getMaterialityAssessment(): Promise<MaterialityAssessment[]> {
+    try {
+      const { data, error } = await supabase
+        .from('double_materiality_assessments')
+        .select('*')
+        .order('combined_score', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching materiality assessment:', error);
+      throw error;
+    }
+  }
+
+  async createMaterialityAssessment(assessment: Omit<MaterialityAssessment, 'id' | 'created_at'>): Promise<MaterialityAssessment> {
+    try {
+      const { data, error } = await supabase
+        .from('double_materiality_assessments')
+        .insert({
+          ...assessment,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error creating materiality assessment:', error);
+      throw error;
+    }
+  }
+
+  // Stakeholder Engagement
+  async getStakeholderEngagement(): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('esg_stakeholder_engagement')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching stakeholder engagement:', error);
+      throw error;
+    }
+  }
+
+  async addStakeholderEngagement(engagement: any): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('esg_stakeholder_engagement')
+        .insert({
+          ...engagement,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error adding stakeholder engagement:', error);
       throw error;
     }
   }
 
   // ESG Disclosures
-  async getESGDisclosures(programId?: string, params?: ESGSearchParams): Promise<PaginatedResponse<ESGDisclosure>> {
+  async getDisclosures(): Promise<any[]> {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('esg_disclosures')
-        .select(`
-          *,
-          program:esg_programs!esg_disclosures_program_id_fkey(name, program_type),
-          approver:users!esg_disclosures_approver_id_fkey(first_name, last_name)
-        `);
-
-      if (programId) {
-        query = query.eq('program_id', programId);
-      }
-
-      if (params?.filters?.status?.length) {
-        query = query.in('status', params.filters.status);
-      }
-
-      const { data, error, count } = await query.order('created_at', { ascending: false });
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
-      };
+      return data || [];
     } catch (error) {
       console.error('Error fetching ESG disclosures:', error);
       throw error;
     }
   }
 
-  async createESGDisclosure(formData: ESGDisclosureFormData): Promise<ESGDisclosure> {
+  async createDisclosure(disclosure: any): Promise<any> {
     try {
       const { data, error } = await supabase
         .from('esg_disclosures')
-        .insert([formData])
-        .select(`
-          *,
-          program:esg_programs!esg_disclosures_program_id_fkey(name, program_type),
-          approver:users!esg_disclosures_approver_id_fkey(first_name, last_name)
-        `)
+        .insert({
+          ...disclosure,
+          created_at: new Date().toISOString(),
+        })
+        .select()
         .single();
 
       if (error) throw error;
+
       return data;
     } catch (error) {
       console.error('Error creating ESG disclosure:', error);
@@ -453,380 +455,172 @@ class ESGService {
     }
   }
 
-  async approveESGDisclosure(id: string, approverId: string): Promise<ESGDisclosure> {
+  // ESG Analytics and Reporting
+  async getESGAnalytics(timeframe: string = 'current'): Promise<any> {
     try {
-      const { data, error } = await supabase
-        .from('esg_disclosures')
-        .update({
-          status: 'approved',
-          approver_id: approverId,
-          approved_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select(`
-          *,
-          program:esg_programs!esg_disclosures_program_id_fkey(name, program_type),
-          approver:users!esg_disclosures_approver_id_fkey(first_name, last_name)
-        `)
-        .single();
+      // Calculate analytics based on metrics, goals, and programs
+      const [metrics, goals, programs] = await Promise.all([
+        this.getMetrics(timeframe),
+        this.getGoals(),
+        this.getPrograms(),
+      ]);
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error approving ESG disclosure:', error);
-      throw error;
-    }
-  }
+      // Calculate overall ESG score
+      const environmentalScore = this.calculateEnvironmentalScore(metrics.environmental);
+      const socialScore = this.calculateSocialScore(metrics.social);
+      const governanceScore = this.calculateGovernanceScore(metrics.governance);
+      const overallScore = (environmentalScore + socialScore + governanceScore) / 3;
 
-  // ESG Portfolio Assessments
-  async getESGPortfolioAssessments(params?: ESGSearchParams): Promise<PaginatedResponse<ESGPortfolioAssessment>> {
-    try {
-      let query = supabase
-        .from('esg_portfolio_assessments')
-        .select('*');
+      // Calculate goal progress
+      const goalProgress = this.calculateGoalProgress(goals);
 
-      if (params?.filters?.portfolio_type?.length) {
-        query = query.in('portfolio_type', params.filters.portfolio_type);
-      }
-
-      const { data, error, count } = await query.order('assessment_date', { ascending: false });
-
-      if (error) throw error;
+      // Calculate program performance
+      const programPerformance = this.calculateProgramPerformance(programs);
 
       return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
+        overallScore,
+        environmentalScore,
+        socialScore,
+        governanceScore,
+        goalProgress,
+        programPerformance,
+        trends: this.calculateTrends(metrics),
       };
     } catch (error) {
-      console.error('Error fetching ESG portfolio assessments:', error);
+      console.error('Error calculating ESG analytics:', error);
       throw error;
     }
   }
 
-  async createESGPortfolioAssessment(formData: ESGPortfolioAssessmentFormData): Promise<ESGPortfolioAssessment> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_portfolio_assessments')
-        .insert([formData])
-        .select()
-        .single();
+  private calculateEnvironmentalScore(metrics: any): number {
+    // Calculate environmental score based on various factors
+    const carbonScore = Math.max(0, 100 - (metrics.carbonFootprint / 100));
+    const energyScore = Math.max(0, 100 - (metrics.energyConsumption * 5));
+    const waterScore = Math.max(0, 100 - (metrics.waterUsage / 100));
+    const wasteScore = Math.max(0, 100 - (metrics.wasteGenerated / 10));
+    const renewableScore = metrics.renewableEnergyPercentage;
+    const recyclingScore = metrics.recyclingRate;
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating ESG portfolio assessment:', error);
-      throw error;
-    }
+    return (carbonScore + energyScore + waterScore + wasteScore + renewableScore + recyclingScore) / 6;
   }
 
-  // Double Materiality Assessments
-  async getDoubleMaterialityAssessments(params?: ESGSearchParams): Promise<PaginatedResponse<DoubleMaterialityAssessment>> {
+  private calculateSocialScore(metrics: any): number {
+    // Calculate social score based on various factors
+    const satisfactionScore = metrics.employeeSatisfaction;
+    const diversityScore = metrics.diversityPercentage * 2; // Scale to 100
+    const trainingScore = Math.min(100, metrics.trainingHours * 3);
+    const communityScore = Math.min(100, metrics.communityInvestment / 100000);
+    const safetyScore = Math.max(0, 100 - (metrics.healthSafetyIncidents * 50));
+    const supplierScore = metrics.supplierDiversity * 3.57; // Scale to 100
+
+    return (satisfactionScore + diversityScore + trainingScore + communityScore + safetyScore + supplierScore) / 6;
+  }
+
+  private calculateGovernanceScore(metrics: any): number {
+    // Calculate governance score based on various factors
+    const boardScore = metrics.boardDiversity * 2.22; // Scale to 100
+    const compensationScore = Math.max(0, 100 - (metrics.executiveCompensationRatio / 2));
+    const ethicsScore = metrics.ethicsComplianceScore;
+    const transparencyScore = metrics.transparencyScore;
+    const engagementScore = metrics.stakeholderEngagement;
+    const riskScore = metrics.riskManagementScore;
+
+    return (boardScore + compensationScore + ethicsScore + transparencyScore + engagementScore + riskScore) / 6;
+  }
+
+  private calculateGoalProgress(goals: ESGGoal[]): any {
+    const totalGoals = goals.length;
+    const completedGoals = goals.filter(goal => goal.status === 'completed').length;
+    const onTrackGoals = goals.filter(goal => goal.status === 'on-track').length;
+    const atRiskGoals = goals.filter(goal => goal.status === 'at-risk').length;
+    const behindGoals = goals.filter(goal => goal.status === 'behind').length;
+
+    return {
+      total: totalGoals,
+      completed: completedGoals,
+      onTrack: onTrackGoals,
+      atRisk: atRiskGoals,
+      behind: behindGoals,
+      completionRate: totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0,
+    };
+  }
+
+  private calculateProgramPerformance(programs: ESGProgram[]): any {
+    const totalPrograms = programs.length;
+    const activePrograms = programs.filter(program => program.status === 'active').length;
+    const completedPrograms = programs.filter(program => program.status === 'completed').length;
+    const totalBudget = programs.reduce((sum, program) => sum + program.budget, 0);
+    const totalSpent = programs.reduce((sum, program) => sum + program.spent, 0);
+
+    return {
+      total: totalPrograms,
+      active: activePrograms,
+      completed: completedPrograms,
+      totalBudget,
+      totalSpent,
+      budgetUtilization: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0,
+    };
+  }
+
+  private calculateTrends(metrics: ESGMetrics): any {
+    // In a real implementation, this would compare current metrics with historical data
+    return {
+      environmental: {
+        carbonFootprint: -12,
+        energyConsumption: -8,
+        waterUsage: -15,
+        wasteGenerated: -20,
+        renewableEnergyPercentage: 5,
+        recyclingRate: 3,
+      },
+      social: {
+        employeeSatisfaction: 2,
+        diversityPercentage: 1,
+        trainingHours: 5,
+        communityInvestment: 15,
+        healthSafetyIncidents: -20,
+        supplierDiversity: 3,
+      },
+      governance: {
+        boardDiversity: 5,
+        executiveCompensationRatio: -10,
+        ethicsComplianceScore: 2,
+        transparencyScore: 3,
+        stakeholderEngagement: 1,
+        riskManagementScore: 4,
+      },
+    };
+  }
+
+  // Export and Reporting
+  async generateESGReport(timeframe: string = 'current'): Promise<any> {
     try {
-      let query = supabase
-        .from('double_materiality_assessments')
-        .select(`
-          *,
-          assessor:users!double_materiality_assessments_assessor_id_fkey(first_name, last_name)
-        `);
-
-      if (params?.filters?.topic_category?.length) {
-        query = query.in('topic_category', params.filters.topic_category);
-      }
-
-      if (params?.filters?.materiality_level?.length) {
-        query = query.in('materiality_level', params.filters.materiality_level);
-      }
-
-      const { data, error, count } = await query.order('assessment_date', { ascending: false });
-
-      if (error) throw error;
+      const analytics = await this.getESGAnalytics(timeframe);
+      const goals = await this.getGoals();
+      const programs = await this.getPrograms();
+      const carbonData = await this.getCarbonData();
 
       return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
+        timeframe,
+        generatedAt: new Date().toISOString(),
+        analytics,
+        goals,
+        programs,
+        carbonData,
+        summary: this.generateReportSummary(analytics, goals, programs),
       };
     } catch (error) {
-      console.error('Error fetching double materiality assessments:', error);
+      console.error('Error generating ESG report:', error);
       throw error;
     }
   }
 
-  async createDoubleMaterialityAssessment(formData: DoubleMaterialityAssessmentFormData): Promise<DoubleMaterialityAssessment> {
-    try {
-      // Calculate combined materiality score
-      const impactScore = formData.impact_materiality_score || 0;
-      const financialScore = formData.financial_materiality_score || 0;
-      const combinedScore = (impactScore + financialScore) / 2;
+  private generateReportSummary(analytics: any, goals: ESGGoal[], programs: ESGProgram[]): string {
+    const overallScore = analytics.overallScore.toFixed(1);
+    const goalCompletion = analytics.goalProgress.completionRate.toFixed(1);
+    const programCount = analytics.programPerformance.total;
 
-      // Determine materiality level
-      let materialityLevel: 'low' | 'medium' | 'high' | 'critical' = 'medium';
-      if (combinedScore >= 4.5) materialityLevel = 'critical';
-      else if (combinedScore >= 3.5) materialityLevel = 'high';
-      else if (combinedScore >= 2.5) materialityLevel = 'medium';
-      else materialityLevel = 'low';
-
-      const { data, error } = await supabase
-        .from('double_materiality_assessments')
-        .insert([{
-          ...formData,
-          combined_materiality_score: combinedScore,
-          materiality_level: materialityLevel,
-        }])
-        .select(`
-          *,
-          assessor:users!double_materiality_assessments_assessor_id_fkey(first_name, last_name)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating double materiality assessment:', error);
-      throw error;
-    }
-  }
-
-  async getMaterialityMatrix(): Promise<ESGMaterialityMatrix[]> {
-    try {
-      const { data, error } = await supabase
-        .from('double_materiality_assessments')
-        .select('topic_name, impact_materiality_score, financial_materiality_score, combined_materiality_score, materiality_level, topic_category')
-        .order('combined_materiality_score', { ascending: false });
-
-      if (error) throw error;
-
-      return data?.map(item => ({
-        topic_name: item.topic_name,
-        impact_score: item.impact_materiality_score || 0,
-        financial_score: item.financial_materiality_score || 0,
-        combined_score: item.combined_materiality_score || 0,
-        materiality_level: item.materiality_level,
-        category: item.topic_category,
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching materiality matrix:', error);
-      throw error;
-    }
-  }
-
-  // ESG Goals
-  async getESGGoals(programId?: string, params?: ESGSearchParams): Promise<PaginatedResponse<ESGGoal>> {
-    try {
-      let query = supabase
-        .from('esg_goals')
-        .select(`
-          *,
-          program:esg_programs!esg_goals_program_id_fkey(name, program_type),
-          owner:users!esg_goals_owner_id_fkey(first_name, last_name)
-        `);
-
-      if (programId) {
-        query = query.eq('program_id', programId);
-      }
-
-      if (params?.filters?.category?.length) {
-        query = query.in('category', params.filters.category);
-      }
-
-      if (params?.filters?.status?.length) {
-        query = query.in('status', params.filters.status);
-      }
-
-      const { data, error, count } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
-      };
-    } catch (error) {
-      console.error('Error fetching ESG goals:', error);
-      throw error;
-    }
-  }
-
-  async createESGGoal(formData: ESGGoalFormData): Promise<ESGGoal> {
-    try {
-      // Calculate progress percentage
-      let progressPercentage = 0;
-      if (formData.target_value && formData.current_value && formData.baseline_value) {
-        const totalProgress = formData.target_value - formData.baseline_value;
-        const currentProgress = formData.current_value - formData.baseline_value;
-        progressPercentage = totalProgress > 0 ? (currentProgress / totalProgress) * 100 : 0;
-      }
-
-      const { data, error } = await supabase
-        .from('esg_goals')
-        .insert([{
-          ...formData,
-          progress_percentage: progressPercentage,
-        }])
-        .select(`
-          *,
-          program:esg_programs!esg_goals_program_id_fkey(name, program_type),
-          owner:users!esg_goals_owner_id_fkey(first_name, last_name)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating ESG goal:', error);
-      throw error;
-    }
-  }
-
-  // ESG Stakeholder Engagement
-  async getESGStakeholderEngagement(programId?: string, params?: ESGSearchParams): Promise<PaginatedResponse<ESGStakeholderEngagement>> {
-    try {
-      let query = supabase
-        .from('esg_stakeholder_engagement')
-        .select(`
-          *,
-          program:esg_programs!esg_stakeholder_engagement_program_id_fkey(name, program_type)
-        `);
-
-      if (programId) {
-        query = query.eq('program_id', programId);
-      }
-
-      if (params?.filters?.status?.length) {
-        query = query.in('status', params.filters.status);
-      }
-
-      const { data, error, count } = await query.order('engagement_date', { ascending: false });
-
-      if (error) throw error;
-
-      return {
-        data: data || [],
-        total: count || 0,
-        page: 1,
-        pageSize: count || 0,
-        totalPages: 1,
-      };
-    } catch (error) {
-      console.error('Error fetching ESG stakeholder engagement:', error);
-      throw error;
-    }
-  }
-
-  async createESGStakeholderEngagement(formData: ESGStakeholderEngagementFormData): Promise<ESGStakeholderEngagement> {
-    try {
-      const { data, error } = await supabase
-        .from('esg_stakeholder_engagement')
-        .insert([formData])
-        .select(`
-          *,
-          program:esg_programs!esg_stakeholder_engagement_program_id_fkey(name, program_type)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating ESG stakeholder engagement:', error);
-      throw error;
-    }
-  }
-
-  // Dashboard Metrics
-  async getESGDashboardMetrics(): Promise<ESGDashboardMetrics> {
-    try {
-      // Get programs count
-      const { count: totalPrograms } = await supabase
-        .from('esg_programs')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: activePrograms } = await supabase
-        .from('esg_programs')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
-
-      // Get metrics count
-      const { count: totalMetrics } = await supabase
-        .from('esg_metrics')
-        .select('*', { count: 'exact', head: true });
-
-      // Get data collection rate
-      const { count: totalDataCollections } = await supabase
-        .from('esg_data_collection')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: verifiedDataCollections } = await supabase
-        .from('esg_data_collection')
-        .select('*', { count: 'exact', head: true })
-        .eq('verification_status', 'verified');
-
-      const dataCollectionRate = totalDataCollections > 0 ? (verifiedDataCollections / totalDataCollections) * 100 : 0;
-
-      // Get carbon footprint total
-      const { data: carbonData } = await supabase
-        .from('carbon_management')
-        .select('co2_equivalent');
-
-      const carbonFootprintTotal = carbonData?.reduce((sum, item) => sum + (item.co2_equivalent || 0), 0) || 0;
-
-      // Get disclosure completion rate
-      const { count: totalDisclosures } = await supabase
-        .from('esg_disclosures')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: completedDisclosures } = await supabase
-        .from('esg_disclosures')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['approved', 'published']);
-
-      const disclosureCompletionRate = totalDisclosures > 0 ? (completedDisclosures / totalDisclosures) * 100 : 0;
-
-      // Get portfolio assessments count
-      const { count: portfolioAssessments } = await supabase
-        .from('esg_portfolio_assessments')
-        .select('*', { count: 'exact', head: true });
-
-      // Get materiality assessments count
-      const { count: materialityAssessments } = await supabase
-        .from('double_materiality_assessments')
-        .select('*', { count: 'exact', head: true });
-
-      // Get goals on track and at risk
-      const { count: goalsOnTrack } = await supabase
-        .from('esg_goals')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
-
-      const { count: goalsAtRisk } = await supabase
-        .from('esg_goals')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['behind_schedule', 'at_risk']);
-
-      return {
-        total_programs: totalPrograms || 0,
-        active_programs: activePrograms || 0,
-        total_metrics: totalMetrics || 0,
-        data_collection_rate: dataCollectionRate,
-        carbon_footprint_total: carbonFootprintTotal,
-        disclosure_completion_rate: disclosureCompletionRate,
-        portfolio_assessments: portfolioAssessments || 0,
-        materiality_assessments: materialityAssessments || 0,
-        goals_on_track: goalsOnTrack || 0,
-        goals_at_risk: goalsAtRisk || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching ESG dashboard metrics:', error);
-      throw error;
-    }
+    return `ESG Performance Summary: Overall ESG score of ${overallScore}% with ${goalCompletion}% goal completion rate and ${programCount} active programs.`;
   }
 }
 

@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { workflows } from '../../services/workflows';
+import workflows from '../../services/workflows';
 import { WorkflowStep, Workflow } from '../../types';
 import { Plus, Edit, Trash2, Users, ArrowUp, ArrowDown, CheckCircle } from 'lucide-react';
 

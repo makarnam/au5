@@ -53,6 +53,7 @@ type RiskStore = {
 
   // Mutations
   createRisk: (payload: Partial<Risk>) => Promise<UUID>;
+  deleteRisk: (id: UUID) => Promise<void>;
   addAssessment: (riskId: UUID, payload: Partial<RiskAssessment>) => Promise<UUID>;
   updateAssessment: (id: UUID, payload: Partial<RiskAssessment>) => Promise<void>;
   deleteAssessment: (id: UUID) => Promise<void>;
@@ -197,6 +198,25 @@ export const useRiskStore = create<RiskStore>()(
         throw e;
       } finally {
         set((s) => ({ loading: { ...s.loading, create: false } }));
+      }
+    },
+
+    deleteRisk: async (id) => {
+      set((s) => ({ loading: { ...s.loading, delete: true }, error: null }));
+      try {
+        await riskService.deleteRisk(id);
+        // refresh list after delete
+        await get().loadRisks();
+        // clear selected risk if it was the deleted one
+        const selected = get().selectedRisk;
+        if (selected && selected.id === id) {
+          set({ selectedRisk: null });
+        }
+      } catch (e: any) {
+        set({ error: e?.message ?? "Failed to delete risk" });
+        throw e;
+      } finally {
+        set((s) => ({ loading: { ...s.loading, delete: false } }));
       }
     },
 

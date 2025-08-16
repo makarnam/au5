@@ -254,3 +254,27 @@ export async function deleteWorkflowStep(stepId: UUID): Promise<QueryResult<null
     .eq('id', stepId);
   return { data: null, error };
 }
+
+// Default export for backward compatibility
+const workflows = {
+  listWorkflows,
+  getWorkflows,
+  getWorkflow,
+  createWorkflow,
+  updateWorkflow,
+  deleteWorkflow,
+  startWorkflow,
+  getInstances,
+  getInstance,
+  approveStep,
+  rejectStep,
+  requestRevision,
+  skipStep,
+  getMyTasks,
+  getWorkflowSteps,
+  createWorkflowStep,
+  updateWorkflowStep,
+  deleteWorkflowStep,
+};
+
+export default workflows;

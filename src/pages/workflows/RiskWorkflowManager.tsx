@@ -4,8 +4,8 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { useAuthStore } from '../../store/authStore';
-import { riskService } from '../../services/riskService';
-import { workflows } from '../../services/workflows';
+import riskService from '../../services/riskService';
+import workflows from '../../services/workflows';
 import { Risk, Workflow, WorkflowStep, ApprovalRequest } from '../../types';
 import { Plus, Settings, Users, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 

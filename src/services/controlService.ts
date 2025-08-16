@@ -173,6 +173,55 @@ class ControlService {
     }
   }
 
+  async getAllControlSets(): Promise<ControlSet[]> {
+    try {
+      const { data, error } = await supabase
+        .from("control_sets")
+        .select(
+          `
+          *,
+          controls(
+            id,
+            effectiveness,
+            is_deleted
+          )
+        `,
+        )
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      // Calculate statistics for each control set
+      const controlSetsWithStats = (data || []).map((set: any) => {
+        const controls = set.controls?.filter((c: any) => !c.is_deleted) || [];
+        const total_controls = controls.length;
+        const tested_controls = controls.filter(
+          (c: any) => c.effectiveness && c.effectiveness !== "not_tested",
+        ).length;
+        const effective_controls = controls.filter(
+          (c: any) => c.effectiveness === "effective",
+        ).length;
+
+        // Remove the controls array from the response and add calculated fields
+        const { controls: _, ...controlSet } = set;
+        return {
+          ...controlSet,
+          total_controls,
+          tested_controls,
+          effective_controls,
+        };
+      });
+
+      return controlSetsWithStats as ControlSet[];
+    } catch (error) {
+      console.error("Error fetching control sets:", error);
+      throw error;
+    }
+  }
+
   async getControlSetsByAudit(auditId?: string): Promise<ControlSet[]> {
     try {
       let query = supabase

@@ -23,6 +23,7 @@ import riskService, {
   RiskTreatment,
   RiskLevel,
 } from "../../services/riskService";
+import { controlService } from "../../services/controlService";
 import RiskAssessmentForm, { AssessmentFormValue } from "../../components/risks/RiskAssessmentForm";
 import { useAuthStore } from "../../store/authStore";
 import { cn } from "../../utils";
@@ -129,8 +130,20 @@ type RiskDetailModalProps = {
 };
 
 /** Lightweight inline Controls list component (self-managed state) */
-const ControlsInline: React.FC<{ riskId: string }> = ({ riskId }) => {
-  const [rows, setRows] = React.useState<Array<{ control_id: string; control_title: string; control_status?: string | null }>>([]);
+const ControlsInline: React.FC<{ riskId: string; refreshTrigger?: number; onUnlink?: () => void }> = ({ riskId, refreshTrigger = 0, onUnlink }) => {
+  const [rows, setRows] = React.useState<Array<{ 
+    control_id: string; 
+    control_title: string; 
+    control_code: string;
+    control_description: string;
+    control_type: string;
+    control_status?: string | null;
+    effectiveness?: string | null;
+    process_area: string;
+    frequency: string;
+    last_tested_date?: string | null;
+    next_test_date?: string | null;
+  }>>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   useEffect(() => {
     let mounted = true;
@@ -145,7 +158,7 @@ const ControlsInline: React.FC<{ riskId: string }> = ({ riskId }) => {
     return () => {
       mounted = false;
     };
-  }, [riskId]);
+  }, [riskId, refreshTrigger]);
 
   if (loading) {
     return <div className="py-4"><LoadingSpinner size="sm" text="Loading controls..." /></div>;
@@ -154,43 +167,79 @@ const ControlsInline: React.FC<{ riskId: string }> = ({ riskId }) => {
     return <p className="text-sm text-gray-500">No controls linked.</p>;
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500 border-b">
-            <th className="py-2 pr-3">Control</th>
-            <th className="py-2 pr-3">Status</th>
-            <th className="py-2 pr-3 w-28">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((c) => (
-            <tr key={c.control_id} className="border-b last:border-0">
-              <td className="py-2 pr-3">{c.control_title || c.control_id}</td>
-              <td className="py-2 pr-3 capitalize">{(c.control_status ?? "").replace("_", " ") || "-"}</td>
-              <td className="py-2 pr-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={async () => {
-                      try {
-                        await riskService.unlinkControl(riskId, c.control_id);
-                        setRows((prev) => prev.filter((x) => x.control_id !== c.control_id));
-                        toast.success("Control unlinked");
-                      } catch (e: any) {
-                        toast.error(e?.message || "Failed to unlink control");
-                      }
-                    }}
-                    className="text-red-600 hover:text-red-700 text-xs"
-                    title="Unlink"
-                  >
-                    Unlink
-                  </button>
+    <div className="space-y-3">
+      {rows.map((c) => (
+        <div key={c.control_id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                  {c.control_code}
+                </span>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  c.effectiveness === 'effective' 
+                    ? 'bg-green-100 text-green-800'
+                    : c.effectiveness === 'ineffective'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {c.effectiveness || 'Not Tested'}
+                </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {c.control_type}
+                </span>
+              </div>
+              
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                {c.control_title}
+              </h4>
+              
+              <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                {c.control_description}
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
+                <div>
+                  <span className="font-medium">Process Area:</span>
+                  <div>{c.process_area}</div>
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <div>
+                  <span className="font-medium">Frequency:</span>
+                  <div>{c.frequency}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Last Tested:</span>
+                  <div>{c.last_tested_date ? new Date(c.last_tested_date).toLocaleDateString() : 'Not tested'}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Next Test:</span>
+                  <div>{c.next_test_date ? new Date(c.next_test_date).toLocaleDateString() : 'Not scheduled'}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="ml-4">
+              <button
+                onClick={async () => {
+                  try {
+                    await riskService.unlinkControl(riskId, c.control_id);
+                    setRows((prev) => prev.filter((x) => x.control_id !== c.control_id));
+                    toast.success("Control unlinked successfully");
+                    // Trigger parent refresh if callback provided
+                    onUnlink?.();
+                  } catch (e: any) {
+                    toast.error(e?.message || "Failed to unlink control");
+                  }
+                }}
+                className="text-red-600 hover:text-red-700 text-xs font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                title="Unlink control"
+              >
+                Unlink
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -288,6 +337,8 @@ const RiskDetails: React.FC = () => {
 
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewSaving, setReviewSaving] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [reviewForm, setReviewForm] = useState<Partial<RiskReview>>({
     review_type: "periodic",
     review_date: new Date().toISOString().slice(0, 10),
@@ -297,6 +348,13 @@ const RiskDetails: React.FC = () => {
   const [linkControlOpen, setLinkControlOpen] = useState(false);
   const [linking, setLinking] = useState(false);
   const [controlId, setControlId] = useState<string>("");
+  const [controlSets, setControlSets] = useState<any[]>([]);
+  const [selectedControlSet, setSelectedControlSet] = useState<string>("");
+  const [controls, setControls] = useState<any[]>([]);
+  const [loadingControlSets, setLoadingControlSets] = useState(false);
+  const [loadingControls, setLoadingControls] = useState(false);
+  const [controlSearchTerm, setControlSearchTerm] = useState("");
+  const [controlsRefreshTrigger, setControlsRefreshTrigger] = useState(0);
 
   // track edit or create mode per modal
   const isTreatmentEdit = !!(treatmentForm as any)?.id;
@@ -340,6 +398,46 @@ const RiskDetails: React.FC = () => {
     };
     load();
   }, [id, navigate]);
+
+  // Load control sets when link control modal opens
+  useEffect(() => {
+    if (linkControlOpen) {
+      const loadControlSets = async () => {
+        try {
+          setLoadingControlSets(true);
+          const controlSetsData = await controlService.getAllControlSets();
+          setControlSets(controlSetsData);
+        } catch (err: any) {
+          console.error(err);
+          toast.error("Failed to load control sets");
+        } finally {
+          setLoadingControlSets(false);
+        }
+      };
+      loadControlSets();
+    }
+  }, [linkControlOpen]);
+
+  // Load controls when control set is selected
+  useEffect(() => {
+    if (selectedControlSet) {
+      const loadControls = async () => {
+        try {
+          setLoadingControls(true);
+          const controlsData = await controlService.getControlsBySet(selectedControlSet);
+          setControls(controlsData);
+        } catch (err: any) {
+          console.error(err);
+          toast.error("Failed to load controls");
+        } finally {
+          setLoadingControls(false);
+        }
+      };
+      loadControls();
+    } else {
+      setControls([]);
+    }
+  }, [selectedControlSet]);
 
   const statusLabel = useMemo(
     () =>
@@ -579,6 +677,9 @@ const RiskDetails: React.FC = () => {
     }
   };
 
+  // Tabs - moved before conditional return to follow Rules of Hooks
+  const [activeTab, setActiveTab] = useState<"overview" | "assessments" | "treatments" | "controls" | "history" | "workflow">("overview");
+
   if (loading || !risk) {
     return (
       <div className="p-6">
@@ -586,9 +687,6 @@ const RiskDetails: React.FC = () => {
       </div>
     );
   }
-
-  // Tabs
-  const [activeTab, setActiveTab] = useState<"overview" | "assessments" | "treatments" | "controls" | "history" | "workflow">("overview");
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -628,13 +726,22 @@ const RiskDetails: React.FC = () => {
         </div>
 
         {canEdit && (
-          <button
-            onClick={() => navigate(`/risks/${risk.id}/edit`)}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/risks/${risk.id}/edit`)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </button>
+            <button
+              onClick={() => setDeleteConfirmOpen(true)}
+              className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </button>
+          </div>
         )}
       </div>
 
@@ -1118,7 +1225,11 @@ const RiskDetails: React.FC = () => {
         }
       >
         {/* Self-contained inline controls list to avoid external setter references */}
-        <ControlsInline riskId={risk!.id} />
+        <ControlsInline 
+          riskId={risk!.id} 
+          refreshTrigger={controlsRefreshTrigger} 
+          onUnlink={() => setControlsRefreshTrigger(prev => prev + 1)}
+        />
       </SectionCard>
 
       {/* Modals */}
@@ -1462,46 +1573,219 @@ const RiskDetails: React.FC = () => {
         }
       >
         {/* Self-contained inline controls list to avoid external setter references */}
-        <ControlsInline riskId={risk!.id} />
+        <ControlsInline 
+          riskId={risk!.id} 
+          refreshTrigger={controlsRefreshTrigger} 
+          onUnlink={() => setControlsRefreshTrigger(prev => prev + 1)}
+        />
       </SectionCard>
 
       {/* Link Control Modal */}
       <RiskDetailModal
         title="Link Control"
         open={linkControlOpen}
-        onClose={() => setLinkControlOpen(false)}
+        onClose={() => {
+          setLinkControlOpen(false);
+          setSelectedControlSet("");
+          setControlId("");
+          setControls([]);
+          setControlSearchTerm("");
+        }}
         onSubmit={async () => {
           if (!risk) return;
           if (!controlId) {
-            toast.error("Enter a valid Control ID");
+            toast.error("Please select a control to link");
             return;
           }
           try {
             setLinking(true);
             await riskService.linkControl(risk.id, controlId);
-            // ControlsInline will fetch again based on riskId; just close
+            // Trigger refresh of controls list
+            setControlsRefreshTrigger(prev => prev + 1);
             setLinkControlOpen(false);
             setControlId("");
-            toast.success("Control linked");
+            setSelectedControlSet("");
+            setControls([]);
+            toast.success("Control linked successfully");
           } catch (e: any) {
             toast.error(e?.message || "Failed to link control");
           } finally {
             setLinking(false);
           }
         }}
-        submitLabel={linking ? "Linking..." : "Link"}
-        disabled={linking}
+        submitLabel={linking ? "Linking..." : "Link Control"}
+        disabled={linking || !controlId}
       >
-        <div className="grid grid-cols-1 gap-3">
+        <div className="space-y-4">
+          {/* Control Set Selection */}
           <div>
-            <label className="block text-sm text-gray-700">Control ID (UUID)</label>
-            <input
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              value={controlId}
-              onChange={(e) => setControlId(e.target.value)}
-              placeholder="Paste an existing Control ID"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Control Set
+            </label>
+            {loadingControlSets ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-sm text-gray-500">Loading control sets...</span>
+              </div>
+            ) : (
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={selectedControlSet}
+                onChange={(e) => setSelectedControlSet(e.target.value)}
+              >
+                <option value="">Choose a control set...</option>
+                {controlSets.map((controlSet) => (
+                  <option key={controlSet.id} value={controlSet.id}>
+                    {controlSet.name} ({controlSet.total_controls || 0} controls)
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
+
+          {/* Controls List */}
+          {selectedControlSet && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Control
+              </label>
+              
+              {/* Search Controls */}
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Search controls by code, title, or description..."
+                  value={controlSearchTerm}
+                  onChange={(e) => setControlSearchTerm(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {controlSearchTerm && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    {controls.filter((control) => {
+                      const searchLower = controlSearchTerm.toLowerCase();
+                      return (
+                        control.control_code?.toLowerCase().includes(searchLower) ||
+                        control.title?.toLowerCase().includes(searchLower) ||
+                        control.description?.toLowerCase().includes(searchLower) ||
+                        control.control_type?.toLowerCase().includes(searchLower) ||
+                        control.process_area?.toLowerCase().includes(searchLower)
+                      );
+                    }).length} of {controls.length} controls match
+                  </div>
+                )}
+              </div>
+              {loadingControls ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-sm text-gray-500">Loading controls...</span>
+                </div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                  {(() => {
+                    const filteredControls = controls.filter((control) => {
+                      if (!controlSearchTerm) return true;
+                      const searchLower = controlSearchTerm.toLowerCase();
+                      return (
+                        control.control_code?.toLowerCase().includes(searchLower) ||
+                        control.title?.toLowerCase().includes(searchLower) ||
+                        control.description?.toLowerCase().includes(searchLower) ||
+                        control.control_type?.toLowerCase().includes(searchLower) ||
+                        control.process_area?.toLowerCase().includes(searchLower)
+                      );
+                    });
+
+                    if (controls.length === 0) {
+                      return (
+                        <div className="p-4 text-center text-gray-500">
+                          No controls found in this control set.
+                        </div>
+                      );
+                    }
+
+                    if (controlSearchTerm && filteredControls.length === 0) {
+                      return (
+                        <div className="p-4 text-center text-gray-500">
+                          No controls match your search criteria.
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="divide-y divide-gray-200">
+                        {filteredControls.map((control) => (
+                          <div
+                            key={control.id}
+                            className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                              controlId === control.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                            }`}
+                            onClick={() => setControlId(control.id)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {control.control_code}
+                                  </span>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    control.effectiveness === 'effective' 
+                                      ? 'bg-green-100 text-green-800'
+                                      : control.effectiveness === 'ineffective'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {control.effectiveness || 'Not Tested'}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                                  {control.title}
+                                </h4>
+                                <p className="text-xs text-gray-600 line-clamp-2">
+                                  {control.description}
+                                </p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                  <span>Type: {control.control_type}</span>
+                                  <span>Frequency: {control.frequency}</span>
+                                  <span>Area: {control.process_area}</span>
+                                </div>
+                              </div>
+                              <div className="ml-3">
+                                <input
+                                  type="radio"
+                                  name="selectedControl"
+                                  value={control.id}
+                                  checked={controlId === control.id}
+                                  onChange={() => setControlId(control.id)}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Selected Control Summary */}
+          {controlId && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <h4 className="text-sm font-medium text-blue-900 mb-1">Selected Control</h4>
+              {(() => {
+                const selectedControl = controls.find(c => c.id === controlId);
+                return selectedControl ? (
+                  <div className="text-sm text-blue-800">
+                    <div className="font-medium">{selectedControl.control_code} - {selectedControl.title}</div>
+                    <div className="text-xs mt-1">{selectedControl.description}</div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-blue-800">Loading control details...</div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </RiskDetailModal>
 
@@ -1511,6 +1795,45 @@ const RiskDetails: React.FC = () => {
           <RiskWorkflowManager riskId={risk?.id} />
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <RiskDetailModal
+        title="Delete Risk"
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onSubmit={async () => {
+          if (!risk) return;
+          try {
+            setDeleting(true);
+            await riskService.deleteRisk(risk.id);
+            toast.success("Risk deleted successfully");
+            navigate("/risks");
+          } catch (err: any) {
+            console.error(err);
+            toast.error(err?.message || "Failed to delete risk");
+          } finally {
+            setDeleting(false);
+          }
+        }}
+        submitLabel={deleting ? "Deleting..." : "Delete Risk"}
+        disabled={deleting}
+      >
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <Trash2 className="h-6 w-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Risk</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Are you sure you want to delete the risk <strong>"{risk?.title}"</strong>? 
+            This action cannot be undone and will permanently remove the risk and all associated data.
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-sm text-yellow-800">
+              <strong>Warning:</strong> This will also delete all assessments, treatments, incidents, and reviews associated with this risk.
+            </p>
+          </div>
+        </div>
+      </RiskDetailModal>
     </div>
   );
 };

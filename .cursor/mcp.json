@@ -6,6 +6,14 @@
             "args": ["@modelcontextprotocol/server-puppeteer"]
           },
 
+
+          "sequential-thinking": {
+            "command": "npx",
+            "args": [
+              "-y",
+              "@modelcontextprotocol/server-sequential-thinking"
+            ]
+          },
         "supabase-au5": {
             "command": "/Users/mhuyut/.local/bin/supabase-mcp-server",
             "args": ["--port", "8811"],

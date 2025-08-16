@@ -1090,6 +1090,134 @@ class DocumentManagementService {
     };
   }
 
+  // AI Processing Methods
+  async getAIAnalysis(documentId: string): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('document_ai_processing')
+        .select('*')
+        .eq('document_id', documentId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Parse AI analysis results
+        const analysis = {
+          confidence: data.confidence_score || 0,
+          extractedText: data.extracted_text || '',
+          keywords: data.keywords || [],
+          classification: data.classification || {
+            category: 'Unknown',
+            type: 'Unknown',
+            risk_level: 'unknown',
+            compliance_frameworks: []
+          },
+          entities: data.entities || [],
+          summary: data.summary || ''
+        };
+        return analysis;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error getting AI analysis:', error);
+      throw error;
+    }
+  }
+
+  async triggerAIAnalysis(documentId: string): Promise<void> {
+    try {
+      // Create AI processing record
+      const { error } = await supabase
+        .from('document_ai_processing')
+        .insert({
+          document_id: documentId,
+          processing_type: 'full_analysis',
+          status: 'pending',
+          priority: 5,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        });
+
+      if (error) throw error;
+
+      // In a real implementation, this would trigger a background job
+      // For now, we'll simulate the processing
+      setTimeout(async () => {
+        await this.simulateAIProcessing(documentId);
+      }, 1000);
+    } catch (error) {
+      console.error('Error triggering AI analysis:', error);
+      throw error;
+    }
+  }
+
+  private async simulateAIProcessing(documentId: string): Promise<void> {
+    try {
+      // Simulate AI processing results
+      const mockAnalysis = {
+        confidence_score: 0.85,
+        extracted_text: 'Sample extracted text from document...',
+        keywords: ['compliance', 'risk', 'audit', 'policy', 'security'],
+        classification: {
+          category: 'Compliance',
+          type: 'Policy Document',
+          risk_level: 'medium',
+          compliance_frameworks: ['SOX', 'GDPR']
+        },
+        entities: [
+          { type: 'PERSON', value: 'John Doe', confidence: 0.9 },
+          { type: 'ORGANIZATION', value: 'Company Inc', confidence: 0.8 }
+        ],
+        summary: 'This document contains compliance policies and procedures related to data protection and financial controls.'
+      };
+
+      // Update the processing record
+      const { error } = await supabase
+        .from('document_ai_processing')
+        .update({
+          status: 'completed',
+          confidence_score: mockAnalysis.confidence_score,
+          extracted_text: mockAnalysis.extracted_text,
+          keywords: mockAnalysis.keywords,
+          classification: mockAnalysis.classification,
+          entities: mockAnalysis.entities,
+          summary: mockAnalysis.summary,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('document_id', documentId)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error in AI processing simulation:', error);
+    }
+  }
+
+  async getDocumentUrl(documentId: string): Promise<{ url: string }> {
+    try {
+      const { data: document, error } = await supabase
+        .from('documents')
+        .select('file_path')
+        .eq('id', documentId)
+        .single();
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(document.file_path);
+
+      return { url: urlData.publicUrl };
+    } catch (error) {
+      console.error('Error getting document URL:', error);
+      throw error;
+    }
+  }
+
   // Utility methods
   private async calculateFileHash(file: File): Promise<string> {
     // Simplified hash calculation - in production, use a proper hashing library
