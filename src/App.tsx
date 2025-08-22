@@ -110,6 +110,7 @@ import WorkflowDetails from "./pages/workflows/WorkflowDetails";
 import WorkflowInstance from "./pages/workflows/WorkflowInstance";
 import ApprovalInbox from "./pages/workflows/ApprovalInbox";
 import WorkflowTemplateManagerPage from "./pages/workflows/WorkflowTemplateManagerPage";
+import WorkflowIntegrationDashboard from "./pages/workflows/WorkflowIntegrationDashboard";
 
 // AI Pages
 import AIAssistant from "./pages/ai/AIAssistant";
@@ -159,6 +160,7 @@ import UserManagementDashboard from "./pages/users/UserManagementDashboard";
 import CreateUserPage from "./pages/users/CreateUserPage";
 import InviteUserPage from "./pages/users/InviteUserPage";
 import NotificationsInbox from "./pages/notifications/NotificationsInbox";
+import { EmailTemplateManagement } from "./pages/notifications/EmailTemplateManagement";
 import TrainingCertification from "./pages/training/TrainingCertification";
 import TrainingManagementDashboard from "./pages/training/TrainingManagementDashboard";
 import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
@@ -384,6 +386,7 @@ function App() {
           <Route path="workflows/:id/instance/:instanceId" element={<WorkflowInstance />} />
           <Route path="workflows/approvals" element={<ApprovalInbox />} />
         <Route path="workflows/templates" element={<WorkflowTemplateManagerPage />} />
+        <Route path="workflows/integration" element={<WorkflowIntegrationDashboard />} />
 
           {/* AI */}
           <Route path="ai" element={<AIAssistant />} />
@@ -506,6 +509,7 @@ function App() {
 
           {/* Notifications */}
           <Route path="notifications" element={<NotificationsInbox />} />
+          <Route path="notifications/templates" element={<EmailTemplateManagement />} />
 
           {/* Training */}
           <Route path="training" element={<TrainingCertification />} />
