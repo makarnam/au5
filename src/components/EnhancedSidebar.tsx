@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -95,7 +95,6 @@ import {
   FileHeart,
   FileWarning,
   FileQuestion,
-  FileInfo,
   FileClock,
   FileDown,
   FileUp,
@@ -106,11 +105,7 @@ import {
   FileBarChart,
   FilePieChart,
   FileLineChart,
-  FileAreaChart,
-  FileScatterChart,
-  FileRadarChart,
-  FileGauge,
-  FileThermometer,
+  Thermometer,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
@@ -134,37 +129,8 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
-  // Auto-expand categories and items based on current location
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const newExpandedCategories: string[] = [];
-    const newExpandedItems: Record<string, boolean> = {};
-
-    // Find which category and items should be expanded based on current path
-    menuCategories.forEach(category => {
-      const hasActiveItem = category.items.some(item => {
-        const isActive = item.current;
-        if (isActive && item.children) {
-          // If this item has children and is active, expand it
-          newExpandedItems[item.name] = true;
-        }
-        return isActive;
-      });
-
-      if (hasActiveItem) {
-        newExpandedCategories.push(category.id);
-      }
-    });
-
-    setExpandedCategories(newExpandedCategories);
-    setExpandedItems(prev => ({
-      ...prev,
-      ...newExpandedItems
-    }));
-  }, [location.pathname]);
-
-  // Kategorilere ayrılmış menü yapısı
-  const menuCategories = [
+  // Memoize menuCategories to prevent unnecessary re-renders
+  const menuCategories = useMemo(() => [
     {
       id: "dashboard",
       name: "Main Dashboard",
@@ -516,33 +482,72 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
         },
       ],
     },
-  ];
+  ], [location.pathname, t]);
 
-  const toggleCategory = (categoryId: string) => {
+  // Optimized useEffect - only run when necessary
+  useEffect(() => {
+    const currentPath = location.pathname;
+    
+    // Check if we need to update expanded states
+    const newExpandedCategories: string[] = [];
+    const newExpandedItems: Record<string, boolean> = {};
+
+    menuCategories.forEach(category => {
+      const hasActiveItem = category.items.some(item => {
+        const isActive = item.current;
+        if (isActive && item.children) {
+          newExpandedItems[item.name] = true;
+        }
+        return isActive;
+      });
+
+      if (hasActiveItem) {
+        newExpandedCategories.push(category.id);
+      }
+    });
+
+    // Only update state if there are actual changes
+    setExpandedCategories(prev => {
+      const hasChanges = JSON.stringify(prev.sort()) !== JSON.stringify(newExpandedCategories.sort());
+      return hasChanges ? newExpandedCategories : prev;
+    });
+
+    setExpandedItems(prev => {
+      const hasChanges = JSON.stringify(prev) !== JSON.stringify(newExpandedItems);
+      return hasChanges ? { ...prev, ...newExpandedItems } : prev;
+    });
+  }, [location.pathname, menuCategories]);
+
+  // Memoize filtered categories to prevent unnecessary re-renders
+  const filteredCategories = useMemo(() => 
+    menuCategories.map(category => ({
+      ...category,
+      items: category.items.filter(item =>
+        item.roles.some(role => checkPermission(role as any))
+      )
+    })).filter(category => category.items.length > 0),
+    [menuCategories, checkPermission]
+  );
+
+  // Memoize callback functions
+  const toggleCategory = useCallback((categoryId: string) => {
     setExpandedCategories(prev =>
       prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
-  };
+  }, []);
 
-  const toggleItem = (itemName: string) => {
+  const toggleItem = useCallback((itemName: string) => {
     setExpandedItems(prev => ({
       ...prev,
       [itemName]: !prev[itemName]
     }));
-  };
+  }, []);
 
-  const filteredCategories = menuCategories.map(category => ({
-    ...category,
-    items: category.items.filter(item =>
-      item.roles.some(role => checkPermission(role as any))
-    )
-  })).filter(category => category.items.length > 0);
-
-  const handleItemClick = (href: string) => {
+  const handleItemClick = useCallback((href: string) => {
     navigate(href);
-  };
+  }, [navigate]);
 
   return (
     <div className={`flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300 ${

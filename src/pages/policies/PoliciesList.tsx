@@ -3,6 +3,7 @@ import { policyService } from '../../services/policyService';
 import type { Policy } from '../../types/policies';
 import { Button } from '../../components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import PolicyAIGenerator from '../../components/ai/PolicyAIGenerator';
 
 export default function PoliciesList() {
   const navigate = useNavigate();
@@ -54,12 +55,25 @@ export default function PoliciesList() {
       <div className="border rounded p-4 space-y-3 bg-white">
         <div className="font-medium">Create Policy</div>
         <div className="grid grid-cols-2 gap-3">
-          <input
-            className="border p-2 rounded"
-            placeholder="Policy Name"
-            value={form.name ?? ''}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
+          <div className="col-span-2 flex items-center gap-2">
+            <input
+              className="border p-2 rounded flex-1"
+              placeholder="Policy Name"
+              value={form.name ?? ''}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <PolicyAIGenerator
+              fieldType="policy_title"
+              policyData={{
+                name: form.name,
+                description: form.description,
+                industry: "Technology",
+                framework: "ISO 27001",
+              }}
+              onGenerated={(content) => setForm({ ...form, name: content as string })}
+              className="flex-shrink-0"
+            />
+          </div>
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
@@ -68,13 +82,28 @@ export default function PoliciesList() {
             />
             Active
           </label>
-          <textarea
-            className="border p-2 rounded col-span-2"
-            placeholder="Description (optional)"
-            rows={2}
-            value={form.description ?? ''}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
+          <div className="col-span-2">
+            <div className="flex items-start gap-2">
+              <textarea
+                className="border p-2 rounded flex-1"
+                placeholder="Description (optional)"
+                rows={2}
+                value={form.description ?? ''}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+              <PolicyAIGenerator
+                fieldType="policy_description"
+                policyData={{
+                  name: form.name,
+                  description: form.description,
+                  industry: "Technology",
+                  framework: "ISO 27001",
+                }}
+                onGenerated={(content) => setForm({ ...form, description: content as string })}
+                className="flex-shrink-0"
+              />
+            </div>
+          </div>
         </div>
         <Button disabled={saving || !form.name} onClick={create}>
           {saving ? 'Saving...' : 'Create'}

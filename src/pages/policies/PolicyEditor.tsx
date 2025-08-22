@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { policyService } from '../../services/policyService';
 import type { Policy, PolicyVersion } from '../../types/policies';
 import { Button } from '../../components/ui/button';
+import PolicyAIGenerator from '../../components/ai/PolicyAIGenerator';
 
 export default function PolicyEditor() {
   const { policyId } = useParams();
@@ -102,12 +103,25 @@ export default function PolicyEditor() {
           <div className="border rounded p-4 space-y-3 bg-white">
             <div className="font-medium">Policy Metadata</div>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                className="border p-2 rounded"
-                placeholder="Policy Name"
-                value={form.name ?? ''}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
+              <div className="col-span-2 flex items-center gap-2">
+                <input
+                  className="border p-2 rounded flex-1"
+                  placeholder="Policy Name"
+                  value={form.name ?? ''}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+                <PolicyAIGenerator
+                  fieldType="policy_title"
+                  policyData={{
+                    name: form.name,
+                    description: form.description,
+                    industry: "Technology",
+                    framework: "ISO 27001",
+                  }}
+                  onGenerated={(content) => setForm({ ...form, name: content as string })}
+                  className="flex-shrink-0"
+                />
+              </div>
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -116,13 +130,28 @@ export default function PolicyEditor() {
                 />
                 Active
               </label>
-              <textarea
-                className="border p-2 rounded col-span-2"
-                placeholder="Description (optional)"
-                rows={2}
-                value={form.description ?? ''}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
+              <div className="col-span-2">
+                <div className="flex items-start gap-2">
+                  <textarea
+                    className="border p-2 rounded flex-1"
+                    placeholder="Description (optional)"
+                    rows={2}
+                    value={form.description ?? ''}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  />
+                  <PolicyAIGenerator
+                    fieldType="policy_description"
+                    policyData={{
+                      name: form.name,
+                      description: form.description,
+                      industry: "Technology",
+                      framework: "ISO 27001",
+                    }}
+                    onGenerated={(content) => setForm({ ...form, description: content as string })}
+                    className="flex-shrink-0"
+                  />
+                </div>
+              </div>
             </div>
             <Button onClick={savePolicy} disabled={saving || !form.name}>
               {saving ? 'Saving...' : 'Save Metadata'}
@@ -140,26 +169,58 @@ export default function PolicyEditor() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <input
-                className="border p-2 rounded col-span-2"
-                placeholder="Version Title"
-                value={versionForm.title ?? ''}
-                onChange={(e) => setVersionForm({ ...versionForm, title: e.target.value })}
-              />
+              <div className="col-span-2 flex items-center gap-2">
+                <input
+                  className="border p-2 rounded flex-1"
+                  placeholder="Version Title"
+                  value={versionForm.title ?? ''}
+                  onChange={(e) => setVersionForm({ ...versionForm, title: e.target.value })}
+                />
+                <PolicyAIGenerator
+                  fieldType="policy_title"
+                  policyData={{
+                    name: form.name,
+                    description: form.description,
+                    content: versionForm.content,
+                    industry: "Technology",
+                    framework: "ISO 27001",
+                  }}
+                  onGenerated={(content) => setVersionForm({ ...versionForm, title: content as string })}
+                  className="flex-shrink-0"
+                />
+              </div>
             </div>
 
-            {!preview ? (
-              <textarea
-                className="border p-2 rounded w-full h-64"
-                placeholder="Markdown Content..."
-                value={versionForm.content ?? ''}
-                onChange={(e) => setVersionForm({ ...versionForm, content: e.target.value })}
-              />
-            ) : (
-              <div className="border p-3 rounded bg-gray-50 whitespace-pre-wrap text-sm min-h-[16rem]">
-                {versionForm.content || 'Nothing to preview'}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Policy Content</span>
+                <PolicyAIGenerator
+                  fieldType="policy_content"
+                  policyData={{
+                    name: form.name,
+                    description: form.description,
+                    content: versionForm.content,
+                    industry: "Technology",
+                    framework: "ISO 27001",
+                  }}
+                  onGenerated={(content) => setVersionForm({ ...versionForm, content: content as string })}
+                  className="flex-shrink-0"
+                />
               </div>
-            )}
+              
+              {!preview ? (
+                <textarea
+                  className="border p-2 rounded w-full h-64"
+                  placeholder="Markdown Content..."
+                  value={versionForm.content ?? ''}
+                  onChange={(e) => setVersionForm({ ...versionForm, content: e.target.value })}
+                />
+              ) : (
+                <div className="border p-3 rounded bg-gray-50 whitespace-pre-wrap text-sm min-h-[16rem]">
+                  {versionForm.content || 'Nothing to preview'}
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center gap-3">
               <select

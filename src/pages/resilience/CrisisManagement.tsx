@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { Crisis, CrisisTeamMember, CrisisStakeholder, CrisisCommunication, CrisisAction } from '../../types/resilience';
 import { resilienceService } from '../../services/resilienceService';
+import ResilienceAIGenerator from '../../components/ai/ResilienceAIGenerator';
 
 const CrisisManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -597,13 +598,24 @@ const CrisisManagement: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={newCrisis.description}
-                  onChange={(e) => setNewCrisis({...newCrisis, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Describe the crisis"
-                />
+                <div className="space-y-2">
+                  <textarea
+                    value={newCrisis.description}
+                    onChange={(e) => setNewCrisis({...newCrisis, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Describe the crisis"
+                  />
+                  <ResilienceAIGenerator
+                    fieldType="crisis_management_plan"
+                    title={newCrisis.title || "Crisis Management"}
+                    organizationType="corporate"
+                    industry="Technology"
+                    scale="medium"
+                    onGenerated={(content) => setNewCrisis({...newCrisis, description: content})}
+                    className="mt-2"
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">

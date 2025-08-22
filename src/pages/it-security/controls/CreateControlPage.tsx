@@ -8,6 +8,7 @@ import { Textarea } from '../../../components/ui/textarea';
 import { Badge } from '../../../components/ui/badge';
 import { ArrowLeft, Save, Shield, Target, Activity, BookOpen, Users, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ITSecurityAIGenerator from '../../../components/ai/ITSecurityAIGenerator';
 
 interface ControlFormData {
   name: string;
@@ -182,7 +183,19 @@ const CreateControlPage: React.FC = () => {
             </div>
 
             <div>
-              <Label htmlFor="description">Description *</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="description">Description *</Label>
+                <ITSecurityAIGenerator
+                  fieldType="security_controls_mapping"
+                  title={formData.name}
+                  industry="Technology"
+                  framework="ISO 27001"
+                  securityLevel={formData.priority}
+                  assetType={formData.category}
+                  onGenerated={(content) => handleInputChange('description', content)}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="description"
                 value={formData.description}

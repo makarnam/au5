@@ -27,6 +27,31 @@ export interface AIConfiguration {
   baseUrl?: string;
 }
 
+export interface AITemplate {
+  id: string;
+  name: string;
+  description: string;
+  field_type: string;
+  template_content: string;
+  industry?: string;
+  framework?: string;
+  context_variables: Record<string, string>;
+  is_active: boolean;
+  is_default: boolean;
+  version: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateSelectionCriteria {
+  fieldType: string;
+  industry?: string;
+  framework?: string;
+  auditType?: string;
+  businessUnit?: string;
+}
+
 export interface AIGenerationRequest {
   provider: string;
   model: string;
@@ -42,7 +67,102 @@ export interface AIGenerationRequest {
     | "dpia_description"
     | "dpia_risk_assessment"
     | "ropa_purpose"
-    | "ropa_legal_basis";
+    | "ropa_legal_basis"
+    | "policy_content"
+    | "policy_title"
+    | "policy_description"
+    | "policy_scope"
+    | "policy_version_summary"
+    | "compliance_mapping"
+    | "policy_template"
+    | "incident_response"
+    | "esg_program"
+    | "bcp_plan"
+    | "bcp_description"
+    | "bcp_scope"
+    | "bcp_business_impact_analysis"
+    | "bcp_risk_assessment"
+    | "bcp_recovery_strategies"
+    | "bcp_resource_requirements"
+    | "bcp_communication_plan"
+    | "bcp_testing_schedule"
+    | "bcp_maintenance_schedule"
+    | "bcp_critical_function_description"
+    | "bcp_recovery_strategy"
+    | "bcp_testing_scenario"
+    | "vendor_assessment"
+    | "vendor_due_diligence_report"
+    | "vendor_contract_risk_analysis"
+    | "vendor_risk_scoring"
+    | "vendor_assessment_criteria"
+    | "vendor_monitoring_plan"
+    | "vendor_incident_response"
+    | "vendor_performance_evaluation"
+    | "vendor_compliance_assessment"
+    | "vendor_financial_analysis"
+    | "vendor_security_assessment"
+    | "vendor_operational_assessment"
+    | "security_policy"
+    | "vulnerability_assessment_report"
+    | "security_incident_response_plan"
+    | "security_controls_mapping"
+    | "security_framework_compliance"
+    | "security_policy_description"
+    | "security_policy_scope"
+    | "security_policy_procedures"
+    | "security_policy_roles"
+    | "security_policy_incident_response"
+    | "security_policy_access_control"
+    | "security_policy_data_protection"
+    | "training_program"
+    | "training_description"
+    | "learning_objectives"
+    | "assessment_criteria"
+    | "training_materials"
+    | "training_schedule"
+    | "certification_requirements"
+    | "training_evaluation"
+    | "competency_mapping"
+    | "training_effectiveness"
+    | "compliance_training"
+    | "skill_development_plan"
+    | "finding_description"
+    | "finding_analysis"
+    | "finding_impact"
+    | "finding_recommendations"
+    | "finding_action_plan"
+    | "finding_risk_assessment"
+    | "finding_root_cause"
+    | "finding_evidence"
+    | "finding_priority"
+    | "finding_timeline"
+    | "finding_assignee"
+    | "finding_follow_up"
+    | "resilience_assessment"
+    | "resilience_strategy"
+    | "crisis_management_plan"
+    | "business_impact_analysis"
+    | "recovery_strategies"
+    | "resilience_metrics"
+    | "scenario_analysis"
+    | "resilience_framework"
+    | "capacity_assessment"
+    | "adaptability_plan"
+    | "resilience_monitoring"
+    | "continuous_improvement"
+    | "supply_chain_risk"
+    | "supply_chain_risk_assessment"
+    | "vendor_evaluation_criteria"
+    | "risk_mitigation_strategies"
+    | "supply_chain_mapping"
+    | "vendor_tier_classification"
+    | "risk_propagation_analysis"
+    | "supply_chain_resilience_scoring"
+    | "disruption_response_plan"
+    | "supplier_development_program"
+    | "performance_monitoring_framework"
+    | "compliance_assessment_criteria"
+    | "financial_stability_analysis";
   auditData: {
     title?: string;
     audit_type?: string;
@@ -63,6 +183,9 @@ export interface AIGenerationRequest {
     data_categories?: string[];
     risk_level?: string;
   };
+  templateId?: string; // New field for template selection
+  industry?: string; // New field for industry-specific templates
+  framework?: string; // New field for framework-specific templates
   temperature?: number;
   maxTokens?: number;
   apiKey?: string;
@@ -685,6 +808,1260 @@ Requirements:
 
 Generate only the legal basis text, no additional formatting or explanations.`;
         break;
+
+      case "policy_content":
+        basePrompt = `You are an expert in policy development and governance. Generate comprehensive policy content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed, professional policy content
+- Ensure the content is specifically relevant to "${auditData.title}"
+- Include policy objectives, scope, responsibilities, and procedures
+- Use professional policy language and structure
+- Keep it between 200-500 words
+- Make it specific to the policy type and business unit
+- Include compliance requirements and enforcement mechanisms
+
+Generate only the policy content text, no additional formatting or explanations.`;
+        break;
+
+      case "incident_response":
+        basePrompt = `You are an expert in incident response and crisis management. Generate comprehensive incident response procedures based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed incident response procedures
+- Ensure the procedures are specifically relevant to "${auditData.title}"
+- Include detection, containment, eradication, and recovery steps
+- Use professional incident response terminology
+- Keep it between 200-500 words
+- Make it specific to the incident type and business unit
+- Include escalation procedures and communication protocols
+
+Generate only the incident response text, no additional formatting or explanations.`;
+        break;
+
+      case "esg_program":
+        basePrompt = `You are an expert in Environmental, Social, and Governance (ESG) programs. Generate comprehensive ESG program content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed ESG program descriptions and objectives
+- Ensure the content is specifically relevant to "${auditData.title}"
+- Include environmental, social, and governance aspects
+- Use professional ESG terminology and frameworks
+- Keep it between 200-500 words
+- Make it specific to the ESG focus area and business unit
+- Include sustainability goals and measurement metrics
+
+Generate only the ESG program text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_plan":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive BCP plan content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed business continuity plan content
+- Ensure the content is specifically relevant to "${auditData.title}"
+- Include recovery objectives, procedures, and resource requirements
+- Use professional BCP terminology and standards
+- Keep it between 200-500 words
+- Make it specific to the business function and unit
+- Include RTO/RPO requirements and testing procedures
+
+Generate only the BCP plan text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_description":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive BCP plan description based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed business continuity plan description
+- Ensure the description is specifically relevant to "${auditData.title}"
+- Include plan purpose, scope, and key objectives
+- Use professional BCP terminology and standards
+- Keep it between 150-300 words
+- Make it specific to the business function and unit
+- Include high-level recovery strategies and governance
+
+Generate only the BCP description text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_scope":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive BCP plan scope based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed business continuity plan scope definition
+- Ensure the scope is specifically relevant to "${auditData.title}"
+- Include organizational boundaries, business functions, and systems
+- Use professional BCP terminology and standards
+- Keep it between 100-250 words
+- Make it specific to the business function and unit
+- Include in-scope and out-of-scope elements
+
+Generate only the BCP scope text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_business_impact_analysis":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive business impact analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed business impact analysis for BCP
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include impact assessment, recovery priorities, and dependencies
+- Use professional BCP terminology and standards
+- Keep it between 200-400 words
+- Make it specific to the business function and unit
+- Include financial, operational, and reputational impacts
+
+Generate only the business impact analysis text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_risk_assessment":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive risk assessment for BCP based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed risk assessment for business continuity
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include threat identification, vulnerability analysis, and risk scoring
+- Use professional BCP terminology and standards
+- Keep it between 200-400 words
+- Make it specific to the business function and unit
+- Include risk mitigation strategies and controls
+
+Generate only the risk assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_recovery_strategies":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive recovery strategies based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed recovery strategies for business continuity
+- Ensure the strategies are specifically relevant to "${auditData.title}"
+- Include recovery procedures, resource allocation, and timelines
+- Use professional BCP terminology and standards
+- Keep it between 200-400 words
+- Make it specific to the business function and unit
+- Include RTO/RPO requirements and escalation procedures
+
+Generate only the recovery strategies text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_resource_requirements":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive resource requirements based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed resource requirements for business continuity
+- Ensure the requirements are specifically relevant to "${auditData.title}"
+- Include personnel, technology, facilities, and financial resources
+- Use professional BCP terminology and standards
+- Keep it between 150-300 words
+- Make it specific to the business function and unit
+- Include resource allocation and procurement procedures
+
+Generate only the resource requirements text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_communication_plan":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive communication plan based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed communication plan for business continuity
+- Ensure the plan is specifically relevant to "${auditData.title}"
+- Include stakeholder communication, escalation procedures, and messaging
+- Use professional BCP terminology and standards
+- Keep it between 150-300 words
+- Make it specific to the business function and unit
+- Include communication channels and frequency
+
+Generate only the communication plan text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_testing_schedule":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive testing schedule based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed testing schedule for business continuity
+- Ensure the schedule is specifically relevant to "${auditData.title}"
+- Include exercise types, frequency, and participants
+- Use professional BCP terminology and standards
+- Keep it between 150-300 words
+- Make it specific to the business function and unit
+- Include testing objectives and success criteria
+
+Generate only the testing schedule text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_maintenance_schedule":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive maintenance schedule based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed maintenance schedule for business continuity
+- Ensure the schedule is specifically relevant to "${auditData.title}"
+- Include review cycles, updates, and continuous improvement
+- Use professional BCP terminology and standards
+- Keep it between 150-300 words
+- Make it specific to the business function and unit
+- Include maintenance responsibilities and procedures
+
+Generate only the maintenance schedule text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_critical_function_description":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive critical function description based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed critical function description for business continuity
+- Ensure the description is specifically relevant to "${auditData.title}"
+- Include function purpose, dependencies, and recovery requirements
+- Use professional BCP terminology and standards
+- Keep it between 150-300 words
+- Make it specific to the business function and unit
+- Include RTO/RPO requirements and resource needs
+
+Generate only the critical function description text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_recovery_strategy":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive recovery strategy based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed recovery strategy for business continuity
+- Ensure the strategy is specifically relevant to "${auditData.title}"
+- Include recovery procedures, resource allocation, and timelines
+- Use professional BCP terminology and standards
+- Keep it between 200-400 words
+- Make it specific to the business function and unit
+- Include escalation procedures and decision-making authority
+
+Generate only the recovery strategy text, no additional formatting or explanations.`;
+        break;
+
+      case "bcp_testing_scenario":
+        basePrompt = `You are an expert in Business Continuity Planning (BCP). Generate comprehensive testing scenario based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed testing scenario for business continuity
+- Ensure the scenario is specifically relevant to "${auditData.title}"
+- Include scenario description, objectives, and success criteria
+- Use professional BCP terminology and standards
+- Keep it between 200-400 words
+- Make it specific to the business function and unit
+- Include participant roles and expected outcomes
+
+Generate only the testing scenario text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_assessment":
+        basePrompt = `You are an expert in vendor management and third-party risk assessment. Generate comprehensive vendor assessment criteria based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor assessment criteria and procedures
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include financial, operational, security, and compliance criteria
+- Use professional vendor management terminology
+- Keep it between 200-500 words
+- Make it specific to the vendor type and business unit
+- Include risk scoring and monitoring requirements
+
+Generate only the vendor assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_due_diligence_report":
+        basePrompt = `You are an expert in vendor due diligence and third-party risk management. Generate comprehensive due diligence report based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor due diligence report
+- Ensure the report is specifically relevant to "${auditData.title}"
+- Include financial analysis, legal review, and operational assessment
+- Use professional due diligence terminology and standards
+- Keep it between 300-600 words
+- Make it specific to the vendor type and business unit
+- Include risk findings and recommendations
+
+Generate only the due diligence report text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_contract_risk_analysis":
+        basePrompt = `You are an expert in vendor contract risk analysis and third-party risk management. Generate comprehensive contract risk analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor contract risk analysis
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include contract terms, obligations, and risk exposure
+- Use professional contract analysis terminology
+- Keep it between 250-500 words
+- Make it specific to the vendor type and business unit
+- Include risk mitigation strategies and recommendations
+
+Generate only the contract risk analysis text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_risk_scoring":
+        basePrompt = `You are an expert in vendor risk scoring and third-party risk management. Generate comprehensive vendor risk scoring methodology based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor risk scoring methodology
+- Ensure the scoring is specifically relevant to "${auditData.title}"
+- Include risk factors, scoring criteria, and rating scales
+- Use professional risk management terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include scoring methodology and risk levels
+
+Generate only the vendor risk scoring text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_assessment_criteria":
+        basePrompt = `You are an expert in vendor assessment criteria and third-party risk management. Generate comprehensive vendor assessment criteria based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor assessment criteria and standards
+- Ensure the criteria are specifically relevant to "${auditData.title}"
+- Include financial, operational, security, and compliance criteria
+- Use professional vendor management terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include assessment methodology and evaluation standards
+
+Generate only the vendor assessment criteria text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_monitoring_plan":
+        basePrompt = `You are an expert in vendor monitoring and third-party risk management. Generate comprehensive vendor monitoring plan based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor monitoring plan and procedures
+- Ensure the plan is specifically relevant to "${auditData.title}"
+- Include monitoring frequency, metrics, and reporting requirements
+- Use professional vendor management terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include monitoring schedule and escalation procedures
+
+Generate only the vendor monitoring plan text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_incident_response":
+        basePrompt = `You are an expert in vendor incident response and third-party risk management. Generate comprehensive vendor incident response plan based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor incident response procedures
+- Ensure the response plan is specifically relevant to "${auditData.title}"
+- Include incident classification, response procedures, and escalation
+- Use professional incident management terminology
+- Keep it between 250-500 words
+- Make it specific to the vendor type and business unit
+- Include response timelines and communication procedures
+
+Generate only the vendor incident response text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_performance_evaluation":
+        basePrompt = `You are an expert in vendor performance evaluation and third-party risk management. Generate comprehensive vendor performance evaluation based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor performance evaluation criteria
+- Ensure the evaluation is specifically relevant to "${auditData.title}"
+- Include performance metrics, KPIs, and evaluation methods
+- Use professional vendor management terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include evaluation frequency and reporting requirements
+
+Generate only the vendor performance evaluation text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_compliance_assessment":
+        basePrompt = `You are an expert in vendor compliance assessment and third-party risk management. Generate comprehensive vendor compliance assessment based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor compliance assessment criteria
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include regulatory requirements, industry standards, and compliance frameworks
+- Use professional compliance terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include compliance monitoring and reporting requirements
+
+Generate only the vendor compliance assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_financial_analysis":
+        basePrompt = `You are an expert in vendor financial analysis and third-party risk management. Generate comprehensive vendor financial analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor financial analysis and assessment
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include financial stability, creditworthiness, and risk factors
+- Use professional financial analysis terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include financial risk indicators and monitoring requirements
+
+Generate only the vendor financial analysis text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_security_assessment":
+        basePrompt = `You are an expert in vendor security assessment and third-party risk management. Generate comprehensive vendor security assessment based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor security assessment criteria
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include security controls, data protection, and cybersecurity measures
+- Use professional security assessment terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include security monitoring and incident response requirements
+
+Generate only the vendor security assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "vendor_operational_assessment":
+        basePrompt = `You are an expert in vendor operational assessment and third-party risk management. Generate comprehensive vendor operational assessment based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed vendor operational assessment criteria
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include operational capabilities, processes, and performance metrics
+- Use professional operational assessment terminology
+- Keep it between 200-400 words
+- Make it specific to the vendor type and business unit
+- Include operational risk factors and monitoring requirements
+
+Generate only the vendor operational assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "security_policy":
+        basePrompt = `You are an expert in information security policy development. Generate comprehensive security policy content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed security policy content and procedures
+- Ensure the policy is specifically relevant to "${auditData.title}"
+- Include access controls, data protection, and incident response
+- Use professional cybersecurity terminology and standards
+- Keep it between 200-500 words
+- Make it specific to the security domain and business unit
+- Include compliance requirements and enforcement mechanisms
+
+Generate only the security policy text, no additional formatting or explanations.`;
+        break;
+
+      case "training_program":
+        basePrompt = `You are an expert in training and development program design. Generate comprehensive training program content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed training program descriptions and objectives
+- Ensure the program is specifically relevant to "${auditData.title}"
+- Include learning objectives, curriculum, and assessment methods
+- Use professional training and development terminology
+- Keep it between 200-500 words
+- Make it specific to the training topic and business unit
+- Include competency requirements and certification criteria
+
+Generate only the training program text, no additional formatting or explanations.`;
+        break;
+
+      case "training_description":
+        basePrompt = `You are an expert in training program design. Generate comprehensive training program descriptions based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed training program descriptions and overviews
+- Ensure the description is specifically relevant to "${auditData.title}"
+- Include program purpose, scope, and target audience
+- Use professional training and development terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include program benefits and expected outcomes
+
+Generate only the training description text, no additional formatting or explanations.`;
+        break;
+
+      case "learning_objectives":
+        basePrompt = `You are an expert in instructional design and learning objectives. Generate comprehensive learning objectives based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create specific, measurable, achievable, relevant, and time-bound (SMART) learning objectives
+- Ensure the objectives are specifically relevant to "${auditData.title}"
+- Include cognitive, affective, and psychomotor learning domains
+- Use professional instructional design terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include assessment criteria and success indicators
+
+Generate only the learning objectives text, no additional formatting or explanations.`;
+        break;
+
+      case "assessment_criteria":
+        basePrompt = `You are an expert in training assessment and evaluation. Generate comprehensive assessment criteria based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed assessment criteria and evaluation methods
+- Ensure the criteria are specifically relevant to "${auditData.title}"
+- Include knowledge, skills, and competency assessments
+- Use professional assessment and evaluation terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include scoring rubrics and performance standards
+
+Generate only the assessment criteria text, no additional formatting or explanations.`;
+        break;
+
+      case "training_materials":
+        basePrompt = `You are an expert in training material development. Generate comprehensive training materials outline based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed training materials outline and content structure
+- Ensure the materials are specifically relevant to "${auditData.title}"
+- Include course modules, activities, and resources
+- Use professional training development terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include learning activities and engagement strategies
+
+Generate only the training materials outline text, no additional formatting or explanations.`;
+        break;
+
+      case "training_schedule":
+        basePrompt = `You are an expert in training program scheduling and logistics. Generate comprehensive training schedule based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed training schedule and timeline
+- Ensure the schedule is specifically relevant to "${auditData.title}"
+- Include session breakdown, duration, and sequencing
+- Use professional training scheduling terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include logistics and resource requirements
+
+Generate only the training schedule text, no additional formatting or explanations.`;
+        break;
+
+      case "certification_requirements":
+        basePrompt = `You are an expert in professional certification and credentialing. Generate comprehensive certification requirements based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed certification requirements and criteria
+- Ensure the requirements are specifically relevant to "${auditData.title}"
+- Include eligibility criteria, assessment methods, and renewal requirements
+- Use professional certification terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include continuing education and maintenance requirements
+
+Generate only the certification requirements text, no additional formatting or explanations.`;
+        break;
+
+      case "training_evaluation":
+        basePrompt = `You are an expert in training evaluation and effectiveness measurement. Generate comprehensive training evaluation framework based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed training evaluation framework and methods
+- Ensure the evaluation is specifically relevant to "${auditData.title}"
+- Include Kirkpatrick's four levels of evaluation
+- Use professional training evaluation terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include ROI measurement and continuous improvement
+
+Generate only the training evaluation text, no additional formatting or explanations.`;
+        break;
+
+      case "competency_mapping":
+        basePrompt = `You are an expert in competency mapping and skill development. Generate comprehensive competency mapping framework based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed competency mapping and skill frameworks
+- Ensure the mapping is specifically relevant to "${auditData.title}"
+- Include knowledge, skills, abilities, and behaviors (KSABs)
+- Use professional competency mapping terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include proficiency levels and development pathways
+
+Generate only the competency mapping text, no additional formatting or explanations.`;
+        break;
+
+      case "training_effectiveness":
+        basePrompt = `You are an expert in training effectiveness and performance improvement. Generate comprehensive training effectiveness analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed training effectiveness analysis and metrics
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include performance improvement and behavior change measurement
+- Use professional training effectiveness terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include success metrics and continuous improvement strategies
+
+Generate only the training effectiveness text, no additional formatting or explanations.`;
+        break;
+
+      case "compliance_training":
+        basePrompt = `You are an expert in compliance training and regulatory education. Generate comprehensive compliance training content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed compliance training content and requirements
+- Ensure the training is specifically relevant to "${auditData.title}"
+- Include regulatory requirements, policies, and procedures
+- Use professional compliance training terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include regulatory updates and ongoing compliance requirements
+
+Generate only the compliance training text, no additional formatting or explanations.`;
+        break;
+
+      case "skill_development_plan":
+        basePrompt = `You are an expert in skill development and career planning. Generate comprehensive skill development plan based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed skill development plan and career pathway
+- Ensure the plan is specifically relevant to "${auditData.title}"
+- Include skill gaps, development goals, and action plans
+- Use professional skill development terminology
+- Keep it between 200-400 words
+- Make it specific to the training topic and business unit
+- Include timeline, resources, and success indicators
+
+Generate only the skill development plan text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_description":
+        basePrompt = `You are an expert in audit findings and issue management. Generate comprehensive finding descriptions based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding descriptions and analysis
+- Ensure the finding is specifically relevant to "${auditData.title}"
+- Include issue identification, impact assessment, and root cause analysis
+- Use professional audit and compliance terminology
+- Keep it between 200-500 words
+- Make it specific to the finding type and business unit
+- Include risk implications and remediation recommendations
+
+Generate only the finding description text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_analysis":
+        basePrompt = `You are an expert in audit findings analysis. Generate comprehensive finding analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding analysis and evaluation
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include technical analysis, compliance gaps, and control deficiencies
+- Use professional audit and analysis terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed technical assessment and implications
+
+Generate only the finding analysis text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_impact":
+        basePrompt = `You are an expert in audit finding impact assessment. Generate comprehensive finding impact analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding impact assessment and evaluation
+- Ensure the impact analysis is specifically relevant to "${auditData.title}"
+- Include business impact, operational impact, and financial impact
+- Use professional audit and risk assessment terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include risk quantification and business implications
+
+Generate only the finding impact text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_recommendations":
+        basePrompt = `You are an expert in audit finding recommendations. Generate comprehensive finding recommendations based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding recommendations and remediation strategies
+- Ensure the recommendations are specifically relevant to "${auditData.title}"
+- Include corrective actions, preventive measures, and improvement opportunities
+- Use professional audit and compliance terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include actionable recommendations and implementation guidance
+
+Generate only the finding recommendations text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_action_plan":
+        basePrompt = `You are an expert in audit finding action planning. Generate comprehensive finding action plan based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding action plan and implementation strategy
+- Ensure the action plan is specifically relevant to "${auditData.title}"
+- Include specific steps, timelines, and resource requirements
+- Use professional audit and project management terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed implementation steps and success criteria
+
+Generate only the finding action plan text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_risk_assessment":
+        basePrompt = `You are an expert in audit finding risk assessment. Generate comprehensive finding risk assessment based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding risk assessment and evaluation
+- Ensure the risk assessment is specifically relevant to "${auditData.title}"
+- Include risk likelihood, impact, and overall risk rating
+- Use professional audit and risk management terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include risk scoring and mitigation strategies
+
+Generate only the finding risk assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_root_cause":
+        basePrompt = `You are an expert in audit finding root cause analysis. Generate comprehensive finding root cause analysis based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding root cause analysis and investigation
+- Ensure the root cause analysis is specifically relevant to "${auditData.title}"
+- Include underlying causes, contributing factors, and systemic issues
+- Use professional audit and investigation terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed cause analysis and contributing factors
+
+Generate only the finding root cause text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_evidence":
+        basePrompt = `You are an expert in audit finding evidence documentation. Generate comprehensive finding evidence documentation based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding evidence documentation and support
+- Ensure the evidence is specifically relevant to "${auditData.title}"
+- Include supporting documentation, test results, and observations
+- Use professional audit and documentation terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed evidence description and support materials
+
+Generate only the finding evidence text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_priority":
+        basePrompt = `You are an expert in audit finding prioritization. Generate comprehensive finding priority assessment based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding priority assessment and ranking
+- Ensure the priority assessment is specifically relevant to "${auditData.title}"
+- Include urgency, importance, and resource allocation considerations
+- Use professional audit and prioritization terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include priority justification and resource requirements
+
+Generate only the finding priority text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_timeline":
+        basePrompt = `You are an expert in audit finding timeline planning. Generate comprehensive finding timeline based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding timeline and milestone planning
+- Ensure the timeline is specifically relevant to "${auditData.title}"
+- Include remediation phases, deadlines, and critical path activities
+- Use professional audit and project management terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed timeline with milestones and dependencies
+
+Generate only the finding timeline text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_assignee":
+        basePrompt = `You are an expert in audit finding assignment and responsibility. Generate comprehensive finding assignee recommendations based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding assignee recommendations and responsibility matrix
+- Ensure the assignment is specifically relevant to "${auditData.title}"
+- Include role responsibilities, skill requirements, and accountability
+- Use professional audit and organizational terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed role assignments and responsibilities
+
+Generate only the finding assignee text, no additional formatting or explanations.`;
+        break;
+
+      case "finding_follow_up":
+        basePrompt = `You are an expert in audit finding follow-up and monitoring. Generate comprehensive finding follow-up plan based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed finding follow-up plan and monitoring strategy
+- Ensure the follow-up plan is specifically relevant to "${auditData.title}"
+- Include verification activities, progress monitoring, and closure criteria
+- Use professional audit and monitoring terminology
+- Keep it between 200-400 words
+- Make it specific to the finding type and business unit
+- Include detailed follow-up activities and success criteria
+
+Generate only the finding follow-up text, no additional formatting or explanations.`;
+        break;
+
+      case "resilience_assessment":
+        basePrompt = `You are an expert in organizational resilience and risk management. Generate comprehensive resilience assessment content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed resilience assessment criteria and procedures
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include organizational capacity, adaptability, and recovery capabilities
+- Use professional resilience and risk management terminology
+- Keep it between 200-500 words
+- Make it specific to the resilience domain and business unit
+- Include measurement frameworks and improvement strategies
+
+Generate only the resilience assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "resilience_strategy":
+        basePrompt = `You are an expert in organizational resilience strategy development. Generate comprehensive resilience strategy content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed resilience strategy framework and approach
+- Ensure the strategy is specifically relevant to "${auditData.title}"
+- Include strategic objectives, key initiatives, and implementation roadmap
+- Use professional strategy and resilience terminology
+- Keep it between 300-600 words
+- Make it specific to the resilience domain and business unit
+- Include governance structure and success metrics
+
+Generate only the resilience strategy text, no additional formatting or explanations.`;
+        break;
+
+      case "crisis_management_plan":
+        basePrompt = `You are an expert in crisis management and emergency response planning. Generate comprehensive crisis management plan content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed crisis management procedures and response protocols
+- Ensure the plan is specifically relevant to "${auditData.title}"
+- Include crisis identification, escalation procedures, and response teams
+- Use professional crisis management and emergency response terminology
+- Keep it between 300-600 words
+- Make it specific to the crisis management domain and business unit
+- Include communication protocols and recovery procedures
+
+Generate only the crisis management plan text, no additional formatting or explanations.`;
+        break;
+
+      case "business_impact_analysis":
+        basePrompt = `You are an expert in business impact analysis and continuity planning. Generate comprehensive business impact analysis content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed business impact assessment criteria and methodology
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include critical business functions, dependencies, and recovery priorities
+- Use professional business continuity and impact analysis terminology
+- Keep it between 300-600 words
+- Make it specific to the business impact domain and business unit
+- Include quantitative and qualitative impact assessments
+
+Generate only the business impact analysis text, no additional formatting or explanations.`;
+        break;
+
+      case "recovery_strategies":
+        basePrompt = `You are an expert in business recovery and continuity strategies. Generate comprehensive recovery strategies content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed recovery strategies and implementation approaches
+- Ensure the strategies are specifically relevant to "${auditData.title}"
+- Include recovery time objectives, resource requirements, and procedures
+- Use professional business continuity and recovery terminology
+- Keep it between 300-600 words
+- Make it specific to the recovery domain and business unit
+- Include escalation procedures and success criteria
+
+Generate only the recovery strategies text, no additional formatting or explanations.`;
+        break;
+
+      case "resilience_metrics":
+        basePrompt = `You are an expert in resilience measurement and performance metrics. Generate comprehensive resilience metrics content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed resilience metrics framework and measurement criteria
+- Ensure the metrics are specifically relevant to "${auditData.title}"
+- Include key performance indicators, measurement methods, and targets
+- Use professional metrics and performance management terminology
+- Keep it between 200-500 words
+- Make it specific to the resilience metrics domain and business unit
+- Include reporting frequency and improvement tracking
+
+Generate only the resilience metrics text, no additional formatting or explanations.`;
+        break;
+
+      case "scenario_analysis":
+        basePrompt = `You are an expert in scenario planning and risk analysis. Generate comprehensive scenario analysis content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed scenario analysis framework and methodology
+- Ensure the analysis is specifically relevant to "${auditData.title}"
+- Include scenario development, impact assessment, and response planning
+- Use professional scenario planning and risk analysis terminology
+- Keep it between 300-600 words
+- Make it specific to the scenario analysis domain and business unit
+- Include probability assessment and mitigation strategies
+
+Generate only the scenario analysis text, no additional formatting or explanations.`;
+        break;
+
+      case "resilience_framework":
+        basePrompt = `You are an expert in resilience frameworks and governance structures. Generate comprehensive resilience framework content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed resilience framework structure and governance model
+- Ensure the framework is specifically relevant to "${auditData.title}"
+- Include framework components, roles, responsibilities, and processes
+- Use professional framework and governance terminology
+- Keep it between 300-600 words
+- Make it specific to the resilience framework domain and business unit
+- Include implementation roadmap and maturity assessment
+
+Generate only the resilience framework text, no additional formatting or explanations.`;
+        break;
+
+      case "capacity_assessment":
+        basePrompt = `You are an expert in organizational capacity assessment and capability building. Generate comprehensive capacity assessment content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed capacity assessment criteria and evaluation methodology
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include capacity gaps, capability requirements, and development needs
+- Use professional capacity building and assessment terminology
+- Keep it between 300-600 words
+- Make it specific to the capacity assessment domain and business unit
+- Include improvement recommendations and development plans
+
+Generate only the capacity assessment text, no additional formatting or explanations.`;
+        break;
+
+      case "adaptability_plan":
+        basePrompt = `You are an expert in organizational adaptability and change management. Generate comprehensive adaptability plan content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed adaptability plan framework and implementation approach
+- Ensure the plan is specifically relevant to "${auditData.title}"
+- Include adaptability strategies, change management processes, and learning mechanisms
+- Use professional adaptability and change management terminology
+- Keep it between 300-600 words
+- Make it specific to the adaptability domain and business unit
+- Include continuous improvement and learning frameworks
+
+Generate only the adaptability plan text, no additional formatting or explanations.`;
+        break;
+
+      case "resilience_monitoring":
+        basePrompt = `You are an expert in resilience monitoring and performance tracking. Generate comprehensive resilience monitoring content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed resilience monitoring framework and tracking mechanisms
+- Ensure the monitoring is specifically relevant to "${auditData.title}"
+- Include monitoring indicators, reporting processes, and alert mechanisms
+- Use professional monitoring and performance tracking terminology
+- Keep it between 200-500 words
+- Make it specific to the resilience monitoring domain and business unit
+- Include early warning systems and response triggers
+
+Generate only the resilience monitoring text, no additional formatting or explanations.`;
+        break;
+
+      case "continuous_improvement":
+        basePrompt = `You are an expert in continuous improvement and organizational learning. Generate comprehensive continuous improvement content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed continuous improvement framework and methodology
+- Ensure the improvement plan is specifically relevant to "${auditData.title}"
+- Include improvement cycles, learning mechanisms, and feedback processes
+- Use professional continuous improvement and learning terminology
+- Keep it between 300-600 words
+- Make it specific to the continuous improvement domain and business unit
+- Include measurement of improvement and success criteria
+
+Generate only the continuous improvement text, no additional formatting or explanations.`;
+        break;
+
+      case "supply_chain_risk":
+        basePrompt = `You are an expert in supply chain risk management. Generate comprehensive supply chain risk assessment content based on the following information:
+
+${auditInfo}
+
+Context: ${context}
+
+Requirements:
+- Create detailed supply chain risk assessment criteria and procedures
+- Ensure the assessment is specifically relevant to "${auditData.title}"
+- Include supplier risk, logistics risk, and operational continuity
+- Use professional supply chain and risk management terminology
+- Keep it between 200-500 words
+- Make it specific to the supply chain domain and business unit
+- Include risk mitigation strategies and monitoring requirements
+
+Generate only the supply chain risk text, no additional formatting or explanations.`;
+        break;
     }
 
     return basePrompt;
@@ -754,6 +2131,184 @@ Generate only the legal basis text, no additional formatting or explanations.`;
 - Assess operational effectiveness and risk management
 - Evaluate monitoring and reporting mechanisms
 - Review continuous improvement and corrective actions`;
+    }
+  }
+
+  // Enhanced template-based prompt building
+  private async buildEnhancedPrompt(request: AIGenerationRequest): Promise<string> {
+    try {
+      // Try to find a matching template first
+      const template = await this.findBestTemplate(request);
+      
+      if (template) {
+        return this.processTemplate(template, request);
+      }
+      
+      // Fallback to the original buildPrompt method
+      return this.buildPrompt(request);
+    } catch (error) {
+      console.warn("Template-based prompt building failed, falling back to default:", error);
+      return this.buildPrompt(request);
+    }
+  }
+
+  private async findBestTemplate(request: AIGenerationRequest): Promise<AITemplate | null> {
+    try {
+      const { data: templates, error } = await supabase
+        .from('ai_templates')
+        .select('*')
+        .eq('field_type', request.fieldType)
+        .eq('is_active', true)
+        .order('is_default', { ascending: false })
+        .order('version', { ascending: false });
+
+      if (error || !templates || templates.length === 0) {
+        return null;
+      }
+
+      // Find the best matching template based on industry and framework
+      let bestTemplate = templates[0]; // Default to first template
+
+      for (const template of templates) {
+        // Perfect match: industry and framework
+        if (request.industry && template.industry === request.industry &&
+            request.framework && template.framework === request.framework) {
+          return template;
+        }
+        
+        // Industry match only
+        if (request.industry && template.industry === request.industry && !template.framework) {
+          bestTemplate = template;
+        }
+        
+        // Framework match only
+        if (request.framework && template.framework === request.framework && !template.industry) {
+          bestTemplate = template;
+        }
+        
+        // Default template (no industry/framework specified)
+        if (!template.industry && !template.framework && template.is_default) {
+          bestTemplate = template;
+        }
+      }
+
+      return bestTemplate;
+    } catch (error) {
+      console.error("Error finding template:", error);
+      return null;
+    }
+  }
+
+  private processTemplate(template: AITemplate, request: AIGenerationRequest): string {
+    let prompt = template.template_content;
+
+    // Replace template variables with actual values
+    const auditInfo = `
+Audit Information:
+- Title: ${request.auditData.title || "Not specified"}
+- Type: ${request.auditData.audit_type || "Not specified"}
+- Business Unit: ${request.auditData.business_unit || "Not specified"}
+- Existing Scope: ${request.auditData.scope || "Not specified"}
+    `.trim();
+
+    // Replace common placeholders
+    prompt = prompt.replace(/\{\{title\}\}/g, request.auditData.title || "Not specified");
+    prompt = prompt.replace(/\{\{audit_type\}\}/g, request.auditData.audit_type || "Not specified");
+    prompt = prompt.replace(/\{\{business_unit\}\}/g, request.auditData.business_unit || "Not specified");
+    prompt = prompt.replace(/\{\{scope\}\}/g, request.auditData.scope || "Not specified");
+    prompt = prompt.replace(/\{\{context\}\}/g, request.context || "");
+    prompt = prompt.replace(/\{\{auditInfo\}\}/g, auditInfo);
+
+    // Add industry-specific context if available
+    if (request.industry && template.industry) {
+      prompt += `\n\nIndustry Context: This template is specifically designed for the ${request.industry} industry.`;
+    }
+
+    // Add framework-specific context if available
+    if (request.framework && template.framework) {
+      prompt += `\n\nFramework Context: This template follows ${request.framework} standards and best practices.`;
+    }
+
+    return prompt;
+  }
+
+  // Template management methods
+  async getTemplates(criteria?: TemplateSelectionCriteria): Promise<AITemplate[]> {
+    try {
+      let query = supabase
+        .from('ai_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('field_type')
+        .order('name');
+
+      if (criteria) {
+        if (criteria.fieldType) {
+          query = query.eq('field_type', criteria.fieldType);
+        }
+        if (criteria.industry) {
+          query = query.eq('industry', criteria.industry);
+        }
+        if (criteria.framework) {
+          query = query.eq('framework', criteria.framework);
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      return [];
+    }
+  }
+
+  async createTemplate(template: Omit<AITemplate, 'id' | 'created_at' | 'updated_at'>): Promise<AITemplate | null> {
+    try {
+      const { data, error } = await supabase
+        .from('ai_templates')
+        .insert([template])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error("Error creating template:", error);
+      return null;
+    }
+  }
+
+  async updateTemplate(id: string, updates: Partial<AITemplate>): Promise<AITemplate | null> {
+    try {
+      const { data, error } = await supabase
+        .from('ai_templates')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error("Error updating template:", error);
+      return null;
+    }
+  }
+
+  async deleteTemplate(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('ai_templates')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      return false;
     }
   }
 
@@ -903,7 +2458,7 @@ Generate only the legal basis text, no additional formatting or explanations.`;
     request: AIGenerationRequest,
   ): Promise<AIGenerationResponse> {
     try {
-      const prompt = this.buildPrompt(request);
+      const prompt = await this.buildEnhancedPrompt(request);
 
       switch (request.provider) {
         case "ollama":

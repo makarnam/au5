@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -45,7 +45,8 @@ const Layout: React.FC = () => {
   const [useEnhancedSidebar, setUseEnhancedSidebar] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const navigation = [
+  // Memoize navigation array to prevent unnecessary re-renders
+  const navigation = useMemo(() => [
     {
       name: t("navigation.dashboard"),
       href: "/",
@@ -280,6 +281,18 @@ const Layout: React.FC = () => {
       icon: Workflow,
       current: location.pathname.startsWith("/workflows"),
       roles: ["cro", "admin", "super_admin"],
+      children: [
+        {
+          name: "Workflow Templates",
+          href: "/workflows/templates",
+          current: location.pathname === "/workflows/templates",
+        },
+        {
+          name: "Approval Inbox",
+          href: "/workflows/approvals",
+          current: location.pathname === "/workflows/approvals",
+        },
+      ],
     },
     {
       name: "Entity Relationships",
@@ -787,7 +800,7 @@ const Layout: React.FC = () => {
         location.pathname.startsWith("/settings/"),
       roles: ["admin", "super_admin"],
     },
-  ];
+  ], [location.pathname, t, navigate]);
 
   const languages = [
     { code: "en", name: "English", flag: "🇺🇸" },
@@ -800,31 +813,29 @@ const Layout: React.FC = () => {
   const currentLanguage =
     languages.find((lang) => lang.code === i18n.language) || languages[0];
 
-  const filteredNavigation = navigation.filter((item) =>
-    item.roles.some((role) => checkPermission(role as any)),
+  // Memoize filtered navigation to prevent unnecessary re-renders
+  const filteredNavigation = useMemo(() => 
+    navigation.filter((item) =>
+      item.roles.some((role) => checkPermission(role as any)),
+    ),
+    [navigation, checkPermission]
   );
 
-  const handleSignOut = async () => {
+  // Memoize callback functions
+  const handleSignOut = useCallback(async () => {
     await signOut();
     navigate("/auth/sign-in", { replace: true });
-  };
+  }, [signOut, navigate]);
 
-  const changeLanguage = (languageCode: string) => {
+  const changeLanguage = useCallback((languageCode: string) => {
     i18n.changeLanguage(languageCode);
     setLanguageMenuOpen(false);
-  };
+  }, [i18n]);
 
-  const SidebarContent = () => {
-    if (useEnhancedSidebar) {
-      return (
-        <EnhancedSidebar
-          isCollapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onSwitchToLegacy={() => setUseEnhancedSidebar(false)}
-        />
-      );
-    }
 
+
+  // Create a separate component for the legacy sidebar content
+  const LegacySidebarContent = () => {
     return (
       <div className="flex flex-col h-full">
         {/* Logo */}
@@ -946,13 +957,23 @@ const Layout: React.FC = () => {
     );
   };
 
+
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className={`flex flex-col ${useEnhancedSidebar && sidebarCollapsed ? 'w-16' : 'w-80'}`}>
           <div className="flex flex-col flex-grow bg-white border-r border-gray-200 overflow-hidden">
-            <SidebarContent />
+            {useEnhancedSidebar ? (
+              <EnhancedSidebar
+                isCollapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                onSwitchToLegacy={() => setUseEnhancedSidebar(false)}
+              />
+            ) : (
+              <LegacySidebarContent />
+            )}
           </div>
         </div>
       </div>
@@ -989,7 +1010,15 @@ const Layout: React.FC = () => {
                   <X className="h-6 w-6 text-white" />
                 </button>
               </div>
-              <SidebarContent />
+              {useEnhancedSidebar ? (
+                <EnhancedSidebar
+                  isCollapsed={sidebarCollapsed}
+                  onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  onSwitchToLegacy={() => setUseEnhancedSidebar(false)}
+                />
+              ) : (
+                <LegacySidebarContent />
+              )}
             </motion.div>
           </>
         )}

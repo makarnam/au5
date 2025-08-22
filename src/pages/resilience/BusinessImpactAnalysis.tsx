@@ -29,6 +29,7 @@ import {
   RecoveryRequirement
 } from '../../types/resilience';
 import { resilienceService } from '../../services/resilienceService';
+import ResilienceAIGenerator from '../../components/ai/ResilienceAIGenerator';
 
 const BusinessImpactAnalysis: React.FC = () => {
   const navigate = useNavigate();
@@ -524,13 +525,24 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ process, onSave, onCancel }) 
         
         <div>
           <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
+          <div className="space-y-2">
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <ResilienceAIGenerator
+              fieldType="business_impact_analysis"
+              title={formData.name || "Business Process"}
+              organizationType="corporate"
+              industry="Technology"
+              scale="medium"
+              onGenerated={(content) => setFormData({ ...formData, description: content })}
+              className="mt-2"
+            />
+          </div>
         </div>
 
         <div>
@@ -545,12 +557,23 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ process, onSave, onCancel }) 
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Recovery Strategy</label>
-          <textarea
-            value={formData.recovery_strategy}
-            onChange={(e) => setFormData({ ...formData, recovery_strategy: e.target.value })}
-            rows={3}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
+          <div className="space-y-2">
+            <textarea
+              value={formData.recovery_strategy}
+              onChange={(e) => setFormData({ ...formData, recovery_strategy: e.target.value })}
+              rows={3}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+            <ResilienceAIGenerator
+              fieldType="recovery_strategies"
+              title={formData.name || "Business Process"}
+              organizationType="corporate"
+              industry="Technology"
+              scale="medium"
+              onGenerated={(content) => setFormData({ ...formData, recovery_strategy: content })}
+              className="mt-2"
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-3">

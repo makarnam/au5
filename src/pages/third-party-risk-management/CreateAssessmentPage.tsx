@@ -19,6 +19,7 @@ import {
 import { thirdPartyRiskManagementService } from '../../services/thirdPartyRiskManagementService';
 import { ThirdPartyAssessmentFormData } from '../../types/thirdPartyRiskManagement';
 import { Link, useNavigate } from 'react-router-dom';
+import TPRMAIGenerator from '../../components/ai/TPRMAIGenerator';
 
 const CreateAssessmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -387,7 +388,19 @@ const CreateAssessmentPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="findings_summary">Findings Summary</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="findings_summary">Findings Summary</Label>
+                <TPRMAIGenerator
+                  fieldType="vendor_assessment"
+                  tprmData={formData}
+                  onGenerated={(content) => {
+                    if (typeof content === 'string') {
+                      handleInputChange('findings_summary', content);
+                    }
+                  }}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="findings_summary"
                 value={formData.findings_summary}
@@ -398,7 +411,19 @@ const CreateAssessmentPage: React.FC = () => {
             </div>
 
             <div>
-              <Label htmlFor="recommendations">Recommendations</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="recommendations">Recommendations</Label>
+                <TPRMAIGenerator
+                  fieldType="vendor_assessment_criteria"
+                  tprmData={formData}
+                  onGenerated={(content) => {
+                    if (typeof content === 'string') {
+                      handleInputChange('recommendations', content);
+                    }
+                  }}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="recommendations"
                 value={formData.recommendations}
@@ -409,7 +434,19 @@ const CreateAssessmentPage: React.FC = () => {
             </div>
 
             <div>
-              <Label htmlFor="mitigation_actions">Mitigation Actions</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="mitigation_actions">Mitigation Actions</Label>
+                <TPRMAIGenerator
+                  fieldType="vendor_risk_scoring"
+                  tprmData={formData}
+                  onGenerated={(content) => {
+                    if (typeof content === 'string') {
+                      handleInputChange('mitigation_actions', content);
+                    }
+                  }}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="mitigation_actions"
                 value={formData.mitigation_actions}

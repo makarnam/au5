@@ -23,7 +23,43 @@ import AIConfigurationComponent from "./AIConfiguration";
 import OllamaDiagnostic from "./OllamaDiagnostic";
 
 interface AIGeneratorProps {
-  fieldType: "description" | "objectives" | "scope" | "methodology";
+  fieldType: 
+    | "description" 
+    | "objectives" 
+    | "scope" 
+    | "methodology"
+    | "policy_content"
+    | "incident_response"
+    | "esg_program"
+    | "bcp_plan"
+    | "vendor_assessment"
+    | "security_policy"
+    | "training_program"
+    | "training_description"
+    | "learning_objectives"
+    | "assessment_criteria"
+    | "training_materials"
+    | "training_schedule"
+    | "certification_requirements"
+    | "training_evaluation"
+    | "competency_mapping"
+    | "training_effectiveness"
+    | "compliance_training"
+    | "skill_development_plan"
+    | "finding_description"
+    | "finding_analysis"
+    | "finding_impact"
+    | "finding_recommendations"
+    | "finding_action_plan"
+    | "finding_risk_assessment"
+    | "finding_root_cause"
+    | "finding_evidence"
+    | "finding_priority"
+    | "finding_timeline"
+    | "finding_assignee"
+    | "finding_follow_up"
+    | "resilience_assessment"
+    | "supply_chain_risk";
   auditData: {
     title?: string;
     audit_type?: string;
@@ -82,6 +118,116 @@ export default function AIGenerator({
         return "Scope";
       case "methodology":
         return "Methodology";
+      case "policy_content":
+        return "Policy Content";
+      case "incident_response":
+        return "Incident Response";
+      case "esg_program":
+        return "ESG Program";
+      case "bcp_plan":
+        return "BCP Plan";
+      case "vendor_assessment":
+        return "Vendor Assessment";
+      case "security_policy":
+        return "Security Policy";
+      case "vulnerability_assessment_report":
+        return "Vulnerability Assessment Report";
+      case "security_incident_response_plan":
+        return "Security Incident Response Plan";
+      case "security_controls_mapping":
+        return "Security Controls Mapping";
+      case "security_framework_compliance":
+        return "Security Framework Compliance";
+      case "security_policy_description":
+        return "Security Policy Description";
+      case "security_policy_scope":
+        return "Security Policy Scope";
+      case "security_policy_procedures":
+        return "Security Policy Procedures";
+      case "security_policy_roles":
+        return "Security Policy Roles";
+      case "security_policy_incident_response":
+        return "Security Policy Incident Response";
+      case "security_policy_access_control":
+        return "Security Policy Access Control";
+      case "security_policy_data_protection":
+        return "Security Policy Data Protection";
+      case "training_program":
+        return "Training Program";
+      case "training_description":
+        return "Training Description";
+      case "learning_objectives":
+        return "Learning Objectives";
+      case "assessment_criteria":
+        return "Assessment Criteria";
+      case "training_materials":
+        return "Training Materials";
+      case "training_schedule":
+        return "Training Schedule";
+      case "certification_requirements":
+        return "Certification Requirements";
+      case "training_evaluation":
+        return "Training Evaluation";
+      case "competency_mapping":
+        return "Competency Mapping";
+      case "training_effectiveness":
+        return "Training Effectiveness";
+      case "compliance_training":
+        return "Compliance Training";
+      case "skill_development_plan":
+        return "Skill Development Plan";
+      case "finding_description":
+        return "Finding Description";
+      case "finding_analysis":
+        return "Finding Analysis";
+      case "finding_impact":
+        return "Finding Impact";
+      case "finding_recommendations":
+        return "Finding Recommendations";
+      case "finding_action_plan":
+        return "Finding Action Plan";
+      case "finding_risk_assessment":
+        return "Finding Risk Assessment";
+      case "finding_root_cause":
+        return "Finding Root Cause";
+      case "finding_evidence":
+        return "Finding Evidence";
+      case "finding_priority":
+        return "Finding Priority";
+      case "finding_timeline":
+        return "Finding Timeline";
+      case "finding_assignee":
+        return "Finding Assignee";
+      case "finding_follow_up":
+        return "Finding Follow-up";
+      case "resilience_assessment":
+        return "Resilience Assessment";
+      case "supply_chain_risk":
+        return "Supply Chain Risk";
+      case "supply_chain_risk_assessment":
+        return "Supply Chain Risk Assessment";
+      case "vendor_evaluation_criteria":
+        return "Vendor Evaluation Criteria";
+      case "risk_mitigation_strategies":
+        return "Risk Mitigation Strategies";
+      case "supply_chain_mapping":
+        return "Supply Chain Mapping";
+      case "vendor_tier_classification":
+        return "Vendor Tier Classification";
+      case "risk_propagation_analysis":
+        return "Risk Propagation Analysis";
+      case "supply_chain_resilience_scoring":
+        return "Supply Chain Resilience Scoring";
+      case "disruption_response_plan":
+        return "Disruption Response Plan";
+      case "supplier_development_program":
+        return "Supplier Development Program";
+      case "performance_monitoring_framework":
+        return "Performance Monitoring Framework";
+      case "compliance_assessment_criteria":
+        return "Compliance Assessment Criteria";
+      case "financial_stability_analysis":
+        return "Financial Stability Analysis";
       default:
         return field;
     }

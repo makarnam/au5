@@ -4,6 +4,7 @@ import type { ApprovalRequest, ApprovalRequestStep, ApprovalActionLog, UUID } fr
 import { useParams, useNavigate } from 'react-router-dom';
 import ApprovalTimeline from '../../components/workflows/ApprovalTimeline';
 import ApproveRejectDialog from '../../components/workflows/ApproveRejectDialog';
+import WorkflowHistory from '../../components/workflows/WorkflowHistory';
 
 export default function WorkflowInstance() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,7 @@ export default function WorkflowInstance() {
   const [actions, setActions] = useState<ApprovalActionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedStep, setSelectedStep] = useState<ApprovalRequestStep | null>(null);
 
   async function refresh() {
     if (!id) return;
@@ -37,63 +39,99 @@ export default function WorkflowInstance() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const handleAction = async (action: 'approve' | 'reject' | 'request_revision' | 'skip', comments?: string) => {
+    if (!selectedStep || !id) return;
+
+    try {
+      let result;
+      switch (action) {
+        case 'approve':
+          result = await approveStep(id as UUID, selectedStep.id, comments);
+          break;
+        case 'reject':
+          result = await rejectStep(id as UUID, selectedStep.id, comments);
+          break;
+        case 'request_revision':
+          result = await requestRevision(id as UUID, selectedStep.id, comments);
+          break;
+        case 'skip':
+          result = await skipStep(id as UUID, selectedStep.id, comments);
+          break;
+      }
+
+      if (result.error) {
+        alert(result.error.message || 'Action failed');
+        return;
+      }
+
+      setDialogOpen(false);
+      setSelectedStep(null);
+      await refresh();
+    } catch (error) {
+      console.error('Action error:', error);
+      alert('Action failed');
+    }
+  };
+
   if (!id) return <div className="p-6">Invalid instance id</div>;
   if (loading) return <div className="p-6">Loading instance…</div>;
   if (!req) return <div className="p-6">Instance not found</div>;
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-semibold">Approval Request</h1>
-          <div className="text-xs text-gray-500 mt-1">
-            ID: <span className="font-mono">{req.id}</span> • Entity: {req.entity_type} • Status: {req.status}
+          <h1 className="text-2xl font-bold">Workflow Instance</h1>
+          <p className="text-gray-600">
+            {req.entity_type} • ID: {req.entity_id} • Status: {req.status}
+          </p>
+        </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          Back
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Approval Timeline */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Approval Timeline</h2>
+          <div className="bg-white p-4 rounded-lg border">
+            <ApprovalTimeline 
+              steps={steps} 
+              currentStep={req.current_step}
+              onStepClick={(step) => {
+                if (step.status === 'pending') {
+                  setSelectedStep(step);
+                  setDialogOpen(true);
+                }
+              }}
+            />
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm"
-            disabled={req.status === 'approved' || req.status === 'rejected' || req.status === 'cancelled'}
-          >
-            Take Action
-          </button>
-          <button onClick={() => navigate('/workflows/home')} className="px-3 py-2 rounded border text-sm hover:bg-gray-50">
-            Back
-          </button>
+
+        {/* Workflow History */}
+        <div className="space-y-4">
+          <WorkflowHistory requestId={id} />
         </div>
       </div>
 
-      <div className="bg-white border rounded p-4">
-        <h2 className="font-medium mb-2">Timeline</h2>
-        <ApprovalTimeline steps={steps as any} currentStep={req.current_step} />
-      </div>
-
-      <div className="bg-white border rounded p-4">
-        <h2 className="font-medium mb-2">Action Log</h2>
-        {actions.length === 0 ? (
-          <div className="text-sm text-gray-600">No actions yet.</div>
-        ) : (
-          <ul className="text-sm space-y-2">
-            {actions.map((a) => (
-              <li key={a.id} className="flex items-center justify-between border-b pb-2">
-                <div>
-                  <span className="font-medium">{a.action}</span>
-                  {a.comments ? <span className="text-gray-600"> — {a.comments}</span> : null}
-                </div>
-                <div className="text-xs text-gray-500">{new Date(a.created_at).toLocaleString()}</div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <ApproveRejectDialog
-        requestId={req.id}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onDone={() => refresh()}
-      />
+      {/* Action Dialog */}
+      {dialogOpen && selectedStep && (
+        <ApproveRejectDialog
+          step={selectedStep}
+          onApprove={(comments) => handleAction('approve', comments)}
+          onReject={(comments) => handleAction('reject', comments)}
+          onRequestRevision={(comments) => handleAction('request_revision', comments)}
+          onSkip={(comments) => handleAction('skip', comments)}
+          onClose={() => {
+            setDialogOpen(false);
+            setSelectedStep(null);
+          }}
+        />
+      )}
     </div>
   );
 }

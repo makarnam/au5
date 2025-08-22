@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Activity,
   Calendar,
-  Globe
+  Globe,
+  Wand2
 } from 'lucide-react';
 import ESGDashboard from '../../components/esg/ESGDashboard';
 import CarbonManagement from '../../components/esg/CarbonManagement';
@@ -22,6 +23,7 @@ import PortfolioAssessment from '../../components/esg/PortfolioAssessment';
 import ESGGoalsManagement from '../../components/esg/ESGGoalsManagement';
 import StakeholderEngagement from '../../components/esg/StakeholderEngagement';
 import DoubleMaterialityCalculator from '../../components/esg/DoubleMaterialityCalculator';
+import ESGAIGenerator from '../../components/ai/ESGAIGenerator';
 
 const ESGComprehensivePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -68,6 +70,12 @@ const ESGComprehensivePage: React.FC = () => {
       label: 'Materiality Assessment',
       icon: <Shield className="h-4 w-4" />,
       description: 'Double materiality analysis'
+    },
+    {
+      id: 'ai-generator',
+      label: 'AI Generator',
+      icon: <Wand2 className="h-4 w-4" />,
+      description: 'AI-powered ESG content generation'
     }
   ];
 
@@ -87,6 +95,8 @@ const ESGComprehensivePage: React.FC = () => {
         return <StakeholderEngagement />;
       case 'materiality':
         return <DoubleMaterialityCalculator />;
+      case 'ai-generator':
+        return <ESGAIGenerator />;
       default:
         return <ESGDashboard />;
     }

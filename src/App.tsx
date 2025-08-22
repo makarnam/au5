@@ -109,6 +109,7 @@ import WorkflowCenterPage from "./pages/workflows/WorkflowCenterPage";
 import WorkflowDetails from "./pages/workflows/WorkflowDetails";
 import WorkflowInstance from "./pages/workflows/WorkflowInstance";
 import ApprovalInbox from "./pages/workflows/ApprovalInbox";
+import WorkflowTemplateManagerPage from "./pages/workflows/WorkflowTemplateManagerPage";
 
 // AI Pages
 import AIAssistant from "./pages/ai/AIAssistant";
@@ -159,7 +160,7 @@ import CreateUserPage from "./pages/users/CreateUserPage";
 import InviteUserPage from "./pages/users/InviteUserPage";
 import NotificationsInbox from "./pages/notifications/NotificationsInbox";
 import TrainingCertification from "./pages/training/TrainingCertification";
-import TrainingManagementDashboard from "./components/training/TrainingManagementDashboard";
+import TrainingManagementDashboard from "./pages/training/TrainingManagementDashboard";
 import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
 
 // Third Party Risk Management Pages
@@ -210,6 +211,10 @@ import CMMCProgramDetails from "./pages/it-security/cmmc/CMMCProgramDetails";
 import EditCMMCProgramPage from "./pages/it-security/cmmc/EditCMMCProgramPage";
 import ITSecurityMonitoring from "./pages/it-security/SecurityMonitoring";
 import SecurityAssets from "./pages/it-security/SecurityAssets";
+
+// Supply Chain Risk Management Pages
+import SupplyChainDashboard from "./pages/supply-chain-risk/SupplyChainDashboard";
+import CreateSupplyChainRiskPage from "./pages/supply-chain-risk/CreateSupplyChainRiskPage";
 
 // Admin Pages
 import ComingSoonAdmin from "./pages/admin/ComingSoonAdmin";
@@ -377,6 +382,7 @@ function App() {
           <Route path="workflows/:id" element={<WorkflowDetails />} />
           <Route path="workflows/:id/instance/:instanceId" element={<WorkflowInstance />} />
           <Route path="workflows/approvals" element={<ApprovalInbox />} />
+        <Route path="workflows/templates" element={<WorkflowTemplateManagerPage />} />
 
           {/* AI */}
           <Route path="ai" element={<AIAssistant />} />
@@ -443,6 +449,10 @@ function App() {
           <Route path="third-party-risk-management/performance" element={<PerformanceMonitoring />} />
           <Route path="third-party-risk-management/security" element={<SecurityMonitoring />} />
           <Route path="third-party-risk-management/due-diligence" element={<DueDiligenceWorkflow />} />
+
+          {/* Supply Chain Risk Management */}
+          <Route path="supply-chain-risk" element={<SupplyChainDashboard />} />
+          <Route path="supply-chain-risk/create" element={<CreateSupplyChainRiskPage />} />
 
           {/* ESG Management */}
           <Route path="esg" element={<ESGDashboardPage />} />

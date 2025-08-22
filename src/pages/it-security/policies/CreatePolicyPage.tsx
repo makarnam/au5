@@ -8,6 +8,7 @@ import { Textarea } from '../../../components/ui/textarea';
 import { Badge } from '../../../components/ui/badge';
 import { ArrowLeft, Save, FileText, Users, Calendar, Shield, BookOpen, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ITSecurityAIGenerator from '../../../components/ai/ITSecurityAIGenerator';
 
 interface PolicyFormData {
   title: string;
@@ -319,7 +320,18 @@ const CreatePolicyPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="scope">Scope *</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="scope">Scope *</Label>
+                <ITSecurityAIGenerator
+                  fieldType="security_policy_scope"
+                  title={formData.title}
+                  industry="Technology"
+                  framework="ISO 27001"
+                  securityLevel={formData.priority}
+                  onGenerated={(content) => handleInputChange('scope', content)}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="scope"
                 value={formData.scope}
@@ -343,7 +355,18 @@ const CreatePolicyPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="policy_content">Policy Content *</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="policy_content">Policy Content *</Label>
+                <ITSecurityAIGenerator
+                  fieldType="security_policy"
+                  title={formData.title}
+                  industry="Technology"
+                  framework="ISO 27001"
+                  securityLevel={formData.priority}
+                  onGenerated={(content) => handleInputChange('policy_content', content)}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="policy_content"
                 value={formData.policy_content}
@@ -367,7 +390,18 @@ const CreatePolicyPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="procedures">Procedures</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="procedures">Procedures</Label>
+                <ITSecurityAIGenerator
+                  fieldType="security_policy_procedures"
+                  title={formData.title}
+                  industry="Technology"
+                  framework="ISO 27001"
+                  securityLevel={formData.priority}
+                  onGenerated={(content) => handleInputChange('procedures', content)}
+                  className="ml-2"
+                />
+              </div>
               <Textarea
                 id="procedures"
                 value={formData.procedures}

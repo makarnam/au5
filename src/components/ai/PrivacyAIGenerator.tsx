@@ -4,7 +4,21 @@ import { toast } from "react-hot-toast";
 import { aiService } from "../../services/aiService";
 
 interface PrivacyAIGeneratorProps {
-  fieldType: "dpia_description" | "dpia_risk_assessment" | "ropa_purpose" | "ropa_legal_basis";
+  fieldType: 
+    | "dpia_description" 
+    | "dpia_risk_assessment" 
+    | "ropa_purpose" 
+    | "ropa_legal_basis"
+    | "policy_content"
+    | "incident_response"
+    | "esg_program"
+    | "bcp_plan"
+    | "vendor_assessment"
+    | "security_policy"
+    | "training_program"
+    | "finding_description"
+    | "resilience_assessment"
+    | "supply_chain_risk";
   title: string;
   industry?: string;
   dataSubjects?: string[];
@@ -57,6 +71,26 @@ export default function PrivacyAIGenerator({
         return "Purpose";
       case "ropa_legal_basis":
         return "Legal Basis";
+      case "policy_content":
+        return "Policy Content";
+      case "incident_response":
+        return "Incident Response";
+      case "esg_program":
+        return "ESG Program";
+      case "bcp_plan":
+        return "BCP Plan";
+      case "vendor_assessment":
+        return "Vendor Assessment";
+      case "security_policy":
+        return "Security Policy";
+      case "training_program":
+        return "Training Program";
+      case "finding_description":
+        return "Finding Description";
+      case "resilience_assessment":
+        return "Resilience Assessment";
+      case "supply_chain_risk":
+        return "Supply Chain Risk";
       default:
         return "Content";
     }
@@ -72,6 +106,26 @@ export default function PrivacyAIGenerator({
         return "🎯";
       case "ropa_legal_basis":
         return "⚖️";
+      case "policy_content":
+        return "📋";
+      case "incident_response":
+        return "🚨";
+      case "esg_program":
+        return "🌱";
+      case "bcp_plan":
+        return "🔄";
+      case "vendor_assessment":
+        return "🤝";
+      case "security_policy":
+        return "🔒";
+      case "training_program":
+        return "🎓";
+      case "finding_description":
+        return "🔍";
+      case "resilience_assessment":
+        return "🛡️";
+      case "supply_chain_risk":
+        return "📦";
       default:
         return "✨";
     }

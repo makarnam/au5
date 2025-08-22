@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bcpService } from '../../services/bcpService';
 import { BusinessContinuityPlan, CriticalFunction, EmergencyContact, RecoveryTimeObjective } from '../../types/bcp';
+import BCPAIGenerator from '../../components/ai/BCPAIGenerator';
 
 const CreatePlanPage: React.FC = () => {
   const navigate = useNavigate();
@@ -86,7 +87,19 @@ const CreatePlanPage: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+              <BCPAIGenerator
+                fieldType="bcp_description"
+                bcpData={plan}
+                onGenerated={(content) => {
+                  if (typeof content === 'string') {
+                    setPlan(prev => ({ ...prev, description: content }));
+                  }
+                }}
+                className="ml-2"
+              />
+            </div>
             <textarea
               id="description"
               name="description"
