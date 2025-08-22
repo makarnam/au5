@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { errorHandler } from "./lib/errorHandler";
+import "./lib/sessionDebugger"; // Initialize session debugger
 
 // Auth Pages
 import SignIn from "./pages/auth/SignIn";
@@ -109,6 +111,9 @@ import ApprovalInbox from "./pages/workflows/ApprovalInbox";
 import AIAssistant from "./pages/ai/AIAssistant";
 import RiskAIGeneration from "./pages/ai/RiskAIGeneration";
 
+// Entity Relationship Viewer
+import EntityRelationshipViewer from "./components/EntityRelationshipViewer";
+
 // AI Governance Pages
 import AIGovernanceDashboard from "./pages/ai-governance/AIGovernanceDashboard";
 import AIModelsList from "./pages/ai-governance/AIModelsList";
@@ -123,6 +128,13 @@ import AICompliancePage from "./pages/ai-governance/AICompliancePage";
 import BCPDashboard from "./pages/bcp/BCPDashboard";
 import CreatePlanPage from "./pages/bcp/CreatePlanPage";
 import PlanDetails from "./pages/bcp/PlanDetails";
+import CreateCriticalFunctionPage from "./pages/bcp/CreateCriticalFunctionPage";
+import CreateITContinuityPage from "./pages/bcp/CreateITContinuityPage";
+import CreateEmergencyContactPage from "./pages/bcp/CreateEmergencyContactPage";
+import CreateRTOPage from "./pages/bcp/CreateRTOPage";
+import CreateRiskAssessmentPage from "./pages/bcp/CreateRiskAssessmentPage";
+import CreateTestingExercisePage from "./pages/bcp/CreateTestingExercisePage";
+import CreateResourcePage from "./pages/bcp/CreateResourcePage";
 
 // Resilience Management
 import ResilienceDashboard from "./pages/resilience/ResilienceDashboard";
@@ -145,6 +157,7 @@ import CreateUserPage from "./pages/users/CreateUserPage";
 import InviteUserPage from "./pages/users/InviteUserPage";
 import NotificationsInbox from "./pages/notifications/NotificationsInbox";
 import TrainingCertification from "./pages/training/TrainingCertification";
+import TrainingManagementDashboard from "./components/training/TrainingManagementDashboard";
 import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
 
 // Third Party Risk Management Pages
@@ -207,6 +220,11 @@ import GovernanceTraining from "./pages/governance/Training";
 
 function App() {
   console.log("App component rendering...");
+  
+  // Setup global error handlers
+  useEffect(() => {
+    errorHandler.setupGlobalErrorHandlers();
+  }, []);
   
   return (
     <Router>
@@ -327,6 +345,9 @@ function App() {
           <Route path="ai" element={<AIAssistant />} />
           <Route path="ai/risk-generation" element={<RiskAIGeneration />} />
 
+          {/* Entity Relationships */}
+          <Route path="relationships" element={<EntityRelationshipViewer />} />
+
           {/* AI Governance */}
           <Route path="ai-governance" element={<AIGovernanceDashboard />} />
           <Route path="ai-governance/dashboard" element={<AIGovernanceDashboard />} />
@@ -343,6 +364,13 @@ function App() {
           <Route path="bcp" element={<BCPDashboard />} />
           <Route path="bcp/create" element={<CreatePlanPage />} />
           <Route path="bcp/:id" element={<PlanDetails />} />
+          <Route path="bcp/:id/functions/create" element={<CreateCriticalFunctionPage />} />
+          <Route path="bcp/:id/it-continuity/create" element={<CreateITContinuityPage />} />
+          <Route path="bcp/:id/contacts/create" element={<CreateEmergencyContactPage />} />
+          <Route path="bcp/:id/rto/create" element={<CreateRTOPage />} />
+          <Route path="bcp/:id/risks/create" element={<CreateRiskAssessmentPage />} />
+          <Route path="bcp/:id/testing/create" element={<CreateTestingExercisePage />} />
+          <Route path="bcp/:id/resources/create" element={<CreateResourcePage />} />
 
           {/* Resilience Management */}
           <Route path="resilience" element={<ResilienceDashboard />} />
@@ -436,6 +464,7 @@ function App() {
 
           {/* Training */}
           <Route path="training" element={<TrainingCertification />} />
+          <Route path="training/dashboard" element={<TrainingManagementDashboard />} />
 
           {/* Analytics */}
           <Route path="analytics" element={<AdvancedAnalytics />} />

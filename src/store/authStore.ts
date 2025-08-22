@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import { sessionInterceptor } from '../lib/sessionInterceptor';
 import { User, UserRole } from '../types';
 import toast from 'react-hot-toast';
 
@@ -19,6 +20,8 @@ interface AuthActions {
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
   checkPermission: (requiredRole: UserRole | UserRole[]) => boolean;
   initialize: () => Promise<void>;
+  refreshSession: () => Promise<boolean>;
+  handleSessionError: (error: any) => Promise<boolean>;
   setUser: (user: User | null) => void;
   setSession: (session: any) => void;
   setLoading: (loading: boolean) => void;
@@ -63,6 +66,8 @@ export const useAuthStore = create<AuthStore>()(
         try {
           // Attach listener first to catch any immediate state changes
           const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth state change:', event, session?.user?.id);
+            
             if (event === 'SIGNED_IN' && session?.user) {
               // Load or create profile
               const { data: userProfile, error: profileError } = await supabase
@@ -109,6 +114,9 @@ export const useAuthStore = create<AuthStore>()(
 
               set({ user: userProfile as User, session, loading: false, initialized: true });
               didSetFromSession = true;
+            } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+              console.log('Token refreshed, updating session');
+              set({ session, loading: false });
             } else if (event === 'SIGNED_OUT') {
               set({ user: null, session: null, loading: false, initialized: true });
             }
@@ -409,6 +417,66 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         return userRoleLevel >= ROLE_HIERARCHY[requiredRole];
+      },
+
+      refreshSession: async () => {
+        try {
+          console.log('Manual session refresh requested');
+          const { data, error } = await supabase.auth.refreshSession();
+          
+          if (error) {
+            console.error('Session refresh failed:', error);
+            return false;
+          }
+
+          if (data.session) {
+            console.log('Session refreshed successfully');
+            set({ session: data.session });
+            toast.success('Session renewed');
+            return true;
+          }
+
+          return false;
+        } catch (error) {
+          console.error('Session refresh error:', error);
+          return false;
+        }
+      },
+
+      handleSessionError: async (error: any) => {
+        console.log('Handling session error:', error);
+        
+        // Check if it's a session-related error
+        const errorMessage = error?.message?.toLowerCase() || '';
+        const errorCode = error?.code?.toLowerCase() || '';
+        
+        const isSessionError = (
+          errorMessage.includes('jwt') ||
+          errorMessage.includes('token') ||
+          errorMessage.includes('unauthorized') ||
+          errorMessage.includes('unauthenticated') ||
+          errorCode.includes('401') ||
+          errorCode.includes('jwt') ||
+          errorCode.includes('token')
+        );
+
+        if (isSessionError) {
+          console.log('Session error detected, attempting refresh');
+          const refreshSuccess = await get().refreshSession();
+          
+          if (refreshSuccess) {
+            return true; // Session refreshed, retry the operation
+          } else {
+            // Session refresh failed, redirect to login
+            toast.error('Session expired. Please log in again.');
+            setTimeout(() => {
+              window.location.href = '/auth/sign-in';
+            }, 1000);
+            return false;
+          }
+        }
+
+        return false; // Not a session error
       },
 
       // Setters

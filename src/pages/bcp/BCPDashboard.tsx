@@ -1,34 +1,93 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BusinessContinuityPlan } from '../../types/bcp';
-import { bcpService, computeKpis, computePlanMetrics, filterAndSortPlans, PlanStatusFilter } from '../../services/bcpService';
+import { 
+  BusinessContinuityPlan, 
+  BCMDashboardStats, 
+  BCMKPIMetrics, 
+  BCMPlanMetrics,
+  BCMPlanStatusFilter 
+} from '../../types/bcp';
+import { bcpService, filterAndSortPlans } from '../../services/bcpService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Input } from '../../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Progress } from '../../components/ui/progress';
+import { 
+  Activity, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  FileText, 
+  Globe, 
+  Shield, 
+  Target, 
+  TrendingUp, 
+  TrendingDown, 
+  Minus,
+  Plus,
+  Search,
+  Filter,
+  BarChart3,
+  Users,
+  Building2,
+  Zap,
+  Calendar,
+  AlertCircle,
+  ArrowRight,
+  RefreshCw,
+  Download,
+  Eye
+} from 'lucide-react';
 
 const BCPDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<BusinessContinuityPlan[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<BCMDashboardStats | null>(null);
+  const [kpiMetrics, setKpiMetrics] = useState<BCMKPIMetrics | null>(null);
+  const [planMetrics, setPlanMetrics] = useState<BCMPlanMetrics[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Filter states
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<PlanStatusFilter>('all');
-  const [owner, setOwner] = useState('');
+  const [status, setStatus] = useState<BCMPlanStatusFilter['status']>('all');
+  const [planType, setPlanType] = useState<BCMPlanStatusFilter['plan_type']>('all');
+  const [criticality, setCriticality] = useState<BCMPlanStatusFilter['criticality']>('all');
+  const [approval, setApproval] = useState<BCMPlanStatusFilter['approval']>('all');
   const [sortBy, setSortBy] = useState<'updated' | 'name' | 'readiness'>('updated');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    const fetchPlans = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await bcpService.getPlans();
-        setPlans(data);
+        const [plansData, statsData, kpiData] = await Promise.all([
+          bcpService.getPlans(),
+          bcpService.getDashboardStats(),
+          bcpService.getKPIMetrics()
+        ]);
+        
+        setPlans(plansData);
+        setDashboardStats(statsData);
+        setKpiMetrics(kpiData);
+
+        // Fetch plan metrics for each plan
+        const metricsPromises = plansData.map(plan => bcpService.getPlanMetrics(plan.id));
+        const metrics = await Promise.all(metricsPromises);
+        setPlanMetrics(metrics);
       } catch (err) {
-        setError('Failed to load business continuity plans');
+        setError('Failed to load business continuity data');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlans();
+    fetchData();
   }, []);
 
   const handleCreatePlan = () => {
@@ -40,11 +99,48 @@ const BCPDashboard: React.FC = () => {
   };
 
   const filteredPlans = useMemo(
-    () => filterAndSortPlans(plans, { query, status, owner, sortBy, sortDir }),
-    [plans, query, status, owner, sortBy, sortDir]
+    () => filterAndSortPlans(plans, { query, status, owner: '', sortBy, sortDir }),
+    [plans, query, status, sortBy, sortDir]
   );
 
-  const kpis = useMemo(() => computeKpis(filteredPlans), [filteredPlans]);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'draft': return 'bg-yellow-100 text-yellow-800';
+      case 'inactive': return 'bg-red-100 text-red-800';
+      case 'archived': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getCriticalityColor = (level: string) => {
+    switch (level) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'improving': return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'declining': return <TrendingDown className="h-4 w-4 text-red-600" />;
+      default: return <Minus className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const formatAvailability = (availability: number) => {
+    return `${(availability * 100).toFixed(4)}%`;
+  };
+
+  const formatHours = (hours: number) => {
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+  };
 
   if (loading) {
     return (
@@ -64,148 +160,460 @@ const BCPDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Business Continuity Plans</h1>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="relative">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search plans, owners, versions..."
-              className="w-full border border-gray-300 rounded-md shadow-sm py-2 pl-9 pr-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            <span className="absolute left-2 top-2.5 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clipRule="evenodd"/></svg>
-            </span>
-          </div>
-          <select value={status} onChange={(e) => setStatus(e.target.value as PlanStatusFilter)} className="border border-gray-300 rounded-md py-2 px-3 text-sm">
-            <option value="all">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="inactive">Inactive</option>
-          </select>
-          <input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Filter by owner" className="border border-gray-300 rounded-md py-2 px-3 text-sm" />
-          <div className="flex gap-2">
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="border border-gray-300 rounded-md py-2 px-3 text-sm">
-              <option value="updated">Sort: Updated</option>
-              <option value="name">Sort: Name</option>
-              <option value="readiness">Sort: Readiness</option>
-            </select>
-            <button onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))} className="border border-gray-300 rounded-md px-3 text-sm">
-              {sortDir === 'asc' ? 'Asc' : 'Desc'}
-            </button>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Business Continuity Management</h1>
+          <p className="text-gray-600 mt-1">Global enterprise business continuity and IT continuity management</p>
         </div>
-        <button
-          onClick={handleCreatePlan}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-          </svg>
-          Create New Plan
-        </button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={handleCreatePlan}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Plan
+          </Button>
+        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        {[
-          { label: 'Plans', value: kpis.totalPlans },
-          { label: 'Active', value: kpis.activePlans },
-          { label: 'Draft', value: kpis.draftPlans },
-          { label: 'Inactive', value: kpis.inactivePlans },
-          { label: 'Avg Functions/Plan', value: kpis.avgCriticalFunctionsPerPlan },
-          { label: 'Avg Contacts/Plan', value: kpis.avgContactsPerPlan },
-        ].map((k) => (
-          <div key={k.label} className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">{k.label}</p>
-            <p className="text-2xl font-semibold text-gray-900">{k.value}</p>
-          </div>
-        ))}
-      </div>
+      {/* Dashboard Stats Cards */}
+      {dashboardStats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Plans</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats.total_plans}</div>
+              <p className="text-xs text-muted-foreground">
+                {dashboardStats.active_plans} active, {dashboardStats.plans_needing_review} need review
+              </p>
+            </CardContent>
+          </Card>
 
-      {filteredPlans.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No business continuity plans</h3>
-          <p className="mt-2 text-gray-500">Get started by creating a new business continuity plan.</p>
-          <div className="mt-6">
-            <button
-              onClick={handleCreatePlan}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-            >
-              Create Your First Plan
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlans.map((plan) => {
-            const metrics = computePlanMetrics(plan);
-            return (
-            <div 
-              key={plan.id} 
-              className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleViewPlan(plan.id)}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-start">
-                  <h2 className="text-xl font-semibold text-gray-900">{plan.name}</h2>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                    ${plan.status === 'active' ? 'bg-green-100 text-green-800' : 
-                      plan.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-gray-100 text-gray-800'}`}>
-                    {plan.status}
-                  </span>
-                </div>
-                
-                <p className="mt-2 text-gray-600 line-clamp-2">{plan.description}</p>
-                
-                <div className="mt-4 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm text-gray-600">{plan.owner}</span>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804V14a2 2 0 002 2h14a2 2 0 002-2V4.804A7.962 7.962 0 0014.5 4c-1.255 0-2.443.29-3.5.804V14a2 2 0 01-2 2H9a2 2 0 01-2-2V4.804z" />
-                    </svg>
-                    <span className="text-sm text-gray-600">{plan.version}</span>
-                  </div>
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm text-gray-600">
-                      {metrics.criticalFunctionsCount} functions
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                    </svg>
-                    <span className="text-sm text-gray-600">{metrics.emergencyContactsCount} contacts</span>
-                  </div>
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 4a1 1 0 10-2 0v3H6a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V6z"/></svg>
-                    <span className="text-sm text-gray-600">Score {metrics.readinessScore}</span>
-                  </div>
-                </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Readiness Score</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats.overall_readiness_score}%</div>
+              <div className="flex items-center mt-2">
+                <Progress value={dashboardStats.overall_readiness_score} className="flex-1 mr-2" />
+                <Badge variant={dashboardStats.compliance_status === 'compliant' ? 'default' : 'destructive'}>
+                  {dashboardStats.compliance_status}
+                </Badge>
               </div>
-            </div>
-            );
-          })}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Recovery Times</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatHours(dashboardStats.average_rto_hours)}</div>
+              <p className="text-xs text-muted-foreground">
+                RTO: {formatHours(dashboardStats.average_rto_hours)} | RPO: {formatHours(dashboardStats.average_rpo_hours)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Incidents</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats.open_incidents}</div>
+              <p className="text-xs text-muted-foreground">
+                {dashboardStats.upcoming_exercises} exercises planned
+              </p>
+            </CardContent>
+          </Card>
         </div>
       )}
+
+      {/* KPI Metrics */}
+      {kpiMetrics && (
+        <Tabs defaultValue="availability" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="availability">Availability</TabsTrigger>
+            <TabsTrigger value="recovery">Recovery</TabsTrigger>
+            <TabsTrigger value="testing">Testing</TabsTrigger>
+            <TabsTrigger value="risk">Risk</TabsTrigger>
+            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="availability" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Current Availability
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{formatAvailability(kpiMetrics.availability_metrics.current_availability)}</div>
+                  <div className="flex items-center mt-2">
+                    {getTrendIcon(kpiMetrics.availability_metrics.trend)}
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      Target: {formatAvailability(kpiMetrics.availability_metrics.target_availability)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    System Health
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Uptime</span>
+                      <span className="font-semibold">{formatAvailability(kpiMetrics.availability_metrics.current_availability)}</span>
+                    </div>
+                    <Progress value={kpiMetrics.availability_metrics.current_availability * 100} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Global Coverage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{plans.filter(p => p.global_region).length}</div>
+                  <p className="text-sm text-muted-foreground">Regions covered</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="recovery" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average RTO</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatHours(kpiMetrics.recovery_metrics.average_rto)}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average RPO</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatHours(kpiMetrics.recovery_metrics.average_rpo)}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average MTTA</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatHours(kpiMetrics.recovery_metrics.average_mtta)}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average MTTR</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatHours(kpiMetrics.recovery_metrics.average_mttr)}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="testing" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Exercises This Year</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{kpiMetrics.testing_metrics.exercises_completed_this_year}</div>
+                  <p className="text-sm text-muted-foreground">of {kpiMetrics.testing_metrics.exercises_planned_this_year} planned</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Last Exercise</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {kpiMetrics.testing_metrics.last_exercise_date 
+                      ? new Date(kpiMetrics.testing_metrics.last_exercise_date).toLocaleDateString()
+                      : 'Never'
+                    }
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Next Exercise</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {kpiMetrics.testing_metrics.next_exercise_date 
+                      ? new Date(kpiMetrics.testing_metrics.next_exercise_date).toLocaleDateString()
+                      : 'Not scheduled'
+                    }
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="risk" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-red-600">High Risk</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{kpiMetrics.risk_metrics.high_risk_items}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-orange-600">Medium Risk</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{kpiMetrics.risk_metrics.medium_risk_items}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-green-600">Low Risk</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{kpiMetrics.risk_metrics.low_risk_items}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-blue-600">Mitigated</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{kpiMetrics.risk_metrics.mitigated_risks}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="compliance" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-green-600">Compliant</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{kpiMetrics.compliance_metrics.compliant_plans}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-red-600">Non-Compliant</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{kpiMetrics.compliance_metrics.non_compliant_plans}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-yellow-600">Pending Review</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">{kpiMetrics.compliance_metrics.pending_reviews}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
+
+      {/* Plans Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Business Continuity Plans</CardTitle>
+          <CardDescription>
+            Manage and monitor your business continuity plans across all regions and business units
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search plans, descriptions, owners..."
+                className="pl-8"
+              />
+            </div>
+            <Select value={status} onValueChange={(value) => setStatus(value as any)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={planType} onValueChange={(value) => setPlanType(value as any)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Plan Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="business_continuity">Business Continuity</SelectItem>
+                <SelectItem value="it_continuity">IT Continuity</SelectItem>
+                <SelectItem value="disaster_recovery">Disaster Recovery</SelectItem>
+                <SelectItem value="crisis_management">Crisis Management</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={criticality} onValueChange={(value) => setCriticality(value as any)}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Criticality" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="critical">Critical</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Plans Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Plan Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Criticality</TableHead>
+                  <TableHead>Readiness</TableHead>
+                  <TableHead>Last Exercise</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPlans.map((plan) => {
+                  const metrics = planMetrics.find(m => m.plan_id === plan.id);
+                  return (
+                    <TableRow key={plan.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{plan.name}</div>
+                          <div className="text-sm text-gray-500">{plan.business_unit || 'No unit'}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {plan.plan_type?.replace('_', ' ') || 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(plan.status)}>
+                          {plan.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getCriticalityColor(plan.criticality_level)}>
+                          {plan.criticality_level}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Progress value={metrics?.readiness_score || 0} className="w-16" />
+                          <span className="text-sm font-medium">{metrics?.readiness_score || 0}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {plan.last_exercise_date 
+                          ? new Date(plan.last_exercise_date).toLocaleDateString()
+                          : 'Never'
+                        }
+                      </TableCell>
+                      <TableCell>{plan.owner}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewPlan(plan.id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/bcp/${plan.id}/edit`)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {filteredPlans.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No plans found</h3>
+              <p className="text-gray-500 mb-4">
+                {query || status !== 'all' || planType !== 'all' || criticality !== 'all'
+                  ? 'Try adjusting your filters'
+                  : 'Get started by creating your first business continuity plan'
+                }
+              </p>
+              {!query && status === 'all' && planType === 'all' && criticality === 'all' && (
+                <Button onClick={handleCreatePlan}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Plan
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

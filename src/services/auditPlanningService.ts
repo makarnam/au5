@@ -436,14 +436,10 @@ class AuditPlanningService {
   // Auditor Competencies Management
   async createAuditorCompetency(competencyData: AuditorCompetencyFormData): Promise<AuditorCompetency> {
     try {
-      const { data, error } = await supabase
+      const { data: competency, error } = await supabase
         .from("auditor_competencies")
         .insert([competencyData])
-        .select(`
-          *,
-          user:users(first_name, last_name, email),
-          assessed_by_user:users!assessed_by(first_name, last_name, email)
-        `)
+        .select("*")
         .single();
 
       if (error) {
@@ -451,7 +447,40 @@ class AuditPlanningService {
         throw new Error(`Database error: ${error.message}`);
       }
 
-      return data as AuditorCompetency;
+      // Fetch user data for the auditor
+      const { data: user, error: userError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, email")
+        .eq("id", competency.user_id)
+        .single();
+
+      if (userError) {
+        console.error("Supabase error fetching user:", userError);
+        throw new Error(`Database error: ${userError.message}`);
+      }
+
+      // Fetch user data for the assessor if exists
+      let assessedByUser = null;
+      if (competency.assessed_by) {
+        const { data: assessor, error: assessorError } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, email")
+          .eq("id", competency.assessed_by)
+          .single();
+
+        if (assessorError) {
+          console.error("Supabase error fetching assessor:", assessorError);
+          // Don't throw error for assessor, just log it
+        } else {
+          assessedByUser = assessor;
+        }
+      }
+
+      return {
+        ...competency,
+        user,
+        assessed_by_user: assessedByUser
+      } as AuditorCompetency;
     } catch (error) {
       console.error("Error creating auditor competency:", error);
       throw error;
@@ -460,23 +489,62 @@ class AuditPlanningService {
 
   async getAuditorCompetencies(userId: string): Promise<AuditorCompetency[]> {
     try {
-      const { data, error } = await supabase
+      // First, get the competencies without the problematic joins
+      const { data: competencies, error: competenciesError } = await supabase
         .from("auditor_competencies")
-        .select(`
-          *,
-          user:users(first_name, last_name, email),
-          assessed_by_user:users!assessed_by(first_name, last_name, email)
-        `)
+        .select("*")
         .eq("user_id", userId)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error(`Database error: ${error.message}`);
+      if (competenciesError) {
+        console.error("Supabase error:", competenciesError);
+        throw new Error(`Database error: ${competenciesError.message}`);
       }
 
-      return data as AuditorCompetency[];
+      if (!competencies || competencies.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs for the joins
+      const userIds = [...new Set(competencies.map(c => c.user_id))];
+      const assessedByIds = [...new Set(competencies.map(c => c.assessed_by).filter(Boolean))];
+
+      // Fetch user data for auditors
+      const { data: users, error: usersError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, email")
+        .in("id", userIds);
+
+      if (usersError) {
+        console.error("Supabase error fetching users:", usersError);
+        throw new Error(`Database error: ${usersError.message}`);
+      }
+
+      // Fetch user data for assessors
+      let assessors: any[] = [];
+      if (assessedByIds.length > 0) {
+        const { data: assessorsData, error: assessorsError } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, email")
+          .in("id", assessedByIds);
+
+        if (assessorsError) {
+          console.error("Supabase error fetching assessors:", assessorsError);
+          throw new Error(`Database error: ${assessorsError.message}`);
+        }
+        assessors = assessorsData || [];
+      }
+
+      // Combine the data
+      const result = competencies.map(competency => ({
+        ...competency,
+        user: users?.find(u => u.id === competency.user_id) || null,
+        assessed_by_user: competency.assessed_by ? 
+          assessors?.find(a => a.id === competency.assessed_by) || null : null
+      }));
+
+      return result as AuditorCompetency[];
     } catch (error) {
       console.error("Error fetching auditor competencies:", error);
       throw error;
@@ -584,14 +652,10 @@ class AuditPlanningService {
   // Training Needs Management
   async createTrainingNeed(trainingData: TrainingNeedFormData): Promise<AuditTrainingNeed> {
     try {
-      const { data, error } = await supabase
+      const { data: training, error } = await supabase
         .from("audit_training_needs")
         .insert([trainingData])
-        .select(`
-          *,
-          user:users(first_name, last_name, email),
-          approved_by_user:users!approved_by(first_name, last_name, email)
-        `)
+        .select("*")
         .single();
 
       if (error) {
@@ -599,7 +663,40 @@ class AuditPlanningService {
         throw new Error(`Database error: ${error.message}`);
       }
 
-      return data as AuditTrainingNeed;
+      // Fetch user data for the trainee
+      const { data: user, error: userError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, email")
+        .eq("id", training.user_id)
+        .single();
+
+      if (userError) {
+        console.error("Supabase error fetching user:", userError);
+        throw new Error(`Database error: ${userError.message}`);
+      }
+
+      // Fetch user data for the approver if exists
+      let approvedByUser = null;
+      if (training.approved_by) {
+        const { data: approver, error: approverError } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, email")
+          .eq("id", training.approved_by)
+          .single();
+
+        if (approverError) {
+          console.error("Supabase error fetching approver:", approverError);
+          // Don't throw error for approver, just log it
+        } else {
+          approvedByUser = approver;
+        }
+      }
+
+      return {
+        ...training,
+        user,
+        approved_by_user: approvedByUser
+      } as AuditTrainingNeed;
     } catch (error) {
       console.error("Error creating training need:", error);
       throw error;
@@ -608,21 +705,60 @@ class AuditPlanningService {
 
   async getTrainingNeeds(): Promise<AuditTrainingNeed[]> {
     try {
-      const { data, error } = await supabase
+      // First, get the training needs without the problematic joins
+      const { data: trainingNeeds, error: trainingError } = await supabase
         .from("audit_training_needs")
-        .select(`
-          *,
-          user:users(first_name, last_name, email),
-          approved_by_user:users!approved_by(first_name, last_name, email)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error(`Database error: ${error.message}`);
+      if (trainingError) {
+        console.error("Supabase error:", trainingError);
+        throw new Error(`Database error: ${trainingError.message}`);
       }
 
-      return data as AuditTrainingNeed[];
+      if (!trainingNeeds || trainingNeeds.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs for the joins
+      const userIds = [...new Set(trainingNeeds.map(t => t.user_id))];
+      const approvedByIds = [...new Set(trainingNeeds.map(t => t.approved_by).filter(Boolean))];
+
+      // Fetch user data for trainees
+      const { data: users, error: usersError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, email")
+        .in("id", userIds);
+
+      if (usersError) {
+        console.error("Supabase error fetching users:", usersError);
+        throw new Error(`Database error: ${usersError.message}`);
+      }
+
+      // Fetch user data for approvers
+      let approvers: any[] = [];
+      if (approvedByIds.length > 0) {
+        const { data: approversData, error: approversError } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, email")
+          .in("id", approvedByIds);
+
+        if (approversError) {
+          console.error("Supabase error fetching approvers:", approversError);
+          throw new Error(`Database error: ${approversError.message}`);
+        }
+        approvers = approversData || [];
+      }
+
+      // Combine the data
+      const result = trainingNeeds.map(training => ({
+        ...training,
+        user: users?.find(u => u.id === training.user_id) || null,
+        approved_by_user: training.approved_by ? 
+          approvers?.find(a => a.id === training.approved_by) || null : null
+      }));
+
+      return result as AuditTrainingNeed[];
     } catch (error) {
       console.error("Error fetching training needs:", error);
       throw error;
@@ -637,18 +773,13 @@ class AuditPlanningService {
         throw new Error("User not authenticated");
       }
 
-      const { data, error } = await supabase
+      const { data: assessment, error } = await supabase
         .from("audit_risk_assessments")
         .insert([{
           ...assessmentData,
           assessed_by: user.id,
         }])
-        .select(`
-          *,
-          universe_entity:audit_universe(entity_name, entity_type),
-          assessed_by_user:users!assessed_by(first_name, last_name, email),
-          reviewed_by_user:users!reviewed_by(first_name, last_name, email)
-        `)
+        .select("*")
         .single();
 
       if (error) {
@@ -656,7 +787,53 @@ class AuditPlanningService {
         throw new Error(`Database error: ${error.message}`);
       }
 
-      return data as AuditRiskAssessment;
+      // Fetch universe entity data
+      const { data: universeEntity, error: universeError } = await supabase
+        .from("audit_universe")
+        .select("entity_name, entity_type")
+        .eq("id", assessment.universe_entity_id)
+        .single();
+
+      if (universeError) {
+        console.error("Supabase error fetching universe entity:", universeError);
+        throw new Error(`Database error: ${universeError.message}`);
+      }
+
+      // Fetch user data for the assessor
+      const { data: assessor, error: assessorError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, email")
+        .eq("id", assessment.assessed_by)
+        .single();
+
+      if (assessorError) {
+        console.error("Supabase error fetching assessor:", assessorError);
+        throw new Error(`Database error: ${assessorError.message}`);
+      }
+
+      // Fetch user data for the reviewer if exists
+      let reviewer = null;
+      if (assessment.reviewed_by) {
+        const { data: reviewerData, error: reviewerError } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, email")
+          .eq("id", assessment.reviewed_by)
+          .single();
+
+        if (reviewerError) {
+          console.error("Supabase error fetching reviewer:", reviewerError);
+          // Don't throw error for reviewer, just log it
+        } else {
+          reviewer = reviewerData;
+        }
+      }
+
+      return {
+        ...assessment,
+        universe_entity: universeEntity,
+        assessed_by_user: assessor,
+        reviewed_by_user: reviewer
+      } as AuditRiskAssessment;
     } catch (error) {
       console.error("Error creating risk assessment:", error);
       throw error;
@@ -665,23 +842,74 @@ class AuditPlanningService {
 
   async getRiskAssessments(universeEntityId: string): Promise<AuditRiskAssessment[]> {
     try {
-      const { data, error } = await supabase
+      // First, get the risk assessments without the problematic joins
+      const { data: assessments, error: assessmentsError } = await supabase
         .from("audit_risk_assessments")
-        .select(`
-          *,
-          universe_entity:audit_universe(entity_name, entity_type),
-          assessed_by_user:users!assessed_by(first_name, last_name, email),
-          reviewed_by_user:users!reviewed_by(first_name, last_name, email)
-        `)
+        .select("*")
         .eq("universe_entity_id", universeEntityId)
         .order("assessment_date", { ascending: false });
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error(`Database error: ${error.message}`);
+      if (assessmentsError) {
+        console.error("Supabase error:", assessmentsError);
+        throw new Error(`Database error: ${assessmentsError.message}`);
       }
 
-      return data as AuditRiskAssessment[];
+      if (!assessments || assessments.length === 0) {
+        return [];
+      }
+
+      // Get unique universe entity IDs and user IDs for the joins
+      const universeEntityIds = [...new Set(assessments.map(a => a.universe_entity_id))];
+      const assessedByIds = [...new Set(assessments.map(a => a.assessed_by).filter(Boolean))];
+      const reviewedByIds = [...new Set(assessments.map(a => a.reviewed_by).filter(Boolean))];
+
+      // Fetch universe entity data
+      const { data: universeEntities, error: universeError } = await supabase
+        .from("audit_universe")
+        .select("id, entity_name, entity_type")
+        .in("id", universeEntityIds);
+
+      if (universeError) {
+        console.error("Supabase error fetching universe entities:", universeError);
+        throw new Error(`Database error: ${universeError.message}`);
+      }
+
+      // Fetch user data for assessors
+      const { data: assessors, error: assessorsError } = await supabase
+        .from("users")
+        .select("id, first_name, last_name, email")
+        .in("id", assessedByIds);
+
+      if (assessorsError) {
+        console.error("Supabase error fetching assessors:", assessorsError);
+        throw new Error(`Database error: ${assessorsError.message}`);
+      }
+
+      // Fetch user data for reviewers
+      let reviewers: any[] = [];
+      if (reviewedByIds.length > 0) {
+        const { data: reviewersData, error: reviewersError } = await supabase
+          .from("users")
+          .select("id, first_name, last_name, email")
+          .in("id", reviewedByIds);
+
+        if (reviewersError) {
+          console.error("Supabase error fetching reviewers:", reviewersError);
+          throw new Error(`Database error: ${reviewersError.message}`);
+        }
+        reviewers = reviewersData || [];
+      }
+
+      // Combine the data
+      const result = assessments.map(assessment => ({
+        ...assessment,
+        universe_entity: universeEntities?.find(u => u.id === assessment.universe_entity_id) || null,
+        assessed_by_user: assessors?.find(a => a.id === assessment.assessed_by) || null,
+        reviewed_by_user: assessment.reviewed_by ? 
+          reviewers?.find(r => r.id === assessment.reviewed_by) || null : null
+      }));
+
+      return result as AuditRiskAssessment[];
     } catch (error) {
       console.error("Error fetching risk assessments:", error);
       throw error;

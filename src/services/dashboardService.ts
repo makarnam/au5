@@ -1,9 +1,13 @@
 import { supabase } from "../lib/supabase";
 
 export interface DashboardMetrics {
+  totalAudits: number;
   activeAudits: number;
+  totalFindings: number;
+  criticalFindings: number;
+  totalControls: number;
+  effectiveControls: number;
   openRisks: number;
-  activeControls: number;
   complianceScore: number;
   auditChange: number;
   riskChange: number;
@@ -23,7 +27,8 @@ export interface AuditStatusData {
 
 export interface ComplianceStatus {
   framework: string;
-  score: number;
+  compliance: number;
+  controls: number;
   status: 'compliant' | 'non-compliant' | 'partial';
   lastAssessment: string;
 }
@@ -38,11 +43,12 @@ export interface MonthlyTrendData {
 
 export interface RecentActivity {
   id: string;
-  type: 'audit' | 'risk' | 'control' | 'finding' | 'compliance';
+  title: string;
   description: string;
   timestamp: string;
   link: string;
   user: string;
+  severity: 'success' | 'critical' | 'info' | 'warning';
 }
 
 export interface UpcomingTask {
@@ -51,7 +57,9 @@ export interface UpcomingTask {
   type: 'audit' | 'review' | 'assessment' | 'training';
   dueDate: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
-  assignedTo: string;
+  assignee: string;
+  progress: number;
+  link?: string;
 }
 
 export interface RiskHeatmapData {
@@ -63,18 +71,27 @@ export interface RiskHeatmapData {
 
 export interface ModuleOverview {
   name: string;
-  count: number;
-  status: 'active' | 'inactive' | 'warning';
-  trend: number;
-  lastUpdated: string;
+  status: 'healthy' | 'warning' | 'critical';
+  metrics: {
+    total: number;
+    active: number;
+    critical: number;
+    completed: number;
+  };
+  icon: any;
+  link: string;
 }
 
 export interface GRCMetric {
-  name: string;
+  id: string;
+  title: string;
   value: number;
   target: number;
   unit: string;
   trend: 'up' | 'down' | 'stable';
+  status: 'excellent' | 'good' | 'warning' | 'critical';
+  category: string;
+  lastUpdated: string;
 }
 
 export interface EntityRelationship {
@@ -103,15 +120,25 @@ class DashboardService {
         .from('risks')
         .select('status, created_at');
 
-      // Get control metrics
+      // Get control metrics - use effectiveness instead of status
       const { data: controls } = await supabase
         .from('controls')
-        .select('status, created_at');
+        .select('effectiveness, created_at')
+        .eq('is_deleted', false);
+
+      // Get findings metrics
+      const { data: findings } = await supabase
+        .from('findings')
+        .select('severity, created_at');
 
       // Calculate metrics
+      const totalAudits = audits?.length || 0;
       const activeAudits = audits?.filter(a => a.status === 'in_progress').length || 0;
+      const totalFindings = findings?.length || 0;
+      const criticalFindings = findings?.filter(f => f.severity === 'critical').length || 0;
+      const totalControls = controls?.length || 0;
+      const effectiveControls = controls?.filter(c => c.effectiveness === 'effective').length || 0;
       const openRisks = risks?.filter(r => r.status === 'identified').length || 0;
-      const activeControls = controls?.filter(c => c.status === 'active').length || 0;
 
       // Calculate trends (simplified for now)
       const auditTrend = [12, 15, 18, 22, 25, 28, 30, 32, 35, 38, 40, 42];
@@ -120,9 +147,13 @@ class DashboardService {
       const complianceTrend = [75, 77, 79, 81, 83, 85, 87, 89, 91, 93, 95, 97];
 
       return {
+        totalAudits,
         activeAudits,
+        totalFindings,
+        criticalFindings,
+        totalControls,
+        effectiveControls,
         openRisks,
-        activeControls,
         complianceScore: 87,
         auditChange: 12,
         riskChange: -5,
@@ -164,7 +195,7 @@ class DashboardService {
     }
   }
 
-  async getComplianceStatus(): Promise<ComplianceStatus[]> {
+  async getComplianceData(): Promise<ComplianceStatus[]> {
     try {
       const { data: frameworks } = await supabase
         .from('compliance_frameworks')
@@ -172,17 +203,18 @@ class DashboardService {
 
       return frameworks?.map(framework => ({
         framework: framework.name,
-        score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+        compliance: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+        controls: Math.floor(Math.random() * 50) + 20, // Random controls count
         status: Math.random() > 0.3 ? 'compliant' : 'partial' as any,
         lastAssessment: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
       })) || [];
     } catch (error) {
-      console.error('Error fetching compliance status:', error);
+      console.error('Error fetching compliance data:', error);
       return [];
     }
   }
 
-  async getMonthlyTrends(timeframe: string = '30d'): Promise<MonthlyTrendData[]> {
+  async getMonthlyTrendData(timeframe: string = '30d'): Promise<MonthlyTrendData[]> {
     try {
       // Generate sample trend data
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -194,12 +226,12 @@ class DashboardService {
         findings: Math.floor(Math.random() * 15) + 5
       }));
     } catch (error) {
-      console.error('Error fetching monthly trends:', error);
+      console.error('Error fetching monthly trend data:', error);
       return [];
     }
   }
 
-  async getRecentActivity(): Promise<RecentActivity[]> {
+  async getRecentActivities(): Promise<RecentActivity[]> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
@@ -231,33 +263,36 @@ class DashboardService {
       recentAudits?.forEach(audit => {
         activities.push({
           id: audit.id,
-          type: 'audit',
-          description: `Audit "${audit.title}" status changed to ${audit.status}`,
+          title: `Audit "${audit.title}" status changed`,
+          description: `Audit status changed to ${audit.status}`,
           timestamp: audit.created_at,
           link: `/audits/${audit.id}`,
-          user: 'System'
+          user: 'System',
+          severity: audit.status === 'completed' ? 'success' : 'info'
         });
       });
 
       recentRisks?.forEach(risk => {
         activities.push({
           id: risk.id,
-          type: 'risk',
-          description: `Risk "${risk.title}" was identified`,
+          title: `Risk "${risk.title}" was identified`,
+          description: `New risk identified with status ${risk.status}`,
           timestamp: risk.created_at,
           link: `/risks/${risk.id}`,
-          user: 'System'
+          user: 'System',
+          severity: 'info'
         });
       });
 
       recentFindings?.forEach(finding => {
         activities.push({
           id: finding.id,
-          type: 'finding',
-          description: `Finding "${finding.title}" was created (${finding.severity})`,
+          title: `Finding "${finding.title}" was created`,
+          description: `Finding created with ${finding.severity} severity`,
           timestamp: finding.created_at,
           link: `/findings/${finding.id}`,
-          user: 'System'
+          user: 'System',
+          severity: finding.severity === 'critical' ? 'critical' : 'warning'
         });
       });
 
@@ -285,7 +320,9 @@ class DashboardService {
         type: 'audit',
         dueDate: audit.start_date,
         priority: 'medium' as any,
-        assignedTo: audit.lead_auditor_id || 'Unassigned'
+        assignee: audit.lead_auditor_id || 'Unassigned',
+        progress: Math.floor(Math.random() * 100),
+        link: `/audits/${audit.id}`
       })) || [];
     } catch (error) {
       console.error('Error fetching upcoming tasks:', error);
@@ -302,7 +339,7 @@ class DashboardService {
       const heatmapData: Record<string, RiskHeatmapData> = {};
 
       risks?.forEach(risk => {
-        const key = `${risk.probability}-${risk.impact}`;
+        const key = `${risk.probability || 1}-${risk.impact || 1}`;
         if (heatmapData[key]) {
           heatmapData[key].count++;
         } else {
@@ -325,12 +362,12 @@ class DashboardService {
   async getModuleOverview(): Promise<ModuleOverview[]> {
     try {
       const modules = [
-        { name: 'Audits', table: 'audits' },
-        { name: 'Risks', table: 'risks' },
-        { name: 'Controls', table: 'controls' },
-        { name: 'Findings', table: 'findings' },
-        { name: 'Compliance', table: 'compliance_frameworks' },
-        { name: 'Documents', table: 'documents' }
+        { name: 'Audits', table: 'audits', icon: 'FileText', link: '/audits' },
+        { name: 'Risks', table: 'risks', icon: 'AlertTriangle', link: '/risks' },
+        { name: 'Controls', table: 'controls', icon: 'Shield', link: '/controls' },
+        { name: 'Findings', table: 'findings', icon: 'Search', link: '/findings' },
+        { name: 'Compliance', table: 'compliance_frameworks', icon: 'CheckCircle', link: '/compliance' },
+        { name: 'Documents', table: 'documents', icon: 'FileText', link: '/documents' }
       ];
 
       const overview: ModuleOverview[] = [];
@@ -340,12 +377,79 @@ class DashboardService {
           .from(module.table)
           .select('*', { count: 'exact', head: true });
 
+        // Handle different status/effectiveness columns based on table
+        let activeCount = 0;
+        let criticalCount = 0;
+        let completedCount = 0;
+
+        if (module.table === 'audits') {
+          const { count: active } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'in_progress')
+            .eq('is_deleted', false);
+          
+          const { count: completed } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'completed')
+            .eq('is_deleted', false);
+          
+          activeCount = active || 0;
+          completedCount = completed || 0;
+        } else if (module.table === 'controls') {
+          const { count: effective } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('effectiveness', 'effective')
+            .eq('is_deleted', false);
+          
+          activeCount = effective || 0;
+        } else if (module.table === 'risks') {
+          const { count: identified } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'identified');
+          
+          const { count: critical } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('risk_level', 'critical');
+          
+          activeCount = identified || 0;
+          criticalCount = critical || 0;
+        } else if (module.table === 'findings') {
+          const { count: open } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'open');
+          
+          const { count: critical } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('severity', 'critical');
+          
+          const { count: resolved } = await supabase
+            .from(module.table)
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'resolved');
+          
+          activeCount = open || 0;
+          criticalCount = critical || 0;
+          completedCount = resolved || 0;
+        }
+
         overview.push({
           name: module.name,
-          count: count || 0,
-          status: count > 0 ? 'active' : 'inactive',
-          trend: Math.floor(Math.random() * 20) - 10, // Random trend between -10 and +10
-          lastUpdated: new Date().toISOString()
+          status: (count || 0) > 0 ? 'healthy' : 'critical',
+          metrics: {
+            total: count || 0,
+            active: activeCount,
+            critical: criticalCount,
+            completed: completedCount
+          },
+          icon: module.icon,
+          link: module.link
         });
       }
 
@@ -360,32 +464,48 @@ class DashboardService {
     try {
       return [
         {
-          name: 'Risk Coverage',
+          id: '1',
+          title: 'Risk Coverage',
           value: 85,
           target: 90,
           unit: '%',
-          trend: 'up'
+          trend: 'up',
+          status: 'good',
+          category: 'Risk Management',
+          lastUpdated: new Date().toISOString()
         },
         {
-          name: 'Control Effectiveness',
+          id: '2',
+          title: 'Control Effectiveness',
           value: 78,
           target: 85,
           unit: '%',
-          trend: 'up'
+          trend: 'up',
+          status: 'warning',
+          category: 'Control Management',
+          lastUpdated: new Date().toISOString()
         },
         {
-          name: 'Compliance Score',
+          id: '3',
+          title: 'Compliance Score',
           value: 92,
           target: 95,
           unit: '%',
-          trend: 'stable'
+          trend: 'stable',
+          status: 'excellent',
+          category: 'Compliance',
+          lastUpdated: new Date().toISOString()
         },
         {
-          name: 'Audit Completion',
+          id: '4',
+          title: 'Audit Completion',
           value: 67,
           target: 80,
           unit: '%',
-          trend: 'down'
+          trend: 'down',
+          status: 'warning',
+          category: 'Audit Management',
+          lastUpdated: new Date().toISOString()
         }
       ];
     } catch (error) {

@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { withErrorHandling, handleSupabaseError } from "../lib/errorHandler";
 
 export type UUID = string;
 
@@ -211,37 +212,43 @@ function applyRiskFilters(query: any, filter?: RiskFilter) {
 
 const riskService = {
   async getRisks(filter?: RiskFilter): Promise<Risk[]> {
-    let query = supabase.from(tableRisks).select("*").order("created_at", { ascending: false });
-    query = applyRiskFilters(query, filter);
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data as Risk[]) ?? [];
+    return withErrorHandling(async () => {
+      let query = supabase.from(tableRisks).select("*").order("created_at", { ascending: false });
+      query = applyRiskFilters(query, filter);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data as Risk[]) ?? [];
+    }, 'Get risks') ?? [];
   },
 
   async getRisk(id: UUID): Promise<Risk | null> {
-    const { data, error } = await supabase.from(tableRisks).select("*").eq("id", id).single();
-    if (error) throw error;
-    return (data as Risk) ?? null;
-    },
+    return withErrorHandling(async () => {
+      const { data, error } = await supabase.from(tableRisks).select("*").eq("id", id).single();
+      if (error) throw error;
+      return (data as Risk) ?? null;
+    }, 'Get risk') ?? null;
+  },
 
   async createRisk(payload: Partial<Risk>): Promise<UUID> {
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error("User not authenticated");
-    }
+    return withErrorHandling(async () => {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
 
-    const { data, error } = await supabase
-      .from(tableRisks)
-      .insert({
-        ...payload,
-        created_by: user.id,
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    // Ensure we always return the primitive UUID (string), not an object
-    return (data as any)?.id as UUID;
+      const { data, error } = await supabase
+        .from(tableRisks)
+        .insert({
+          ...payload,
+          created_by: user.id,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      // Ensure we always return the primitive UUID (string), not an object
+      return (data as any)?.id as UUID;
+    }, 'Create risk') ?? '';
   },
 
   async deleteRisk(id: UUID): Promise<void> {

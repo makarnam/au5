@@ -145,6 +145,7 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
+        console.log('Fetching dashboard data...');
         
         // Fetch all dashboard data in parallel
         const [
@@ -158,100 +159,143 @@ const Dashboard: React.FC = () => {
           modules,
           grcMetricsData
         ] = await Promise.all([
-          dashboardService.getDashboardMetrics(),
-          dashboardService.getAuditStatusData(),
-          dashboardService.getComplianceData(),
-          dashboardService.getMonthlyTrendData(),
-          dashboardService.getRecentActivities(),
-          dashboardService.getUpcomingTasks(),
-          dashboardService.getRiskHeatmapData(),
-          dashboardService.getModuleOverview(),
-          dashboardService.getGRCMetrics()
+          dashboardService.getDashboardMetrics().catch(err => {
+            console.error('Error fetching metrics:', err);
+            return null;
+          }),
+          dashboardService.getAuditStatusData().catch(err => {
+            console.error('Error fetching audit status:', err);
+            return [];
+          }),
+          dashboardService.getComplianceData().catch(err => {
+            console.error('Error fetching compliance data:', err);
+            return [];
+          }),
+          dashboardService.getMonthlyTrendData().catch(err => {
+            console.error('Error fetching monthly trends:', err);
+            return [];
+          }),
+          dashboardService.getRecentActivities().catch(err => {
+            console.error('Error fetching recent activities:', err);
+            return [];
+          }),
+          dashboardService.getUpcomingTasks().catch(err => {
+            console.error('Error fetching upcoming tasks:', err);
+            return [];
+          }),
+          dashboardService.getRiskHeatmapData().catch(err => {
+            console.error('Error fetching risk heatmap:', err);
+            return [];
+          }),
+          dashboardService.getModuleOverview().catch(err => {
+            console.error('Error fetching module overview:', err);
+            return [];
+          }),
+          dashboardService.getGRCMetrics().catch(err => {
+            console.error('Error fetching GRC metrics:', err);
+            return [];
+          })
         ]);
+
+        console.log('Dashboard data fetched:', {
+          metrics: metricsData,
+          auditStatus: auditStatus?.length,
+          compliance: compliance?.length,
+          monthlyTrends: monthlyTrends?.length,
+          activities: activities?.length,
+          tasks: tasks?.length,
+          riskHeatmap: riskHeatmap?.length,
+          modules: modules?.length,
+          grcMetrics: grcMetricsData?.length
+        });
 
         // Update state with real data
         setDashboardMetrics(metricsData);
-        setAuditStatusData(auditStatus);
-        setComplianceData(compliance);
-        setMonthlyTrendData(monthlyTrends);
-        setRecentActivities(activities);
-        setUpcomingTasks(tasks);
-        setRiskHeatmapData(riskHeatmap);
-        setModuleOverview(modules);
-        setGrcMetrics(grcMetricsData);
+        setAuditStatusData(auditStatus || []);
+        setComplianceData(compliance || []);
+        setMonthlyTrendData(monthlyTrends || []);
+        setRecentActivities(activities || []);
+        setUpcomingTasks(tasks || []);
+        setRiskHeatmapData(riskHeatmap || []);
+        setModuleOverview(modules || []);
+        setGrcMetrics(grcMetricsData || []);
 
         // Update metrics cards with real data
-        const updatedMetrics: MetricCard[] = [
-          {
-            title: t('dashboard.totalAudits'),
-            value: metricsData.totalAudits,
-            change: 12, // Would need to calculate from historical data
-            changeType: 'increase',
-            icon: FileText,
-            color: 'from-blue-500 to-blue-600',
-            trend: [45, 52, 48, 61, 70, 65, 74, 82, 95, 87, 92, 98], // Placeholder
-            category: 'audit',
-            link: '/audits'
-          },
-          {
-            title: t('dashboard.activeAudits'),
-            value: metricsData.activeAudits,
-            change: 8, // Would need to calculate from historical data
-            changeType: 'increase',
-            icon: Activity,
-            color: 'from-emerald-500 to-emerald-600',
-            trend: [12, 15, 18, 22, 25, 28, 24, 27, 31, 29, 26, 23], // Placeholder
-            category: 'audit',
-            link: '/audits'
-          },
-          {
-            title: t('dashboard.totalFindings'),
-            value: metricsData.totalFindings,
-            change: -5, // Would need to calculate from historical data
-            changeType: 'decrease',
-            icon: Search,
-            color: 'from-orange-500 to-orange-600',
-            trend: [120, 115, 108, 102, 95, 98, 92, 88, 85, 91, 87, 89], // Placeholder
-            category: 'audit',
-            link: '/findings'
-          },
-          {
-            title: t('dashboard.criticalFindings'),
-            value: metricsData.criticalFindings,
-            change: -18, // Would need to calculate from historical data
-            changeType: 'decrease',
-            icon: AlertTriangle,
-            color: 'from-red-500 to-red-600',
-            trend: [18, 16, 15, 17, 14, 13, 15, 12, 11, 13, 10, 12], // Placeholder
-            category: 'audit',
-            link: '/findings'
-          },
-          {
-            title: t('dashboard.totalControls'),
-            value: metricsData.totalControls,
-            change: 6, // Would need to calculate from historical data
-            changeType: 'increase',
-            icon: Shield,
-            color: 'from-purple-500 to-purple-600',
-            trend: [310, 315, 322, 328, 335, 338, 342, 340, 345, 348, 344, 342], // Placeholder
-            category: 'control',
-            link: '/controls'
-          },
-          {
-            title: t('dashboard.effectiveControls'),
-            value: metricsData.effectiveControls,
-            change: 4, // Would need to calculate from historical data
-            changeType: 'increase',
-            icon: CheckCircle,
-            color: 'from-green-500 to-green-600',
-            trend: [280, 285, 288, 292, 295, 294, 296, 298, 300, 299, 297, 298], // Placeholder
-            category: 'control',
-            link: '/controls'
-          }
-        ];
+        if (metricsData) {
+          const updatedMetrics: MetricCard[] = [
+            {
+              title: t('dashboard.totalAudits'),
+              value: metricsData.totalAudits,
+              change: 12, // Would need to calculate from historical data
+              changeType: 'increase',
+              icon: FileText,
+              color: 'from-blue-500 to-blue-600',
+              trend: [45, 52, 48, 61, 70, 65, 74, 82, 95, 87, 92, 98], // Placeholder
+              category: 'audit',
+              link: '/audits'
+            },
+            {
+              title: t('dashboard.activeAudits'),
+              value: metricsData.activeAudits,
+              change: 8, // Would need to calculate from historical data
+              changeType: 'increase',
+              icon: Activity,
+              color: 'from-emerald-500 to-emerald-600',
+              trend: [12, 15, 18, 22, 25, 28, 24, 27, 31, 29, 26, 23], // Placeholder
+              category: 'audit',
+              link: '/audits'
+            },
+            {
+              title: t('dashboard.totalFindings'),
+              value: metricsData.totalFindings,
+              change: -5, // Would need to calculate from historical data
+              changeType: 'decrease',
+              icon: Search,
+              color: 'from-orange-500 to-orange-600',
+              trend: [120, 115, 108, 102, 95, 98, 92, 88, 85, 91, 87, 89], // Placeholder
+              category: 'audit',
+              link: '/findings'
+            },
+            {
+              title: t('dashboard.criticalFindings'),
+              value: metricsData.criticalFindings,
+              change: -18, // Would need to calculate from historical data
+              changeType: 'decrease',
+              icon: AlertTriangle,
+              color: 'from-red-500 to-red-600',
+              trend: [18, 16, 15, 17, 14, 13, 15, 12, 11, 13, 10, 12], // Placeholder
+              category: 'audit',
+              link: '/findings'
+            },
+            {
+              title: t('dashboard.totalControls'),
+              value: metricsData.totalControls,
+              change: 6, // Would need to calculate from historical data
+              changeType: 'increase',
+              icon: Shield,
+              color: 'from-purple-500 to-purple-600',
+              trend: [310, 315, 322, 328, 335, 338, 342, 340, 345, 348, 344, 342], // Placeholder
+              category: 'control',
+              link: '/controls'
+            },
+            {
+              title: t('dashboard.effectiveControls'),
+              value: metricsData.effectiveControls,
+              change: 4, // Would need to calculate from historical data
+              changeType: 'increase',
+              icon: CheckCircle,
+              color: 'from-green-500 to-green-600',
+              trend: [280, 285, 288, 292, 295, 294, 296, 298, 300, 299, 297, 298], // Placeholder
+              category: 'control',
+              link: '/controls'
+            }
+          ];
 
-        setMetrics(updatedMetrics);
+          setMetrics(updatedMetrics);
+        }
+        
         setIsLoading(false);
+        console.log('Dashboard data loading completed');
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setIsLoading(false);
@@ -399,56 +443,69 @@ const Dashboard: React.FC = () => {
 
       {/* Module Overview Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {moduleOverview.map((module, index) => (
-          <motion.div
-            key={module.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group"
-            onClick={() => navigate(module.link)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${
-                  module.status === 'healthy' ? 'from-green-500 to-green-600' :
-                  module.status === 'warning' ? 'from-yellow-500 to-yellow-600' :
-                  'from-red-500 to-red-600'
-                } flex items-center justify-center`}>
-                  <module.icon className="w-5 h-5 text-white" />
+        {moduleOverview.map((module, index) => {
+          // Create icon mapping
+          const iconMap: { [key: string]: React.ElementType } = {
+            FileText,
+            AlertTriangle,
+            Shield,
+            Search,
+            CheckCircle
+          };
+          
+          const ModuleIcon = iconMap[module.icon] || FileText;
+          
+          return (
+            <motion.div
+              key={module.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+              onClick={() => navigate(module.link)}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${
+                    module.status === 'healthy' ? 'from-green-500 to-green-600' :
+                    module.status === 'warning' ? 'from-yellow-500 to-yellow-600' :
+                    'from-red-500 to-red-600'
+                  } flex items-center justify-center`}>
+                    <ModuleIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {module.name}
+                    </h3>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModuleStatusColor(module.status)}`}>
+                      {module.status}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {module.name}
-                  </h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModuleStatusColor(module.status)}`}>
-                    {module.status}
-                  </span>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{module.metrics.total}</div>
+                  <div className="text-sm text-gray-600">Total</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{module.metrics.active}</div>
+                  <div className="text-sm text-gray-600">Active</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">{module.metrics.critical}</div>
+                  <div className="text-sm text-gray-600">Critical</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{module.metrics.completed}</div>
+                  <div className="text-sm text-gray-600">Completed</div>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{module.metrics.total}</div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{module.metrics.active}</div>
-                <div className="text-sm text-gray-600">Active</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{module.metrics.critical}</div>
-                <div className="text-sm text-gray-600">Critical</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{module.metrics.completed}</div>
-                <div className="text-sm text-gray-600">Completed</div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Enhanced Charts Row */}

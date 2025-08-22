@@ -23,6 +23,7 @@ import {
   Building2,
   GraduationCap,
   HardDrive,
+  Network,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
@@ -279,13 +280,27 @@ const Layout: React.FC = () => {
       roles: ["cro", "admin", "super_admin"],
     },
     {
+      name: "Entity Relationships",
+      href: "/relationships",
+      icon: Network,
+      current: location.pathname.startsWith("/relationships"),
+      roles: [
+        "auditor",
+        "reviewer",
+        "supervisor_auditor",
+        "cro",
+        "admin",
+        "super_admin",
+      ],
+    },
+    {
       name: t("navigation.aiAssistant"),
       // Align with existing AI Assistant page route in the app
-      href: "/ai/assistant",
+      href: "/ai",
       icon: Bot,
       current:
-        location.pathname === "/ai/assistant" ||
-        location.pathname.startsWith("/ai/assistant/"),
+        location.pathname === "/ai" ||
+        location.pathname.startsWith("/ai/"),
       roles: [
         "auditor",
         "reviewer",
@@ -295,7 +310,7 @@ const Layout: React.FC = () => {
         "super_admin",
       ],
       // Provide a simple fallback navigate if route exists but page renders empty due to stale state
-      onClick: () => navigate("/ai/assistant"),
+      onClick: () => navigate("/ai"),
     },
     {
       name: "AI Governance",
@@ -464,11 +479,6 @@ const Layout: React.FC = () => {
           name: "Create Plan",
           href: "/bcp/create",
           current: location.pathname === "/bcp/create",
-        },
-        {
-          name: "Plan Details",
-          href: "/bcp/placeholder",
-          current: location.pathname.startsWith("/bcp/") && location.pathname !== "/bcp" && location.pathname !== "/bcp/create",
         }
       ]
     },
