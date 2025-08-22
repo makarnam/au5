@@ -1,9 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { errorHandler } from "./lib/errorHandler";
 import "./lib/sessionDebugger"; // Initialize session debugger
+import "./lib/debug-commands"; // Initialize debug commands
+import { startSessionMonitoring, autoRecoverSession } from "./lib/sessionDebugger";
+import { useAuthStore } from "./store/authStore";
 
 // Auth Pages
 import SignIn from "./pages/auth/SignIn";
@@ -220,9 +223,44 @@ import GovernanceTraining from "./pages/governance/Training";
 function App() {
   console.log("App component rendering...");
   
-  // Setup global error handlers
+  // Use refs to prevent duplicate initialization
+  const initializedRef = useRef(false);
+  const monitoringStartedRef = useRef(false);
+  
+  // Setup global error handlers and session monitoring
   useEffect(() => {
+    // Prevent duplicate initialization
+    if (initializedRef.current) {
+      return;
+    }
+    initializedRef.current = true;
+    
+    // Setup global error handlers
     errorHandler.setupGlobalErrorHandlers();
+    
+    // Initialize auth store
+    const authStore = useAuthStore.getState();
+    authStore.initialize();
+    
+    // Start session monitoring after a short delay (only once)
+    const monitoringTimer = setTimeout(() => {
+      if (!monitoringStartedRef.current) {
+        monitoringStartedRef.current = true;
+        // Temporarily disable session monitoring to fix menu issues
+        // startSessionMonitoring(30000); // Check every 30 seconds
+        console.log('Session monitoring temporarily disabled');
+      }
+    }, 5000);
+    
+    // Auto-recover session if needed when app starts (only once)
+    const recoveryTimer = setTimeout(async () => {
+      await autoRecoverSession();
+    }, 2000);
+    
+    return () => {
+      clearTimeout(monitoringTimer);
+      clearTimeout(recoveryTimer);
+    };
   }, []);
   
   return (

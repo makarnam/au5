@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, AlertTriangle, Grid, ListChecks, RefreshCw, TrendingUp, PieChart } from "lucide-react";
+import { BarChart3, AlertTriangle, Grid, ListChecks, RefreshCw, TrendingUp, PieChart, Info, Calendar, User, Tag, ExternalLink } from "lucide-react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import riskService, { Risk, RiskFilter } from "../../services/riskService";
 import { supabase } from "../../lib/supabase";
 import RiskSearchFilters, { SavedFilter as SavedRiskFilter } from "../../components/risks/RiskSearchFilters";
@@ -13,6 +14,8 @@ import { cn, getChartColors } from "../../utils";
  * - 5x5 risk matrix with drag & drop and keyboard drop support
  * - Backlog with reorder and persisted priority_order
  * - KPI cards + distributions + monthly trend sparkline (SVG)
+ * - Selected risk details panel under matrix
+ * - Enhanced hover tooltips with instant risk information
  */
 
 type MatrixSize = 5;
@@ -27,6 +30,7 @@ const appetiteColorByScore = (score: number) => {
   if (score >= 6) return "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200";
   return "bg-green-100 text-green-800 ring-1 ring-green-200";
 };
+
 const levelBg: Record<string, string> = {
   low: "bg-green-50",
   medium: "bg-yellow-50",
@@ -36,6 +40,274 @@ const levelBg: Record<string, string> = {
 
 const COLORS = getChartColors(10);
 
+// Risk Detail Component
+const RiskDetailPanel: React.FC<{ risk: Risk | null }> = ({ risk }) => {
+  if (!risk) {
+    return (
+      <div className="bg-white border rounded-lg p-6">
+        <div className="flex items-center justify-center h-32 text-gray-500">
+          <div className="text-center">
+            <Info className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm">Select a risk from the matrix to view details</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "Not set";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getTrendIcon = (trend: string | null | undefined) => {
+    switch (trend) {
+      case "increasing": return <TrendingUp className="w-4 h-4 text-red-500" />;
+      case "decreasing": return <TrendingUp className="w-4 h-4 text-green-500 rotate-180" />;
+      case "stable": return <div className="w-4 h-4 text-blue-500">—</div>;
+      default: return <div className="w-4 h-4 text-gray-400">?</div>;
+    }
+  };
+
+  return (
+    <div className="bg-white border rounded-lg p-6">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{risk.title}</h3>
+          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelBg[risk.risk_level] || "bg-gray-50"}`}>
+              {risk.risk_level}
+            </span>
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+              {risk.status}
+            </span>
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+              {risk.category}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={() => window.open(`/risks/${risk.id}`, '_blank')}
+          className="text-blue-600 hover:text-blue-800 p-1"
+          title="Open risk details"
+        >
+          <ExternalLink className="w-4 h-4" />
+        </button>
+      </div>
+
+      {risk.description && (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
+          <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{risk.description}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Risk Assessment</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Probability:</span>
+              <span className="font-medium">{risk.probability || "Not set"}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Impact:</span>
+              <span className="font-medium">{risk.impact || "Not set"}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Inherent Score:</span>
+              <span className="font-medium">{risk.inherent_risk_score || "Not set"}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Residual Score:</span>
+              <span className="font-medium">{risk.residual_risk_score || "Not set"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Trends</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Likelihood:</span>
+              <div className="flex items-center gap-1">
+                {getTrendIcon(risk.likelihood_trend)}
+                <span className="capitalize">{risk.likelihood_trend || "Unknown"}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Impact:</span>
+              <div className="flex items-center gap-1">
+                {getTrendIcon(risk.impact_trend)}
+                <span className="capitalize">{risk.impact_trend || "Unknown"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {risk.mitigation_strategy && (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Mitigation Strategy</h4>
+          <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded-lg">{risk.mitigation_strategy}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-1">
+            <Calendar className="w-4 h-4" />
+            Review Dates
+          </h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Last Review:</span>
+              <span>{formatDate(risk.last_review_date)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Next Review:</span>
+              <span>{formatDate(risk.next_review_date)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Target Date:</span>
+              <span>{formatDate(risk.target_date)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-1">
+            <User className="w-4 h-4" />
+            Risk Details
+          </h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Source:</span>
+              <span>{risk.risk_source || "Not specified"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Review Frequency:</span>
+              <span className="capitalize">{risk.review_frequency?.replace('_', ' ') || "Not set"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Created:</span>
+              <span>{formatDate(risk.created_at)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {risk.tags && risk.tags.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-1">
+            <Tag className="w-4 h-4" />
+            Tags
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {risk.tags.map((tag, index) => (
+              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {risk.external_reference && (
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">External Reference</h4>
+          <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded-lg break-all">{risk.external_reference}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Risk Tooltip Component
+const RiskTooltip: React.FC<{ risk: Risk; children: React.ReactNode }> = ({ risk, children }) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "Not set";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getTrendIcon = (trend: string | null | undefined) => {
+    switch (trend) {
+      case "increasing": return "↗";
+      case "decreasing": return "↘";
+      case "stable": return "→";
+      default: return "?";
+    }
+  };
+
+  return (
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          {children}
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm max-w-xs z-50"
+            sideOffset={5}
+          >
+            <div className="space-y-2">
+              <div className="font-medium">{risk.title}</div>
+              <div className="text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span>Level:</span>
+                  <span className="capitalize">{risk.risk_level}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Status:</span>
+                  <span className="capitalize">{risk.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Category:</span>
+                  <span>{risk.category}</span>
+                </div>
+                {risk.probability && risk.impact && (
+                  <div className="flex justify-between">
+                    <span>Score:</span>
+                    <span>P{risk.probability}×I{risk.impact} = {risk.probability * risk.impact}</span>
+                  </div>
+                )}
+                {(risk.likelihood_trend || risk.impact_trend) && (
+                  <div className="flex justify-between">
+                    <span>Trends:</span>
+                    <span>
+                      L:{getTrendIcon(risk.likelihood_trend)} I:{getTrendIcon(risk.impact_trend)}
+                    </span>
+                  </div>
+                )}
+                {risk.mitigation_strategy && (
+                  <div className="pt-1 border-t border-gray-700">
+                    <div className="text-gray-300 font-medium mb-1">Mitigation:</div>
+                    <div className="line-clamp-2 text-gray-300 text-[10px]">{risk.mitigation_strategy}</div>
+                  </div>
+                )}
+                {risk.description && (
+                  <div className="pt-1 border-t border-gray-700">
+                    <div className="text-gray-300 font-medium mb-1">Description:</div>
+                    <div className="line-clamp-2 text-gray-300 text-[10px]">{risk.description}</div>
+                  </div>
+                )}
+                <div className="pt-1 border-t border-gray-700 text-gray-400 text-[10px]">
+                  <div>Created: {formatDate(risk.created_at)}</div>
+                  <div>Updated: {formatDate(risk.updated_at)}</div>
+                  {risk.next_review_date && (
+                    <div>Next Review: {formatDate(risk.next_review_date)}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <Tooltip.Arrow className="fill-gray-900" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+  );
+};
+
 const RiskDashboard: React.FC = () => {
   const navigate = useNavigate();
 
@@ -44,6 +316,7 @@ const RiskDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
 
   // filters
   const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem("risk.dash.search") ?? "");
@@ -105,6 +378,18 @@ const RiskDashboard: React.FC = () => {
     void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, levelFilter, categoryFilter]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedRisk) {
+        setSelectedRisk(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedRisk]);
 
   // derived matrix buckets
   const matrixSize: MatrixSize = 5;
@@ -303,9 +588,24 @@ const RiskDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Risk Dashboard</h1>
           <p className="text-gray-600 mt-1">
             Drag risks on the matrix to update likelihood and impact. Reorder backlog to prioritize work.
+            {selectedRisk && (
+              <span className="ml-2 text-blue-600 font-medium">
+                • Selected: {selectedRisk.title}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {selectedRisk && (
+            <button
+              onClick={() => setSelectedRisk(null)}
+              className="inline-flex items-center px-3 py-2 border rounded-lg hover:bg-gray-50 text-gray-600"
+              title="Clear selection"
+            >
+              <Info className="w-4 h-4 mr-2" />
+              Clear Selection
+            </button>
+          )}
           <button
             onClick={() => void loadData()}
             className="inline-flex items-center px-3 py-2 border rounded-lg hover:bg-gray-50"
@@ -444,8 +744,9 @@ const RiskDashboard: React.FC = () => {
                       <div
                         key={key}
                         className={cn(
-                          "min-h-[96px] rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400",
+                          "min-h-[96px] rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all",
                           cellColor,
+                          bucket.some(r => selectedRisk?.id === r.id) && "ring-2 ring-blue-500 ring-opacity-50"
                         )}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={onDropToCell(p, i)}
@@ -458,35 +759,51 @@ const RiskDashboard: React.FC = () => {
                           <span className="text-[11px] text-gray-700">
                             P{p}×I{i} = {score}
                           </span>
-                          <span className="text-[11px] capitalize">
-                            {score >= 20 ? "critical" : score >= 12 ? "high" : score >= 6 ? "medium" : "low"}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[11px] capitalize">
+                              {score >= 20 ? "critical" : score >= 12 ? "high" : score >= 6 ? "medium" : "low"}
+                            </span>
+                            {bucket.length > 0 && (
+                              <span className="text-[10px] bg-white/80 px-1.5 py-0.5 rounded-full text-gray-600">
+                                {bucket.length}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="mt-2 flex flex-col gap-1">
                           {bucket.map((r) => (
-                            <div
-                              key={r.id}
-                              draggable
-                              onDragStart={startDrag(r, { p, i })}
-                              onFocus={() => {
-                                keyboardDragRef.current = r;
-                              }}
-                              className="text-xs bg-white/80 hover:bg-white rounded border px-2 py-1 cursor-grab focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              title={r.title}
-                              tabIndex={0}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="truncate">{r.title}</span>
-                                <span
-                                  className={cn(
-                                    "px-1.5 py-0.5 rounded text-[10px] capitalize",
-                                    levelBg[(r as any).risk_level] || "bg-gray-50",
-                                  )}
-                                >
-                                  {(r as any).risk_level}
-                                </span>
+                            <RiskTooltip key={r.id} risk={r}>
+                              <div
+                                draggable
+                                onDragStart={startDrag(r, { p, i })}
+                                onFocus={() => {
+                                  keyboardDragRef.current = r;
+                                }}
+                                onClick={() => setSelectedRisk(r)}
+                                className={cn(
+                                  "text-xs bg-white/80 hover:bg-white rounded border px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all relative",
+                                  selectedRisk?.id === r.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-blue-50"
+                                )}
+                                tabIndex={0}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="truncate">{r.title}</span>
+                                  <div className="flex items-center gap-1">
+                                    {selectedRisk?.id === r.id && (
+                                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                    )}
+                                    <span
+                                      className={cn(
+                                        "px-1.5 py-0.5 rounded text-[10px] capitalize",
+                                        levelBg[(r as any).risk_level] || "bg-gray-50",
+                                      )}
+                                    >
+                                      {(r as any).risk_level}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
+                            </RiskTooltip>
                           ))}
                           {bucket.length === 0 && (
                             <div className="h-6 text-[10px] text-gray-500 flex items-center">Drop here</div>
@@ -516,42 +833,67 @@ const RiskDashboard: React.FC = () => {
             ) : (
               <ul className="space-y-2">
                 {backlog.map((r, idx) => (
-                  <li key={r.id} className="border rounded p-2 bg-white">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{r.title}</div>
-                        <div className="text-[11px] text-gray-500 truncate">{(r as any).category || "-"}</div>
+                  <RiskTooltip key={r.id} risk={r}>
+                    <li 
+                      className={cn(
+                        "border rounded p-2 bg-white cursor-pointer transition-all",
+                        selectedRisk?.id === r.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                      )}
+                      onClick={() => setSelectedRisk(r)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium truncate">{r.title}</div>
+                            {selectedRisk?.id === r.id && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-gray-500 truncate">{(r as any).category || "-"}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              idx > 0 && void moveBacklogItem(idx, idx - 1);
+                            }}
+                            aria-label="Move up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              idx < backlog.length - 1 && void moveBacklogItem(idx, idx + 1);
+                            }}
+                            aria-label="Move down"
+                          >
+                            ↓
+                          </button>
+                          <button
+                            className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/risks/${r.id}`);
+                            }}
+                          >
+                            Open
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
-                          onClick={() => idx > 0 && void moveBacklogItem(idx, idx - 1)}
-                          aria-label="Move up"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
-                          onClick={() => idx < backlog.length - 1 && void moveBacklogItem(idx, idx + 1)}
-                          aria-label="Move down"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
-                          onClick={() => navigate(`/risks/${r.id}`)}
-                        >
-                          Open
-                        </button>
-                      </div>
-                    </div>
-                  </li>
+                    </li>
+                  </RiskTooltip>
                 ))}
               </ul>
             )}
           </div>
         </div>
       </div>
+
+      {/* Risk Detail Panel */}
+      <RiskDetailPanel risk={selectedRisk} />
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

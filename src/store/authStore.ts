@@ -10,21 +10,27 @@ interface AuthState {
   session: any;
   loading: boolean;
   initialized: boolean;
+  lastActivity: number;
+  sessionRecoveryAttempts: number;
+  isRecovering: boolean;
 }
 
 interface AuthActions {
-  signIn: (email: string, password: string) => Promise<boolean>;
-  signUp: (email: string, password: string, firstName: string, lastName: string, role: UserRole) => Promise<boolean>;
-  signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<boolean>;
-  updateProfile: (updates: Partial<User>) => Promise<boolean>;
-  checkPermission: (requiredRole: UserRole | UserRole[]) => boolean;
-  initialize: () => Promise<void>;
-  refreshSession: () => Promise<boolean>;
-  handleSessionError: (error: any) => Promise<boolean>;
   setUser: (user: User | null) => void;
   setSession: (session: any) => void;
   setLoading: (loading: boolean) => void;
+  initialize: () => Promise<void>;
+  checkPermission: (requiredRole: UserRole | UserRole[]) => boolean;
+  refreshSession: () => Promise<boolean>;
+  recoverSession: () => Promise<boolean>;
+  updateLastActivity: () => void;
+  resetRecoveryAttempts: () => void;
+  // Auth methods
+  signIn: (email: string, password: string) => Promise<boolean>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, role?: UserRole) => Promise<boolean>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<boolean>;
+  updateProfile: (updates: Partial<User>) => Promise<boolean>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -50,6 +56,9 @@ export const useAuthStore = create<AuthStore>()(
       session: null,
       loading: false,
       initialized: false,
+      lastActivity: Date.now(),
+      sessionRecoveryAttempts: 0,
+      isRecovering: false,
 
       // Actions
       initialize: async () => {
@@ -62,65 +71,136 @@ export const useAuthStore = create<AuthStore>()(
         set({ loading: true });
 
         let didSetFromSession = false;
+        let listenerAdded = false;
 
         try {
           // Attach listener first to catch any immediate state changes
-          const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state change:', event, session?.user?.id);
-            
-            if (event === 'SIGNED_IN' && session?.user) {
-              // Load or create profile
-              const { data: userProfile, error: profileError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+          if (!(window as any).__auth_listener_added__) {
+            const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+              console.log('Auth state change:', event, session?.user?.id);
 
-              if (profileError) {
-                // Create minimal profile if missing
-                const newUser: Partial<User> = {
-                  id: session.user.id,
-                  email: session.user.email!,
-                  first_name: session.user.user_metadata?.first_name || '',
-                  last_name: session.user.user_metadata?.last_name || '',
-                  role: 'viewer',
-                  department: '',
-                  is_active: true,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                  last_login: new Date().toISOString(),
-                };
-
-                const { data: createdUser, error: createError } = await supabase
-                  .from('users')
-                  .insert([newUser])
-                  .select()
-                  .single();
-
-                if (!createError && createdUser) {
-                  set({ user: createdUser as User, session, loading: false, initialized: true });
-                  didSetFromSession = true;
-                } else {
-                  console.error('User creation error:', createError);
-                  set({ user: null, session: null, loading: false, initialized: true });
-                }
+              // Prevent duplicate processing
+              if ((window as any).__auth_processing_event__) {
+                console.log('Event already being processed, skipping...');
                 return;
               }
+              (window as any).__auth_processing_event__ = true;
 
-              // Update last login (best effort)
               try {
-                await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', userProfile.id);
-              } catch {}
+                if (event === 'SIGNED_IN' && session?.user) {
+                  console.log('User signed in, loading profile...');
+                  
+                  // Check if user is already loaded
+                  const currentState = get();
+                  if (currentState.user?.id === session.user.id) {
+                    console.log('User already loaded, skipping...');
+                    return;
+                  }
+                  
+                  // Get user profile from database
+                  const { data: userProfile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
 
-              set({ user: userProfile as User, session, loading: false, initialized: true });
-              didSetFromSession = true;
-            } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-              console.log('Token refreshed, updating session');
-              set({ session, loading: false });
-            } else if (event === 'SIGNED_OUT') {
-              set({ user: null, session: null, loading: false, initialized: true });
-            }
-          });
+                  if (error) {
+                    console.error('Error loading user profile:', error);
+                    set({ user: null, session: null, loading: false, initialized: true });
+                    return;
+                  }
+
+                  // Update last login (best effort)
+                  try {
+                    await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', userProfile.id);
+                  } catch {}
+
+                  set({ 
+                    user: userProfile as User, 
+                    session, 
+                    loading: false, 
+                    initialized: true,
+                    lastActivity: Date.now(),
+                    sessionRecoveryAttempts: 0
+                  });
+                  didSetFromSession = true;
+                } else if (event === 'INITIAL_SESSION') {
+                  console.log('Initial session event:', session ? 'Session found' : 'No session');
+                  // Handle initial session - this is called when the app first loads
+                  if (session?.user) {
+                    console.log('Found initial session, loading profile...');
+                    
+                    // Check if user is already loaded
+                    const currentState = get();
+                    if (currentState.user?.id === session.user.id) {
+                      console.log('User already loaded from initial session, skipping...');
+                      return;
+                    }
+                    
+                    // Get user profile from database
+                    const { data: userProfile, error } = await supabase
+                      .from('users')
+                      .select('*')
+                      .eq('id', session.user.id)
+                      .single();
+
+                    if (error) {
+                      console.error('Error loading user profile from initial session:', error);
+                      set({ user: null, session: null, loading: false, initialized: true });
+                      return;
+                    }
+
+                    set({ 
+                      user: userProfile as User, 
+                      session, 
+                      loading: false, 
+                      initialized: true,
+                      lastActivity: Date.now(),
+                      sessionRecoveryAttempts: 0
+                    });
+                    didSetFromSession = true;
+                  } else {
+                    // No initial session, mark as initialized
+                    console.log('No initial session found');
+                    set({ 
+                      user: null, 
+                      session: null, 
+                      loading: false, 
+                      initialized: true,
+                      lastActivity: Date.now(),
+                      sessionRecoveryAttempts: 0
+                    });
+                  }
+                } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                  console.log('Token refreshed, updating session');
+                  set({ 
+                    session, 
+                    loading: false,
+                    lastActivity: Date.now(),
+                    sessionRecoveryAttempts: 0
+                  });
+                } else if (event === 'SIGNED_OUT') {
+                  set({ 
+                    user: null, 
+                    session: null, 
+                    loading: false, 
+                    initialized: true,
+                    lastActivity: Date.now(),
+                    sessionRecoveryAttempts: 0
+                  });
+                }
+              } finally {
+                // Clear processing flag after a short delay
+                setTimeout(() => {
+                  (window as any).__auth_processing_event__ = false;
+                }, 100);
+              }
+            });
+
+            (window as any).__auth_listener_added__ = true;
+            listenerAdded = true;
+            console.log('Auth listener added');
+          }
 
           // One-time read of current session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -128,64 +208,135 @@ export const useAuthStore = create<AuthStore>()(
           if (sessionError) {
             console.error('Session error:', sessionError);
             set({ user: null, session: null, loading: false, initialized: true });
-          } else if (session?.user) {
-            // Load profile for current session (this path will set initialized when done)
-            const { data: userProfile, error: profileError } = await supabase
+            return;
+          }
+
+          if (session?.user && !didSetFromSession) {
+            console.log('Found existing session, loading profile...');
+            
+            // Get user profile from database
+            const { data: userProfile, error } = await supabase
               .from('users')
               .select('*')
               .eq('id', session.user.id)
               .single();
 
-            if (profileError) {
-              // Create minimal profile if missing
-              const newUser: Partial<User> = {
-                id: session.user.id,
-                email: session.user.email!,
-                first_name: session.user.user_metadata?.first_name || '',
-                last_name: session.user.user_metadata?.last_name || '',
-                role: 'viewer',
-                department: '',
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                last_login: new Date().toISOString(),
-              };
-
-              const { data: createdUser, error: createError } = await supabase
-                .from('users')
-                .insert([newUser])
-                .select()
-                .single();
-
-              if (!createError && createdUser) {
-                set({ user: createdUser as User, session, loading: false, initialized: true });
-                didSetFromSession = true;
-              } else {
-                console.error('User creation error:', createError);
-                set({ user: null, session: null, loading: false, initialized: true });
-              }
-            } else {
-              try {
-                await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', userProfile.id);
-              } catch {}
-              set({ user: userProfile as User, session, loading: false, initialized: true });
-              didSetFromSession = true;
+            if (error) {
+              console.error('Error loading user profile:', error);
+              set({ user: null, session: null, loading: false, initialized: true });
+              return;
             }
-          } else {
-            // No session present
-            set({ user: null, session: null, loading: false, initialized: true });
+
+            // Update last login (best effort)
+            try {
+              await supabase.from('users').update({ last_login: new Date().toISOString() }).eq('id', userProfile.id);
+            } catch {}
+
+            set({ 
+              user: userProfile as User, 
+              session, 
+              loading: false, 
+              initialized: true,
+              lastActivity: Date.now(),
+              sessionRecoveryAttempts: 0
+            });
+          } else if (!didSetFromSession) {
+            set({ loading: false, initialized: true });
           }
 
-          // Store unsubscribe so we can avoid duplicate listeners in future inits
-          (window as any).__auth_unsubscribe__ = authListener?.subscription?.unsubscribe?.bind(authListener.subscription) || null;
+          // Setup activity tracking
+          setupActivityTracking();
+
+          // Setup visibility change handling for tab switching
+          setupVisibilityChangeHandling();
+
         } catch (error) {
-          console.error('Initialization error:', error);
+          console.error('Error during auth initialization:', error);
           set({ user: null, session: null, loading: false, initialized: true });
         } finally {
           (window as any).__auth_init_in_progress__ = false;
         }
       },
 
+      setUser: (user) => set({ user }),
+      setSession: (session) => set({ session }),
+      setLoading: (loading) => set({ loading }),
+
+      checkPermission: (requiredRole) => {
+        const { user } = get();
+        if (!user) return false;
+
+        const userRoleLevel = ROLE_HIERARCHY[user.role] || 0;
+        
+        if (Array.isArray(requiredRole)) {
+          return requiredRole.some(role => userRoleLevel >= ROLE_HIERARCHY[role]);
+        }
+        
+        return userRoleLevel >= ROLE_HIERARCHY[requiredRole];
+      },
+
+      refreshSession: async () => {
+        const { sessionRecoveryAttempts } = get();
+        
+        if (sessionRecoveryAttempts >= 3) {
+          console.log('Max recovery attempts reached');
+          return false;
+        }
+
+        set({ isRecovering: true, sessionRecoveryAttempts: sessionRecoveryAttempts + 1 });
+
+        try {
+          const { data, error } = await supabase.auth.refreshSession();
+          
+          if (error) {
+            console.error('Session refresh failed:', error);
+            return false;
+          }
+
+          if (data.session) {
+            console.log('Session refreshed successfully');
+            set({ 
+              session: data.session, 
+              isRecovering: false,
+              lastActivity: Date.now()
+            });
+            return true;
+          }
+
+          return false;
+        } catch (error) {
+          console.error('Session refresh error:', error);
+          set({ isRecovering: false });
+          return false;
+        }
+      },
+
+      recoverSession: async () => {
+        const { refreshSession, resetRecoveryAttempts } = get();
+        
+        console.log('Attempting session recovery...');
+        
+        const success = await refreshSession();
+        
+        if (success) {
+          resetRecoveryAttempts();
+          toast.success('Session recovered successfully');
+        } else {
+          toast.error('Session recovery failed. Please log in again.');
+          // Redirect to login after failed recovery
+          setTimeout(() => {
+            window.location.href = '/auth/sign-in';
+          }, 2000);
+        }
+        
+        return success;
+      },
+
+      updateLastActivity: () => set({ lastActivity: Date.now() }),
+
+      resetRecoveryAttempts: () => set({ sessionRecoveryAttempts: 0 }),
+
+      // Auth methods
       signIn: async (email: string, password: string) => {
         set({ loading: true });
 
@@ -224,7 +375,9 @@ export const useAuthStore = create<AuthStore>()(
             set({
               user: userProfile as User,
               session: data.session,
-              loading: false
+              loading: false,
+              lastActivity: Date.now(),
+              sessionRecoveryAttempts: 0
             });
 
             // Log the sign-in activity
@@ -233,7 +386,7 @@ export const useAuthStore = create<AuthStore>()(
               action: 'sign_in',
               entity_type: 'auth',
               entity_id: userProfile.id,
-              ip_address: '', // You might want to get this from a service
+              ip_address: '',
               user_agent: navigator.userAgent,
               created_at: new Date().toISOString()
             }]);
@@ -303,7 +456,9 @@ export const useAuthStore = create<AuthStore>()(
             set({
               user: userProfile as User,
               session: data.session,
-              loading: false
+              loading: false,
+              lastActivity: Date.now(),
+              sessionRecoveryAttempts: 0
             });
 
             toast.success('Account created successfully!');
@@ -344,7 +499,13 @@ export const useAuthStore = create<AuthStore>()(
             return;
           }
 
-          set({ user: null, session: null });
+          set({ 
+            user: null, 
+            session: null, 
+            loading: false,
+            lastActivity: Date.now(),
+            sessionRecoveryAttempts: 0
+          });
           toast.success('Signed out successfully');
         } catch (error) {
           console.error('Sign out error:', error);
@@ -405,94 +566,84 @@ export const useAuthStore = create<AuthStore>()(
           return false;
         }
       },
-
-      checkPermission: (requiredRole: UserRole | UserRole[]) => {
-        const { user } = get();
-        if (!user) return false;
-
-        const userRoleLevel = ROLE_HIERARCHY[user.role];
-
-        if (Array.isArray(requiredRole)) {
-          return requiredRole.some(role => userRoleLevel >= ROLE_HIERARCHY[role]);
-        }
-
-        return userRoleLevel >= ROLE_HIERARCHY[requiredRole];
-      },
-
-      refreshSession: async () => {
-        try {
-          console.log('Manual session refresh requested');
-          const { data, error } = await supabase.auth.refreshSession();
-          
-          if (error) {
-            console.error('Session refresh failed:', error);
-            return false;
-          }
-
-          if (data.session) {
-            console.log('Session refreshed successfully');
-            set({ session: data.session });
-            toast.success('Session renewed');
-            return true;
-          }
-
-          return false;
-        } catch (error) {
-          console.error('Session refresh error:', error);
-          return false;
-        }
-      },
-
-      handleSessionError: async (error: any) => {
-        console.log('Handling session error:', error);
-        
-        // Check if it's a session-related error
-        const errorMessage = error?.message?.toLowerCase() || '';
-        const errorCode = error?.code?.toLowerCase() || '';
-        
-        const isSessionError = (
-          errorMessage.includes('jwt') ||
-          errorMessage.includes('token') ||
-          errorMessage.includes('unauthorized') ||
-          errorMessage.includes('unauthenticated') ||
-          errorCode.includes('401') ||
-          errorCode.includes('jwt') ||
-          errorCode.includes('token')
-        );
-
-        if (isSessionError) {
-          console.log('Session error detected, attempting refresh');
-          const refreshSuccess = await get().refreshSession();
-          
-          if (refreshSuccess) {
-            return true; // Session refreshed, retry the operation
-          } else {
-            // Session refresh failed, redirect to login
-            toast.error('Session expired. Please log in again.');
-            setTimeout(() => {
-              window.location.href = '/auth/sign-in';
-            }, 1000);
-            return false;
-          }
-        }
-
-        return false; // Not a session error
-      },
-
-      // Setters
-      setUser: (user: User | null) => set({ user }),
-      setSession: (session: any) => set({ session }),
-      setLoading: (loading: boolean) => set({ loading })
     }),
     {
       name: 'auth-store',
       partialize: (state) => ({
         user: state.user,
-        session: state.session
-      })
+        session: state.session,
+        lastActivity: state.lastActivity,
+        sessionRecoveryAttempts: state.sessionRecoveryAttempts
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Check if session is still valid after rehydration
+          const now = Date.now();
+          const lastActivity = state.lastActivity || 0;
+          const sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours
+          
+          if (now - lastActivity > sessionTimeout) {
+            console.log('Session expired during rehydration');
+            state.setUser(null);
+            state.setSession(null);
+            state.resetRecoveryAttempts();
+          }
+        }
+      }
     }
   )
 );
 
-// Initialize auth on app start
-useAuthStore.getState().initialize();
+// Activity tracking for session management
+function setupActivityTracking() {
+  const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+  
+  let lastUpdate = 0;
+  const updateInterval = 5000; // Update at most every 5 seconds
+  
+  const updateActivity = () => {
+    const now = Date.now();
+    if (now - lastUpdate > updateInterval) {
+      lastUpdate = now;
+      const authStore = useAuthStore.getState();
+      authStore.updateLastActivity();
+    }
+  };
+
+  events.forEach(event => {
+    document.addEventListener(event, updateActivity, { passive: true });
+  });
+
+  // Cleanup function
+  return () => {
+    events.forEach(event => {
+      document.removeEventListener(event, updateActivity);
+    });
+  };
+}
+
+// Handle tab visibility changes
+function setupVisibilityChangeHandling() {
+  const handleVisibilityChange = async () => {
+    if (!document.hidden) {
+      // Tab became visible, check session status
+      const authStore = useAuthStore.getState();
+      const { session, user } = authStore;
+      
+      if (session && !user) {
+        console.log('Tab became visible, session exists but no user - attempting recovery');
+        await authStore.recoverSession();
+      }
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Cleanup function
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}
+
+// Export for use in other modules
+export const getAuthStore = () => useAuthStore.getState();

@@ -2,6 +2,9 @@ import { supabase } from './supabase';
 import { useAuthStore } from '../store/authStore';
 
 export class SessionDebugger {
+  private static isMonitoring = false;
+  private static monitoringInterval: NodeJS.Timeout | null = null;
+
   /**
    * Debug session status and provide recommendations
    */
@@ -62,6 +65,9 @@ export class SessionDebugger {
       console.log('   Session:', authStore.session ? '✅ Available' : '❌ Not available');
       console.log('   Loading:', authStore.loading ? '⏳ Yes' : '✅ No');
       console.log('   Initialized:', authStore.initialized ? '✅ Yes' : '❌ No');
+      console.log('   Last Activity:', new Date(authStore.lastActivity).toLocaleString());
+      console.log('   Recovery Attempts:', authStore.sessionRecoveryAttempts);
+      console.log('   Is Recovering:', authStore.isRecovering ? '⏳ Yes' : '✅ No');
 
       // 5. Test database connection
       console.log('\n5. Database Connection Test:');
@@ -88,14 +94,21 @@ export class SessionDebugger {
         console.log('❌ Storage access error:', error);
       }
 
-      // 7. Recommendations
-      console.log('\n7. Recommendations:');
+      // 7. Check network status
+      console.log('\n7. Network Status:');
+      console.log('   Online:', navigator.onLine ? '✅ Yes' : '❌ No');
+      console.log('   Page Visibility:', document.hidden ? '❌ Hidden' : '✅ Visible');
+
+      // 8. Recommendations
+      console.log('\n8. Recommendations:');
       if (!sessionData.session) {
         console.log('💡 No session found - user needs to log in');
       } else if (sessionData.session.expires_at < Math.floor(Date.now() / 1000)) {
         console.log('💡 Session expired - try refreshing the page or logging in again');
       } else if (!authStore.user) {
         console.log('💡 Session exists but user profile not loaded - check auth store initialization');
+      } else if (authStore.sessionRecoveryAttempts > 0) {
+        console.log('💡 Session recovery attempts detected - consider manual recovery');
       } else {
         console.log('💡 Session appears healthy');
       }
@@ -215,6 +228,198 @@ export class SessionDebugger {
 
     console.log('\n' + '=' .repeat(50));
   }
+
+  /**
+   * Start monitoring session health
+   */
+  static startMonitoring(intervalMs: number = 30000): void {
+    if (this.isMonitoring) {
+      console.log('⚠️  Session monitoring already active');
+      return;
+    }
+
+    console.log('🔍 Starting session monitoring...');
+    this.isMonitoring = true;
+
+    // Clear any existing interval
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+    }
+
+    this.monitoringInterval = setInterval(async () => {
+      try {
+        const authStore = useAuthStore.getState();
+        const { session, user, initialized } = authStore;
+
+        // Only check if initialized and not already recovering
+        if (!initialized || authStore.isRecovering) {
+          return;
+        }
+
+        // Check if session exists but user is missing
+        if (session && !user) {
+          console.log('⚠️  Session monitoring: Session exists but no user - attempting recovery');
+          await authStore.recoverSession();
+        }
+
+        // Check if session is expired
+        if (session && session.expires_at) {
+          const now = Math.floor(Date.now() / 1000);
+          const timeUntilExpiry = session.expires_at - now;
+          
+          if (timeUntilExpiry < 300) { // Less than 5 minutes
+            console.log('⚠️  Session monitoring: Session expiring soon - refreshing');
+            await authStore.refreshSession();
+          }
+        }
+
+        // Check if recovery attempts are too high
+        if (authStore.sessionRecoveryAttempts >= 3) {
+          console.log('⚠️  Session monitoring: Too many recovery attempts - clearing session');
+          this.clearSessionData();
+        }
+
+      } catch (error) {
+        console.error('❌ Session monitoring error:', error);
+      }
+    }, intervalMs);
+
+    console.log('✅ Session monitoring started');
+  }
+
+  /**
+   * Stop monitoring session health
+   */
+  static stopMonitoring(): void {
+    if (!this.isMonitoring) {
+      console.log('⚠️  Session monitoring not active');
+      return;
+    }
+
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+
+    this.isMonitoring = false;
+    console.log('✅ Session monitoring stopped');
+  }
+
+  /**
+   * Get monitoring status
+   */
+  static getMonitoringStatus(): boolean {
+    return this.isMonitoring;
+  }
+
+  /**
+   * Auto-recover session if needed
+   */
+  static async autoRecover(): Promise<boolean> {
+    console.log('🔄 Auto-recovering session...');
+    
+    try {
+      const authStore = useAuthStore.getState();
+      const { session, user, initialized } = authStore;
+
+      if (!initialized) {
+        console.log('⚠️  Auth store not initialized');
+        return false;
+      }
+
+      if (!session) {
+        console.log('⚠️  No session to recover');
+        return false;
+      }
+
+      if (user) {
+        console.log('✅ User already loaded, no recovery needed');
+        return true;
+      }
+
+      console.log('🔄 Attempting session recovery...');
+      const success = await authStore.recoverSession();
+      
+      if (success) {
+        console.log('✅ Auto-recovery successful');
+      } else {
+        console.log('❌ Auto-recovery failed');
+      }
+
+      return success;
+    } catch (error) {
+      console.error('❌ Auto-recovery error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check session health and return status
+   */
+  static async checkSessionHealth(): Promise<{
+    healthy: boolean;
+    issues: string[];
+    recommendations: string[];
+  }> {
+    const issues: string[] = [];
+    const recommendations: string[] = [];
+
+    try {
+      const authStore = useAuthStore.getState();
+      const { session, user, initialized } = authStore;
+
+      if (!initialized) {
+        issues.push('Auth store not initialized');
+        recommendations.push('Wait for initialization to complete');
+      }
+
+      if (!session) {
+        issues.push('No active session');
+        recommendations.push('User needs to log in');
+      } else {
+        // Check session expiry
+        const now = Math.floor(Date.now() / 1000);
+        if (session.expires_at < now) {
+          issues.push('Session expired');
+          recommendations.push('Session needs to be refreshed');
+        }
+
+        // Check if user profile is loaded
+        if (!user) {
+          issues.push('Session exists but user profile not loaded');
+          recommendations.push('Attempt session recovery');
+        }
+      }
+
+      // Check recovery attempts
+      if (authStore.sessionRecoveryAttempts >= 3) {
+        issues.push('Too many recovery attempts');
+        recommendations.push('Clear session and re-authenticate');
+      }
+
+      // Check network status
+      if (!navigator.onLine) {
+        issues.push('Network connection lost');
+        recommendations.push('Check internet connection');
+      }
+
+      const healthy = issues.length === 0;
+
+      return {
+        healthy,
+        issues,
+        recommendations
+      };
+
+    } catch (error) {
+      console.error('❌ Session health check error:', error);
+      return {
+        healthy: false,
+        issues: ['Health check failed'],
+        recommendations: ['Check console for errors']
+      };
+    }
+  }
 }
 
 // Export convenience functions
@@ -222,6 +427,11 @@ export const debugSession = () => SessionDebugger.debugSession();
 export const forceRefreshSession = () => SessionDebugger.forceRefreshSession();
 export const clearSessionData = () => SessionDebugger.clearSessionData();
 export const testDatabaseOperations = () => SessionDebugger.testDatabaseOperations();
+export const startSessionMonitoring = (intervalMs?: number) => SessionDebugger.startMonitoring(intervalMs);
+export const stopSessionMonitoring = () => SessionDebugger.stopMonitoring();
+export const getMonitoringStatus = () => SessionDebugger.getMonitoringStatus();
+export const autoRecoverSession = () => SessionDebugger.autoRecover();
+export const checkSessionHealth = () => SessionDebugger.checkSessionHealth();
 
 // Add to window for console access
 if (typeof window !== 'undefined') {
@@ -229,6 +439,11 @@ if (typeof window !== 'undefined') {
     debug: debugSession,
     refresh: forceRefreshSession,
     clear: clearSessionData,
-    test: testDatabaseOperations
+    test: testDatabaseOperations,
+    monitor: startSessionMonitoring,
+    stopMonitor: stopSessionMonitoring,
+    monitoringStatus: getMonitoringStatus,
+    autoRecover: autoRecoverSession,
+    health: checkSessionHealth
   };
 }
