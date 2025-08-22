@@ -149,7 +149,6 @@ import DocumentManagement from "./pages/documents/DocumentManagement";
 import DocumentManagementTest from "./pages/documents/DocumentManagementTest";
 
 import IncidentManagement from "./pages/incidents/IncidentManagement";
-import VendorManagement from "./pages/vendors/VendorManagement";
 import UserDetails from "./pages/users/UserDetails";
 import UsersList from "./pages/users/UsersList";
 import UserManagementDashboard from "./pages/users/UserManagementDashboard";
@@ -391,9 +390,6 @@ function App() {
 
           {/* Incidents */}
           <Route path="incidents" element={<IncidentManagement />} />
-
-          {/* Vendors */}
-          <Route path="vendors" element={<VendorManagement />} />
 
           {/* Third Party Risk Management */}
           <Route path="third-party-risk-management" element={<ThirdPartyRiskManagementDashboard />} />
