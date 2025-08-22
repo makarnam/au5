@@ -233,16 +233,18 @@ export default function BCPAIGenerator({
         },
       };
 
-      const result = await aiService.generateContent(request);
+      const response = await aiService.generateContent(request);
       
-      if (typeof result === "string") {
-        setGeneratedContent(result);
-        setGenerationHistory(prev => [result, ...prev.slice(0, 4)]);
+      if (response.success) {
+        const content = Array.isArray(response.content)
+          ? response.content.join("\n\n")
+          : response.content;
+        
+        setGeneratedContent(content);
+        setGenerationHistory(prev => [content, ...prev.slice(0, 4)]);
         toast.success("BCP content generated successfully!");
       } else {
-        setGeneratedContent(result.join("\n\n"));
-        setGenerationHistory(prev => [result.join("\n\n"), ...prev.slice(0, 4)]);
-        toast.success("BCP content generated successfully!");
+        throw new Error(response.error || "Generation failed");
       }
     } catch (err) {
       console.error("Generation error:", err);

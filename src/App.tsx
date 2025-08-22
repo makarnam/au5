@@ -162,6 +162,7 @@ import NotificationsInbox from "./pages/notifications/NotificationsInbox";
 import TrainingCertification from "./pages/training/TrainingCertification";
 import TrainingManagementDashboard from "./pages/training/TrainingManagementDashboard";
 import AdvancedAnalytics from "./pages/analytics/AdvancedAnalytics";
+import WorkflowAnalyticsPage from "./pages/analytics/WorkflowAnalyticsPage";
 
 // Third Party Risk Management Pages
 import ThirdPartyRiskManagementDashboard from "./pages/third-party-risk-management/ThirdPartyRiskManagementDashboard";
@@ -512,6 +513,7 @@ function App() {
 
           {/* Analytics */}
           <Route path="analytics" element={<AdvancedAnalytics />} />
+          <Route path="analytics/workflow" element={<WorkflowAnalyticsPage />} />
 
           {/* Governance */}
           <Route path="governance" element={<GovernanceDashboard />} />
