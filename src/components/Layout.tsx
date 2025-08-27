@@ -864,8 +864,8 @@ const Layout: React.FC = () => {
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
             <div className="ml-3">
-              <h1 className="text-xl font-bold text-gray-900">AI Auditor</h1>
-              <p className="text-xs text-gray-500">GRC Platform</p>
+              <h1 className="text-xl font-bold text-gray-900">{t('navigation.aiAuditor')}</h1>
+              <p className="text-xs text-gray-500">{t('navigation.grcPlatform')}</p>
             </div>
           </div>
         </div>
@@ -969,7 +969,7 @@ const Layout: React.FC = () => {
             className="w-full px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors flex items-center justify-center"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
-            {t("layout.switchToEnhancedMenu")}
+            {t("navigation.switchToEnhancedMenu")}
           </button>
         </div>
       </div>
@@ -1073,7 +1073,7 @@ const Layout: React.FC = () => {
                   onClick={() => setComposeOpen(true)}
                   title="Send notification/message"
                 >
-                  {t("layout.newMessage")}
+                  {t("navigation.newMessage")}
                 </button>
               </div>
               {/* Language Selector */}

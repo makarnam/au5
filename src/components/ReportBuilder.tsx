@@ -1,28 +1,29 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
-   FileText,
-   BarChart3,
-   Table,
-   Target,
-   Search,
-   Shield,
-   AlertTriangle,
-   Trash2,
-   Edit,
-   Save,
-   Download,
-   Eye,
-   Sparkles,
-   Zap,
-   Clock,
-   RefreshCw,
-   ThumbsUp,
-   ThumbsDown,
-   Lightbulb,
-   History,
-   X,
- } from "lucide-react";
+    FileText,
+    BarChart3,
+    Table,
+    Target,
+    Search,
+    Shield,
+    AlertTriangle,
+    Trash2,
+    Edit,
+    Save,
+    Download,
+    Eye,
+    Sparkles,
+    Zap,
+    Clock,
+    RefreshCw,
+    ThumbsUp,
+    ThumbsDown,
+    Lightbulb,
+    History,
+    X,
+  } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -57,6 +58,7 @@ interface SectionComponentProps {
   reportTitle: string;
   entityType: string;
   entityId?: string;
+  t: (key: string) => string;
 }
 
 // Content history entry
@@ -319,6 +321,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   reportTitle,
   entityType,
   entityId,
+  t,
 }) => {
   const [editingState, setEditingState] = useState<SectionEditingState>({
     isEditing: false,
@@ -466,7 +469,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           {section.ai_generated && (
             <Badge variant="secondary" className="bg-purple-100 text-purple-800">
               <Sparkles className="w-3 h-3 mr-1" />
-              AI Generated
+              {t('reports:aiGenerated')}
             </Badge>
           )}
         </div>
@@ -559,10 +562,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
               <div key={entry.id} className="flex items-center justify-between p-2 bg-white rounded border">
                 <div className="flex-1">
                   <div className="text-xs text-gray-500">
-                    {entry.type === 'ai_generated' && '✨ AI Generated'}
-                    {entry.type === 'user_edited' && '✏️ User Edited'}
-                    {entry.type === 'regenerated' && '🔄 Regenerated'}
-                    {entry.type === 'original' && '📄 Original'}
+                    {entry.type === 'ai_generated' && t('reports:historyAIGenerated')}
+                    {entry.type === 'user_edited' && t('reports:historyUserEdited')}
+                    {entry.type === 'regenerated' && t('reports:historyRegenerated')}
+                    {entry.type === 'original' && t('reports:historyOriginal')}
                     • {entry.timestamp.toLocaleString()}
                   </div>
                   <div className="text-sm text-gray-700 truncate">
@@ -574,7 +577,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                   size="sm"
                   onClick={() => restoreFromHistory(entry)}
                 >
-                  Restore
+                  {t('reports:restore')}
                 </Button>
               </div>
             ))}
@@ -593,7 +596,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="sectionName">Section Name</Label>
+                <Label htmlFor="sectionName">{t('reports:sectionName')}</Label>
                 <Input
                   id="sectionName"
                   value={editingState.editData.name}
@@ -604,7 +607,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 />
               </div>
               <div>
-                <Label htmlFor="sectionType">Section Type</Label>
+                <Label htmlFor="sectionType">{t('reports:sectionType')}</Label>
                 <Select
                   value={editingState.editData.type}
                   onValueChange={(value) => setEditingState(prev => ({
@@ -627,7 +630,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="sectionContent">Content</Label>
+              <Label htmlFor="sectionContent">{t('reports:content')}</Label>
               <Textarea
                 id="sectionContent"
                 value={editingState.editData.content || ""}
@@ -636,7 +639,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                   editData: { ...prev.editData, content: e.target.value }
                 }))}
                 rows={6}
-                placeholder="Enter section content or configure AI generation..."
+                placeholder={t('reports:contentPlaceholder')}
               />
               {editingState.editData.content && (
                 <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -658,7 +661,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="dataSource">Data Source</Label>
+                <Label htmlFor="dataSource">{t('reports:dataSource')}</Label>
                 <Select
                   value={editingState.editData.data_source || ""}
                   onValueChange={(value) => setEditingState(prev => ({
@@ -667,7 +670,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                   }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select data source" />
+                    <SelectValue placeholder={t('reports:selectDataSource')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -699,18 +702,18 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 />
                 <Label htmlFor="aiEnabled" className="flex items-center">
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Enable AI Generation
+                  {t('reports:enableAIGeneration')}
                 </Label>
               </div>
             </div>
 
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={handleCancel}>
-                Cancel
+                {t('reports:cancel')}
               </Button>
               <Button onClick={handleSave}>
                 <Save className="w-4 h-4 mr-2" />
-                Save
+                {t('reports:save')}
               </Button>
             </div>
           </motion.div>
@@ -729,8 +732,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                   ) : (
                     <div className="text-gray-500 italic">
                       {section.configuration?.ai_enabled
-                        ? "AI will generate content for this section"
-                        : "Click edit to add content"}
+                        ? t('reports:aiWillGenerateContent')
+                        : t('reports:clickEditToAddContent')}
                     </div>
                   )}
                 </div>
@@ -781,7 +784,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
 
 // Main Report Builder Component
 const ReportBuilder: React.FC = () => {
-  const { user } = useAuthStore();
+   const { t } = useTranslation();
+   const { user } = useAuthStore();
   const [reportTitle, setReportTitle] = useState("New Report");
   const [reportDescription, setReportDescription] = useState("");
   const [entityType, setEntityType] = useState<'audit' | 'risk' | 'finding' | 'control' | 'general'>('general');
@@ -1270,10 +1274,10 @@ const ReportBuilder: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Report Builder</h1>
-          <p className="text-gray-600">
-            Create comprehensive GRC reports with AI-powered content generation
-          </p>
+           <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('reports.reportBuilder')}</h1>
+           <p className="text-gray-600">
+             {t('reports.reportBuilderDescription')}
+           </p>
         </div>
 
         {/* Entity Selection & Configuration */}
@@ -1334,27 +1338,27 @@ const ReportBuilder: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <FileText className="w-5 h-5 mr-2" />
-                Report Details
+                {t('reports:reportDetails')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="reportTitle">Report Title *</Label>
+                  <Label htmlFor="reportTitle">{t('reports:reportTitle')} *</Label>
                   <Input
                     id="reportTitle"
                     value={reportTitle}
                     onChange={(e) => setReportTitle(e.target.value)}
-                    placeholder="Enter report title"
+                    placeholder={t('reports:reportTitlePlaceholder')}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="reportDescription">Description (Optional)</Label>
+                  <Label htmlFor="reportDescription">{t('reports:description')} ({t('common:optional')})</Label>
                   <Textarea
                     id="reportDescription"
                     value={reportDescription}
                     onChange={(e) => setReportDescription(e.target.value)}
-                    placeholder="Brief description of the report"
+                    placeholder={t('reports:descriptionPlaceholder')}
                     rows={2}
                   />
                 </div>
@@ -1362,30 +1366,30 @@ const ReportBuilder: React.FC = () => {
 
               {selectedEntityData && (
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Selected Entity Summary</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">{t('reports:selectedEntitySummary')}</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-blue-700">Entity:</span>
+                      <span className="font-medium text-blue-700">{t('reports:entity')}:</span>
                       <span className="ml-2 text-blue-600">
                         {selectedEntityData.entityData.title || selectedEntityData.entityData.name}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-blue-700">Type:</span>
+                      <span className="font-medium text-blue-700">{t('reports:type')}:</span>
                       <span className="ml-2 text-blue-600 capitalize">
                         {selectedEntityData.entityType}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-blue-700">Status:</span>
+                      <span className="font-medium text-blue-700">{t('reports:status')}:</span>
                       <span className="ml-2 text-blue-600">
-                        {selectedEntityData.entityData.status || 'Unknown'}
+                        {selectedEntityData.entityData.status || t('common:unknown')}
                       </span>
                     </div>
                   </div>
                   {selectedEntityData.relatedFindings.length > 0 && (
                     <div className="mt-2">
-                      <span className="font-medium text-blue-700">Related Findings:</span>
+                      <span className="font-medium text-blue-700">{t('reports:relatedFindings')}:</span>
                       <span className="ml-2 text-blue-600">
                         {selectedEntityData.relatedFindings.length} items
                       </span>
@@ -1393,7 +1397,7 @@ const ReportBuilder: React.FC = () => {
                   )}
                   {selectedEntityData.relatedRisks.length > 0 && (
                     <div className="mt-1">
-                      <span className="font-medium text-blue-700">Related Risks:</span>
+                      <span className="font-medium text-blue-700">{t('reports:relatedRisks')}:</span>
                       <span className="ml-2 text-blue-600">
                         {selectedEntityData.relatedRisks.length} items
                       </span>
@@ -1410,9 +1414,9 @@ const ReportBuilder: React.FC = () => {
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Section Palette</CardTitle>
+                <CardTitle className="text-lg">{t('reports:sectionPalette')}</CardTitle>
                 <p className="text-sm text-gray-600">
-                  Click sections to add to your report
+                  {t('reports:sectionPaletteDescription')}
                 </p>
               </CardHeader>
               <CardContent>
@@ -1434,7 +1438,7 @@ const ReportBuilder: React.FC = () => {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Report Canvas</CardTitle>
+                  <CardTitle className="text-lg">{t('reports:reportCanvas')}</CardTitle>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -1444,18 +1448,18 @@ const ReportBuilder: React.FC = () => {
                       {isGenerating ? (
                         <>
                           <Zap className="w-4 h-4 mr-2 animate-spin" />
-                          Generating...
+                          {t('reports:generating')}
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 mr-2" />
-                          Generate with AI
+                          {t('reports:generateWithAI')}
                         </>
                       )}
                     </Button>
                     <Button variant="outline" onClick={handlePreviewReport}>
                       <Eye className="w-4 h-4 mr-2" />
-                      Preview
+                      {t('reports:preview')}
                     </Button>
                     <Button variant="outline" onClick={handleSaveReport} disabled={isSaving}>
                       {isSaving ? (
@@ -1463,7 +1467,7 @@ const ReportBuilder: React.FC = () => {
                       ) : (
                         <Save className="w-4 h-4 mr-2" />
                       )}
-                      {isSaving ? 'Saving...' : 'Save'}
+                      {isSaving ? t('reports:saving') : t('reports:save')}
                     </Button>
                     <div className="relative">
                       <Button
@@ -1481,7 +1485,7 @@ const ReportBuilder: React.FC = () => {
                         ) : (
                           <Download className="w-4 h-4 mr-2" />
                         )}
-                        {isExporting ? 'Exporting...' : 'Export'}
+                        {isExporting ? t('reports:exporting') : t('reports:export')}
                       </Button>
                       <div
                         id="export-menu"
@@ -1492,31 +1496,31 @@ const ReportBuilder: React.FC = () => {
                             onClick={() => handleExportReport('pdf')}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Export as PDF
+                            {t('reports:exportAsPDF')}
                           </button>
                           <button
                             onClick={() => handleExportReport('excel')}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Export as Excel
+                            {t('reports:exportAsExcel')}
                           </button>
                           <button
                             onClick={() => handleExportReport('word')}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Export as Word
+                            {t('reports:exportAsWord')}
                           </button>
                           <button
                             onClick={() => handleExportReport('powerpoint')}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Export as PowerPoint
+                            {t('reports:exportAsPowerPoint')}
                           </button>
                           <button
                             onClick={() => handleExportReport('html')}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Export as HTML
+                            {t('reports:exportAsHTML')}
                           </button>
                         </div>
                       </div>
@@ -1529,10 +1533,10 @@ const ReportBuilder: React.FC = () => {
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No sections added yet
+                      {t('reports:noSectionsAdded')}
                     </h3>
                     <p className="text-gray-600">
-                      Click sections from the palette to start building your report
+                      {t('reports:noSectionsDescription')}
                     </p>
                   </div>
                 ) : (
@@ -1547,6 +1551,7 @@ const ReportBuilder: React.FC = () => {
                         reportTitle={reportTitle}
                         entityType={entityType}
                         entityId={entityId}
+                        t={t}
                       />
                     ))}
                   </div>
@@ -1560,15 +1565,15 @@ const ReportBuilder: React.FC = () => {
             jobs={generationJobs}
             onJobComplete={(job) => {
               console.log('Job completed:', job);
-              toast.success(`Rapor "${job.reportName}" başarıyla oluşturuldu!`);
+              toast.success(t('reports:jobCompleted', { reportName: job.reportName }));
             }}
             onJobFailed={(job) => {
               console.log('Job failed:', job);
-              toast.error(`Rapor "${job.reportName}" oluşturma başarısız: ${job.error}`);
+              toast.error(t('reports:jobFailed', { reportName: job.reportName, error: job.error }));
             }}
             onCancelJob={(jobId) => {
               removeJob(jobId);
-              toast('Rapor oluşturma iptal edildi');
+              toast(t('reports:jobCancelled'));
             }}
           />
 
@@ -1602,7 +1607,7 @@ const ReportBuilder: React.FC = () => {
                   if (versionContent.entity_type) setEntityType(versionContent.entity_type);
                   if (versionContent.entity_id) setEntityId(versionContent.entity_id);
                   if (versionContent.sections) setSections(versionContent.sections);
-                  toast.success('Version restored successfully!');
+                  toast.success(t('reports:versionRestoredSuccessfully'));
                 }}
                 onUpdate={() => {
                   // Refresh report data when version changes
@@ -1620,7 +1625,7 @@ const ReportBuilder: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Eye className="w-5 h-5 mr-2" />
-              Report Preview: {reportTitle}
+              {t('reports:preview')}: {reportTitle}
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
@@ -1628,7 +1633,7 @@ const ReportBuilder: React.FC = () => {
               <iframe
                 srcDoc={previewContent}
                 className="w-full h-[60vh] border rounded-lg"
-                title="Report Preview"
+                title={t('reports:preview')}
               />
             )}
           </div>

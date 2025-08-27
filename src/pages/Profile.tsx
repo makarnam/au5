@@ -64,12 +64,12 @@ const Profile: React.FC = () => {
     location: "",
     bio: "",
     skills: [
-      "Risk Assessment",
-      "Internal Controls",
-      "Compliance Review",
-      "Financial Auditing",
+      t("profile.riskAssessment"),
+      t("profile.internalControls"),
+      t("profile.complianceReview"),
+      t("profile.financialAuditing"),
     ],
-    certifications: ["CIA", "CPA", "CISA"],
+    certifications: [t("profile.cia"), t("profile.cpa"), t("profile.cisa")],
   });
 
   // Mock activity data
@@ -77,32 +77,32 @@ const Profile: React.FC = () => {
     {
       id: "1",
       type: "audit",
-      title: "Completed IT Security Audit",
-      description: "Finished fieldwork for annual IT security audit",
+      title: t("profile.completedITSecurityAudit"),
+      description: t("profile.finishedFieldworkITSecurityAudit"),
       timestamp: "2024-01-15T14:30:00Z",
       icon: FileText,
     },
     {
       id: "2",
       type: "finding",
-      title: "Created Critical Finding",
-      description: "Identified password policy weakness",
+      title: t("profile.createdCriticalFinding"),
+      description: t("profile.identifiedPasswordPolicyWeakness"),
       timestamp: "2024-01-14T11:20:00Z",
       icon: Shield,
     },
     {
       id: "3",
       type: "control",
-      title: "Updated Control Testing",
-      description: "Completed testing for backup verification control",
+      title: t("profile.updatedControlTesting"),
+      description: t("profile.completedBackupVerificationControl"),
       timestamp: "2024-01-13T16:45:00Z",
       icon: Award,
     },
     {
       id: "4",
       type: "login",
-      title: "Logged In",
-      description: "Accessed system from new device",
+      title: t("profile.loggedIn"),
+      description: t("profile.accessedFromNewDevice"),
       timestamp: "2024-01-12T09:15:00Z",
       icon: Activity,
     },
@@ -165,12 +165,12 @@ const Profile: React.FC = () => {
       location: "",
       bio: "",
       skills: [
-        "Risk Assessment",
-        "Internal Controls",
-        "Compliance Review",
-        "Financial Auditing",
+        t("profile.riskAssessment"),
+        t("profile.internalControls"),
+        t("profile.complianceReview"),
+        t("profile.financialAuditing"),
       ],
-      certifications: ["CIA", "CPA", "CISA"],
+      certifications: [t("profile.cia"), t("profile.cpa"), t("profile.cisa")],
     });
     setIsEditing(false);
   };

@@ -223,7 +223,7 @@ const ControlsList: React.FC = () => {
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Control Set
+              {t('controls.createControlSet')}
             </button>
 
             <button

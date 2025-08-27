@@ -257,9 +257,9 @@ const RisksList: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Risk Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('risks.risksTitle')}</h1>
           <p className="text-gray-600 mt-2">
-            Discover, assess, treat, and monitor enterprise-wide risks.
+            {t('risks.risksSubtitle')}
           </p>
         </div>
 
@@ -270,15 +270,15 @@ const RisksList: React.FC = () => {
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Risk
+              {t('risks.createRisk')}
             </button>
             <button
               onClick={() => navigate("/risks/create-wizard")}
               className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              title="Create (Wizard)"
+              title={t('risks.createRiskWizard')}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create (Wizard)
+              {t('risks.createRiskWizard')}
             </button>
           </div>
         )}

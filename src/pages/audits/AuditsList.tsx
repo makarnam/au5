@@ -260,7 +260,7 @@ const AuditsList: React.FC = () => {
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create New Audit
+              {t('audits:createNewAudit')}
             </button>
           )}
         </div>
@@ -271,7 +271,7 @@ const AuditsList: React.FC = () => {
             <div className="flex items-center">
               <FileText className="w-5 h-5 text-blue-500 mr-2" />
               <div>
-                <p className="text-sm text-gray-600">Total Audits</p>
+                <p className="text-sm text-gray-600">{t('audits.totalAudits')}</p>
                 <p className="text-xl font-bold text-gray-900">
                   {audits.length}
                 </p>
@@ -282,7 +282,7 @@ const AuditsList: React.FC = () => {
             <div className="flex items-center">
               <PlayCircle className="w-5 h-5 text-green-500 mr-2" />
               <div>
-                <p className="text-sm text-gray-600">In Progress</p>
+                <p className="text-sm text-gray-600">{t('audits.inProgress')}</p>
                 <p className="text-xl font-bold text-gray-900">
                   {audits.filter((a) => a.status === "in_progress").length}
                 </p>
@@ -293,7 +293,7 @@ const AuditsList: React.FC = () => {
             <div className="flex items-center">
               <CheckCircle className="w-5 h-5 text-blue-500 mr-2" />
               <div>
-                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-sm text-gray-600">{t('audits.completed')}</p>
                 <p className="text-xl font-bold text-gray-900">
                   {audits.filter((a) => a.status === "completed").length}
                 </p>
@@ -304,7 +304,7 @@ const AuditsList: React.FC = () => {
             <div className="flex items-center">
               <Clock className="w-5 h-5 text-yellow-500 mr-2" />
               <div>
-                <p className="text-sm text-gray-600">Planning</p>
+                <p className="text-sm text-gray-600">{t('audits.planning')}</p>
                 <p className="text-xl font-bold text-gray-900">
                   {audits.filter((a) => a.status === "planning").length}
                 </p>
@@ -322,7 +322,7 @@ const AuditsList: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search audits..."
+                  placeholder={t('audits.searchAudits')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -339,13 +339,13 @@ const AuditsList: React.FC = () => {
                 }
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="planning">Planning</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="on_hold">On Hold</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="all">{t('audits.allStatus')}</option>
+                <option value="draft">{t('audits.draft')}</option>
+                <option value="planning">{t('audits.planning')}</option>
+                <option value="in_progress">{t('audits.inProgress')}</option>
+                <option value="completed">{t('audits.completed')}</option>
+                <option value="on_hold">{t('audits.onHold')}</option>
+                <option value="cancelled">{t('audits.cancelled')}</option>
               </select>
 
               <select
@@ -355,13 +355,13 @@ const AuditsList: React.FC = () => {
                 }
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Types</option>
-                <option value="financial">Financial</option>
-                <option value="operational">Operational</option>
-                <option value="compliance">Compliance</option>
-                <option value="it">IT</option>
-                <option value="internal">Internal</option>
-                <option value="external">External</option>
+                <option value="all">{t('audits.allTypes')}</option>
+                <option value="financial">{t('audits.financial')}</option>
+                <option value="operational">{t('audits.operational')}</option>
+                <option value="compliance">{t('audits.compliance')}</option>
+                <option value="it">{t('audits.it')}</option>
+                <option value="internal">{t('audits.internal')}</option>
+                <option value="external">{t('audits.external')}</option>
               </select>
 
               <button

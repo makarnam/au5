@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
       // Transform metrics data
       const transformedMetrics: MetricCard[] = [
         {
-          title: 'Active Audits',
+          title: t('dashboard.activeAudits'),
           value: metricsData.activeAudits,
           change: metricsData.auditChange,
           changeType: metricsData.auditChange > 0 ? 'increase' : 'decrease',
@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
           category: 'audit'
         },
         {
-          title: 'Open Risks',
+          title: t('dashboard.openRisks'),
           value: metricsData.openRisks,
           change: metricsData.riskChange,
           changeType: metricsData.riskChange > 0 ? 'increase' : 'decrease',
@@ -154,7 +154,7 @@ const Dashboard: React.FC = () => {
           category: 'risk'
         },
         {
-          title: 'Active Controls',
+          title: t('dashboard.activeControls'),
           value: metricsData.activeControls,
           change: metricsData.controlChange,
           changeType: metricsData.controlChange > 0 ? 'increase' : 'decrease',
@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
           category: 'control'
         },
         {
-          title: 'Compliance Score',
+          title: t('dashboard.complianceScore'),
           value: metricsData.complianceScore,
           change: metricsData.complianceChange,
           changeType: metricsData.complianceChange > 0 ? 'increase' : 'decrease',
@@ -204,7 +204,7 @@ const Dashboard: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <GitBranch className="w-5 h-5 mr-2" />
-          Entity Relationships
+          {t('dashboard.entityRelationships')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {relationships.map((rel, index) => (
@@ -280,11 +280,11 @@ const Dashboard: React.FC = () => {
   const renderViewTabs = () => (
     <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
       {[
-        { key: 'overview', label: 'Overview', icon: BarChart3 },
-        { key: 'detailed', label: 'Detailed', icon: PieChartIcon },
-        { key: 'analytics', label: 'Analytics', icon: TrendingUp },
-        { key: 'relationships', label: 'Relationships', icon: GitBranch }
-      ].map((tab) => (
+       { key: 'overview', label: t('dashboard.overviewView'), icon: BarChart3 },
+       { key: 'detailed', label: t('dashboard.detailedView'), icon: PieChartIcon },
+       { key: 'analytics', label: t('dashboard.analyticsView'), icon: TrendingUp },
+       { key: 'relationships', label: t('dashboard.relationships'), icon: GitBranch }
+     ].map((tab) => (
         <button
           key={tab.key}
           onClick={() => setSelectedView(tab.key as any)}
@@ -314,8 +314,8 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back, {user?.email}</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('dashboard.welcomeBack', { name: user?.first_name || user?.email || 'User' })}</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
@@ -323,17 +323,17 @@ const Dashboard: React.FC = () => {
             onChange={(e) => setSelectedPeriod(e.target.value)}
             className="border border-gray-300 rounded-md px-3 py-2 text-sm"
           >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
+            <option value="7d">{t('dashboard.last7Days')}</option>
+            <option value="30d">{t('dashboard.last30Days')}</option>
+            <option value="90d">{t('dashboard.last90Days')}</option>
+            <option value="1y">{t('dashboard.lastYear')}</option>
           </select>
           <button
             onClick={loadDashboardData}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Refresh</span>
+            <span>{t('dashboard.refresh')}</span>
           </button>
         </div>
       </div>
@@ -348,7 +348,7 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Audit Status Chart */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Audit Status Distribution</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('dashboard.auditStatusDistribution')}</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -371,7 +371,7 @@ const Dashboard: React.FC = () => {
 
             {/* Risk Heatmap */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Risk Heatmap</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('dashboard.riskHeatmap')}</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <ScatterChart>
                   <CartesianGrid />
@@ -389,10 +389,10 @@ const Dashboard: React.FC = () => {
       {selectedView === 'relationships' && (
         <div className="space-y-6">
           {renderRelationshipGraph()}
-          
+
           {/* Cross-Module Relationships */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Cross-Module Integration</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('dashboard.crossModuleIntegration')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="border border-gray-200 rounded-lg p-4">
                 <h4 className="font-medium mb-2">Audit → Risk</h4>
