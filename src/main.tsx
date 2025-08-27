@@ -17,6 +17,7 @@ const initializeApp = async () => {
     console.log("Auth store initialized successfully");
   } catch (error) {
     console.error("Failed to initialize auth store:", error);
+    // Continue anyway to allow the app to load
   }
 };
 

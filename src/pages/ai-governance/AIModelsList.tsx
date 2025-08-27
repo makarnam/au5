@@ -305,7 +305,7 @@ const AIModelsList: React.FC = () => {
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="all">All types</SelectItem>
                     <SelectItem value="llm">LLM</SelectItem>
                     <SelectItem value="ml">Machine Learning</SelectItem>
                     <SelectItem value="nlp">NLP</SelectItem>
@@ -323,7 +323,7 @@ const AIModelsList: React.FC = () => {
                     <SelectValue placeholder="All providers" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All providers</SelectItem>
+                    <SelectItem value="all">All providers</SelectItem>
                     <SelectItem value="openai">OpenAI</SelectItem>
                     <SelectItem value="anthropic">Anthropic</SelectItem>
                     <SelectItem value="google">Google</SelectItem>
@@ -341,7 +341,7 @@ const AIModelsList: React.FC = () => {
                     <SelectValue placeholder="All levels" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All levels</SelectItem>
+                    <SelectItem value="all">All levels</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
@@ -357,7 +357,7 @@ const AIModelsList: React.FC = () => {
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
+                    <SelectItem value="all">All statuses</SelectItem>
                     <SelectItem value="compliant">Compliant</SelectItem>
                     <SelectItem value="non_compliant">Non-Compliant</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -373,7 +373,7 @@ const AIModelsList: React.FC = () => {
                     <SelectValue placeholder="All environments" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All environments</SelectItem>
+                    <SelectItem value="all">All environments</SelectItem>
                     <SelectItem value="development">Development</SelectItem>
                     <SelectItem value="staging">Staging</SelectItem>
                     <SelectItem value="production">Production</SelectItem>

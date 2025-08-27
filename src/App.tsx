@@ -1,12 +1,14 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { errorHandler } from "./lib/errorHandler";
 import "./lib/sessionDebugger"; // Initialize session debugger
 import "./lib/debug-commands"; // Initialize debug commands
-import { startSessionMonitoring, autoRecoverSession } from "./lib/sessionDebugger";
+import { autoRecoverSession } from "./lib/sessionDebugger";
 import { useAuthStore } from "./store/authStore";
+import "./i18n"; // Initialize i18n
+import { languageService } from "./services/languageService";
 
 // Auth Pages
 import SignIn from "./pages/auth/SignIn";
@@ -104,7 +106,6 @@ import ImpactDashboard from "./pages/regulations/ImpactDashboard";
 // Workflows Pages
 import WorkflowsHome from "./pages/workflows/WorkflowsHome";
 import WorkflowsList from "./pages/workflows/WorkflowsList";
-import WorkflowCenter from "./pages/workflows/WorkflowCenter";
 import WorkflowCenterPage from "./pages/workflows/WorkflowCenterPage";
 import WorkflowDetails from "./pages/workflows/WorkflowDetails";
 import WorkflowInstance from "./pages/workflows/WorkflowInstance";
@@ -140,6 +141,14 @@ import CreateRTOPage from "./pages/bcp/CreateRTOPage";
 import CreateRiskAssessmentPage from "./pages/bcp/CreateRiskAssessmentPage";
 import CreateTestingExercisePage from "./pages/bcp/CreateTestingExercisePage";
 import CreateResourcePage from "./pages/bcp/CreateResourcePage";
+
+// Reporting Pages
+import ReportBuilderPage from "./pages/reports/ReportBuilderPage";
+import ReportWizardPage from "./pages/reports/ReportWizardPage";
+import ReportTemplatesPage from "./pages/reports/ReportTemplatesPage";
+import GeneratedReportsPage from "./pages/reports/GeneratedReportsPage";
+import ReportAnalyticsPage from "./pages/reports/ReportAnalyticsPage";
+import ScheduledReportsPage from "./pages/reports/ScheduledReportsPage";
 
 // Resilience Management
 import ResilienceDashboard from "./pages/resilience/ResilienceDashboard";
@@ -219,6 +228,11 @@ import SecurityAssets from "./pages/it-security/SecurityAssets";
 import SupplyChainDashboard from "./pages/supply-chain-risk/SupplyChainDashboard";
 import CreateSupplyChainRiskPage from "./pages/supply-chain-risk/CreateSupplyChainRiskPage";
 
+// Risk Control Matrix Pages
+import RiskControlMatrixPage from "./pages/risk-control-matrix/RiskControlMatrixPage";
+import CreateRiskControlMatrixPage from "./pages/risk-control-matrix/CreateRiskControlMatrixPage";
+import RiskControlMatrixDetails from "./pages/risk-control-matrix/RiskControlMatrixDetails";
+
 // Admin Pages
 import ComingSoonAdmin from "./pages/admin/ComingSoonAdmin";
 
@@ -242,13 +256,18 @@ function App() {
       return;
     }
     initializedRef.current = true;
-    
+
     // Setup global error handlers
     errorHandler.setupGlobalErrorHandlers();
-    
+
     // Initialize auth store
     const authStore = useAuthStore.getState();
     authStore.initialize();
+
+    // Initialize language service
+    languageService.initializeLanguage().catch((error) => {
+      console.error('Error initializing language service:', error);
+    });
     
     // Start session monitoring after a short delay (only once)
     const monitoringTimer = setTimeout(() => {
@@ -458,6 +477,11 @@ function App() {
           <Route path="supply-chain-risk" element={<SupplyChainDashboard />} />
           <Route path="supply-chain-risk/create" element={<CreateSupplyChainRiskPage />} />
 
+          {/* Risk Control Matrix */}
+          <Route path="risk-control-matrix" element={<RiskControlMatrixPage />} />
+          <Route path="risk-control-matrix/create" element={<CreateRiskControlMatrixPage />} />
+          <Route path="risk-control-matrix/:id" element={<RiskControlMatrixDetails />} />
+
           {/* ESG Management */}
           <Route path="esg" element={<ESGDashboardPage />} />
           <Route path="esg/comprehensive" element={<ESGComprehensivePage />} />
@@ -525,6 +549,15 @@ function App() {
           <Route path="governance/calendar" element={<GovernanceCalendar />} />
           <Route path="governance/reporting" element={<GovernanceReporting />} />
           <Route path="governance/training" element={<GovernanceTraining />} />
+
+          {/* Reporting */}
+          <Route path="reports" element={<ReportBuilderPage />} />
+          <Route path="reports/builder" element={<ReportBuilderPage />} />
+          <Route path="reports/wizard" element={<ReportWizardPage />} />
+          <Route path="reports/templates" element={<ReportTemplatesPage />} />
+          <Route path="reports/generated" element={<GeneratedReportsPage />} />
+          <Route path="reports/analytics" element={<ReportAnalyticsPage />} />
+          <Route path="reports/scheduled" element={<ScheduledReportsPage />} />
 
           {/* Admin */}
           <Route path="admin" element={<ComingSoonAdmin />} />

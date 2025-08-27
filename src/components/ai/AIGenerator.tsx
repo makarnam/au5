@@ -288,18 +288,27 @@ export default function AIGenerator({
       const response = await aiService.generateContent(request);
 
       if (response.success) {
-        setGeneratedContent(
-          Array.isArray(response.content)
-            ? response.content.join("\n")
-            : response.content,
-        );
+        const processedContent = Array.isArray(response.content)
+          ? response.content.join("\n")
+          : response.content;
+
+        setGeneratedContent(processedContent);
 
         // Log the generation
         await aiService.logGeneration(request, response);
 
-        toast.success(
-          `${getFieldDisplayName(fieldType)} generated successfully!`,
-        );
+        // Automatically call onGenerated for immediate population
+        if (fieldType === "description") {
+          onGenerated(processedContent);
+          setIsOpen(false);
+          toast.success(
+            `${getFieldDisplayName(fieldType)} generated and applied successfully!`,
+          );
+        } else {
+          toast.success(
+            `${getFieldDisplayName(fieldType)} generated successfully!`,
+          );
+        }
       } else {
         throw new Error(response.error || "Generation failed");
       }

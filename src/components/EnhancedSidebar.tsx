@@ -133,7 +133,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
   const menuCategories = useMemo(() => [
     {
       id: "dashboard",
-      name: "Main Dashboard",
+      name: t("navigation.dashboard"),
       icon: Home,
       color: "from-blue-500 to-cyan-500",
       items: [
@@ -148,7 +148,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     },
     {
       id: "risk-management",
-      name: "Risk Management",
+      name: t("sidebar.riskManagement"),
       icon: AlertTriangle,
       color: "from-red-500 to-orange-500",
       items: [
@@ -159,76 +159,83 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           current: location.pathname.startsWith("/risks"),
           roles: ["business_unit_manager", "auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "All Risks", href: "/risks", current: location.pathname === "/risks" },
-            { name: "Dashboard", href: "/risks/dashboard", current: location.pathname === "/risks/dashboard" },
-            { name: "Second Dashboard", href: "/risks/dashboard-2", current: location.pathname === "/risks/dashboard-2" },
-            { name: "Loss Event Management", href: "/risks/loss-events", current: location.pathname === "/risks/loss-events" },
-            { name: "Key Indicator Management", href: "/risks/key-indicators", current: location.pathname === "/risks/key-indicators" },
-            { name: "Operational Risk Management", href: "/risks/operational-risk", current: location.pathname === "/risks/operational-risk" },
-            { name: "Create", href: "/risks/create", current: location.pathname === "/risks/create" }
+            { name: t("navigation.allRisks"), href: "/risks", current: location.pathname === "/risks" },
+            { name: t("navigation.dashboard"), href: "/risks/dashboard", current: location.pathname === "/risks/dashboard" },
+            { name: t("navigation.secondDashboard"), href: "/risks/dashboard-2", current: location.pathname === "/risks/dashboard-2" },
+            { name: t("navigation.lossEventManagement"), href: "/risks/loss-events", current: location.pathname === "/risks/loss-events" },
+            { name: t("navigation.keyIndicatorManagement"), href: "/risks/key-indicators", current: location.pathname === "/risks/key-indicators" },
+            { name: t("navigation.operationalRiskManagement"), href: "/risks/operational-risk", current: location.pathname === "/risks/operational-risk" },
+            { name: t("common.create"), href: "/risks/create", current: location.pathname === "/risks/create" }
           ]
         },
         {
-          name: "Third Party Risk Management",
+          name: t("sidebar.thirdPartyRiskManagement"),
           href: "/third-party-risk-management",
           icon: Building2,
           current: location.pathname.startsWith("/third-party-risk-management"),
           roles: ["business_unit_manager", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/third-party-risk-management", current: location.pathname === "/third-party-risk-management" },
-            { name: "Third Party Catalog", href: "/third-party-risk-management/catalog", current: location.pathname === "/third-party-risk-management/catalog" },
-            { name: "Create Third Party", href: "/third-party-risk-management/create", current: location.pathname === "/third-party-risk-management/create" },
-            { name: "Assessments", href: "/third-party-risk-management/assessments", current: location.pathname === "/third-party-risk-management/assessments" },
-            { name: "Engagements", href: "/third-party-risk-management/engagements", current: location.pathname.startsWith("/third-party-risk-management/engagements") },
-            { name: "Incident Management", href: "/third-party-risk-management/incidents", current: location.pathname === "/third-party-risk-management/incidents" },
-            { name: "Contract Management", href: "/third-party-risk-management/contracts", current: location.pathname === "/third-party-risk-management/contracts" },
-            { name: "Performance Monitoring", href: "/third-party-risk-management/performance", current: location.pathname === "/third-party-risk-management/performance" },
-            { name: "Security Monitoring", href: "/third-party-risk-management/security", current: location.pathname === "/third-party-risk-management/security" },
-            { name: "Due Diligence Workflow", href: "/third-party-risk-management/due-diligence", current: location.pathname === "/third-party-risk-management/due-diligence" },
+            { name: t("sidebar.dashboard"), href: "/third-party-risk-management", current: location.pathname === "/third-party-risk-management" },
+            { name: t("sidebar.thirdPartyCatalog"), href: "/third-party-risk-management/catalog", current: location.pathname === "/third-party-risk-management/catalog" },
+            { name: t("sidebar.createThirdParty"), href: "/third-party-risk-management/create", current: location.pathname === "/third-party-risk-management/create" },
+            { name: t("sidebar.assessments"), href: "/third-party-risk-management/assessments", current: location.pathname === "/third-party-risk-management/assessments" },
+            { name: t("sidebar.engagements"), href: "/third-party-risk-management/engagements", current: location.pathname.startsWith("/third-party-risk-management/engagements") },
+            { name: t("sidebar.incidentManagement"), href: "/third-party-risk-management/incidents", current: location.pathname === "/third-party-risk-management/incidents" },
+            { name: t("sidebar.contractManagement"), href: "/third-party-risk-management/contracts", current: location.pathname === "/third-party-risk-management/contracts" },
+            { name: t("sidebar.performanceMonitoring"), href: "/third-party-risk-management/performance", current: location.pathname === "/third-party-risk-management/performance" },
+            { name: t("sidebar.securityMonitoring"), href: "/third-party-risk-management/security", current: location.pathname === "/third-party-risk-management/security" },
+            { name: t("sidebar.dueDiligenceWorkflow"), href: "/third-party-risk-management/due-diligence", current: location.pathname === "/third-party-risk-management/due-diligence" },
           ]
         },
         {
-          name: "IT & Security Risk Management",
+          name: t("sidebar.itSecurityRiskManagement"),
           href: "/it-security",
           icon: Lock,
           current: location.pathname.startsWith("/it-security"),
           roles: ["business_unit_manager", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/it-security", current: location.pathname === "/it-security" },
-            { name: "Security Incidents", href: "/it-security/incidents", current: location.pathname.startsWith("/it-security/incidents") },
-            { name: "Vulnerabilities", href: "/it-security/vulnerabilities", current: location.pathname.startsWith("/it-security/vulnerabilities") },
-            { name: "IT Controls", href: "/it-security/controls", current: location.pathname.startsWith("/it-security/controls") },
-            { name: "Security Policies", href: "/it-security/policies", current: location.pathname.startsWith("/it-security/policies") },
-            { name: "PCI Compliance", href: "/it-security/pci", current: location.pathname.startsWith("/it-security/pci") },
-            { name: "ISO 27001 (ISMS)", href: "/it-security/isms", current: location.pathname.startsWith("/it-security/isms") },
-            { name: "CMMC Management", href: "/it-security/cmmc", current: location.pathname.startsWith("/it-security/cmmc") },
-            { name: "Security Monitoring", href: "/it-security/monitoring", current: location.pathname.startsWith("/it-security/monitoring") },
-            { name: "Security Assets", href: "/it-security/assets", current: location.pathname.startsWith("/it-security/assets") },
+            { name: t("sidebar.dashboard"), href: "/it-security", current: location.pathname === "/it-security" },
+            { name: t("sidebar.securityIncidents"), href: "/it-security/incidents", current: location.pathname.startsWith("/it-security/incidents") },
+            { name: t("sidebar.vulnerabilities"), href: "/it-security/vulnerabilities", current: location.pathname.startsWith("/it-security/vulnerabilities") },
+            { name: t("sidebar.itControls"), href: "/it-security/controls", current: location.pathname.startsWith("/it-security/controls") },
+            { name: t("sidebar.securityPolicies"), href: "/it-security/policies", current: location.pathname.startsWith("/it-security/policies") },
+            { name: t("sidebar.pciCompliance"), href: "/it-security/pci", current: location.pathname.startsWith("/it-security/pci") },
+            { name: t("sidebar.iso27001"), href: "/it-security/isms", current: location.pathname.startsWith("/it-security/isms") },
+            { name: t("sidebar.cmmcManagement"), href: "/it-security/cmmc", current: location.pathname.startsWith("/it-security/cmmc") },
+            { name: t("sidebar.securityMonitoring"), href: "/it-security/monitoring", current: location.pathname.startsWith("/it-security/monitoring") },
+            { name: t("sidebar.securityAssets"), href: "/it-security/assets", current: location.pathname.startsWith("/it-security/assets") },
           ],
         },
         {
-          name: "ESG Management",
+          name: t("sidebar.riskControlMatrix"),
+          href: "/risk-control-matrix",
+          icon: FileSpreadsheet,
+          current: location.pathname.startsWith("/risk-control-matrix"),
+          roles: ["business_unit_manager", "auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+        },
+        {
+          name: t("sidebar.esgManagement"),
           href: "/esg",
           icon: Leaf,
           current: location.pathname.startsWith("/esg"),
           roles: ["business_unit_manager", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/esg", current: location.pathname === "/esg" },
-            { name: "Comprehensive ESG", href: "/esg/comprehensive", current: location.pathname === "/esg/comprehensive" },
-            { name: "Programs", href: "/esg/programs", current: location.pathname === "/esg/programs" },
-            { name: "Carbon Management", href: "/esg/carbon", current: location.pathname === "/esg/carbon" },
-            { name: "Disclosures", href: "/esg/disclosures", current: location.pathname === "/esg/disclosures" },
-            { name: "Portfolio Assessment", href: "/esg/portfolio", current: location.pathname === "/esg/portfolio" },
-            { name: "Goals Management", href: "/esg/goals", current: location.pathname === "/esg/goals" },
-            { name: "Stakeholder Engagement", href: "/esg/stakeholders", current: location.pathname === "/esg/stakeholders" },
-            { name: "Materiality Calculator", href: "/esg/materiality", current: location.pathname === "/esg/materiality" },
+            { name: t("sidebar.dashboard"), href: "/esg", current: location.pathname === "/esg" },
+            { name: t("sidebar.comprehensiveEsg"), href: "/esg/comprehensive", current: location.pathname === "/esg/comprehensive" },
+            { name: t("sidebar.programs"), href: "/esg/programs", current: location.pathname === "/esg/programs" },
+            { name: t("sidebar.carbonManagement"), href: "/esg/carbon", current: location.pathname === "/esg/carbon" },
+            { name: t("sidebar.disclosures"), href: "/esg/disclosures", current: location.pathname === "/esg/disclosures" },
+            { name: t("sidebar.portfolioAssessment"), href: "/esg/portfolio", current: location.pathname === "/esg/portfolio" },
+            { name: t("sidebar.goalsManagement"), href: "/esg/goals", current: location.pathname === "/esg/goals" },
+            { name: t("sidebar.stakeholderEngagement"), href: "/esg/stakeholders", current: location.pathname === "/esg/stakeholders" },
+            { name: t("sidebar.materialityCalculator"), href: "/esg/materiality", current: location.pathname === "/esg/materiality" },
           ],
         },
       ],
     },
     {
       id: "audit-compliance",
-      name: "Audit & Compliance",
+      name: t("sidebar.auditCompliance"),
       icon: FileText,
       color: "from-green-500 to-emerald-500",
       items: [
@@ -241,22 +248,22 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           children: [
             { name: t("navigation.allAudits"), href: "/audits", current: location.pathname === "/audits" },
             { name: t("navigation.createAudit"), href: "/audits/create", current: location.pathname === "/audits/create" },
-            { name: "Upcoming Schedules", href: "/audits/schedules", current: location.pathname === "/audits/schedules" },
+            { name: t("navigation.upcomingSchedules"), href: "/audits/schedules", current: location.pathname === "/audits/schedules" },
           ],
         },
         {
-          name: "Audit Planning",
+          name: t("navigation.auditPlanning"),
           href: "/audit-planning",
           icon: BarChart3,
           current: location.pathname.startsWith("/audit-planning"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/audit-planning", current: location.pathname === "/audit-planning" },
-            { name: "Audit Universe", href: "/audit-planning/universe", current: location.pathname === "/audit-planning/universe" },
-            { name: "Audit Plans", href: "/audit-planning/plans", current: location.pathname === "/audit-planning/plans" },
-            { name: "Resource Management", href: "/audit-planning/resources", current: location.pathname === "/audit-planning/resources" },
-            { name: "Competencies", href: "/audit-planning/competencies", current: location.pathname === "/audit-planning/competencies" },
-            { name: "Training Needs", href: "/audit-planning/training", current: location.pathname === "/audit-planning/training" },
+            { name: t("navigation.dashboard"), href: "/audit-planning", current: location.pathname === "/audit-planning" },
+            { name: t("navigation.auditUniverse"), href: "/audit-planning/universe", current: location.pathname === "/audit-planning/universe" },
+            { name: t("navigation.auditPlans"), href: "/audit-planning/plans", current: location.pathname === "/audit-planning/plans" },
+            { name: t("navigation.resourceManagement"), href: "/audit-planning/resources", current: location.pathname === "/audit-planning/resources" },
+            { name: t("navigation.competencies"), href: "/audit-planning/competencies", current: location.pathname === "/audit-planning/competencies" },
+            { name: t("navigation.trainingNeeds"), href: "/audit-planning/training", current: location.pathname === "/audit-planning/training" },
           ],
         },
         {
@@ -267,41 +274,41 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
         },
         {
-          name: "Compliance",
+          name: t("navigation.compliance"),
           href: "/compliance/frameworks",
           icon: Gavel,
           current: location.pathname.startsWith("/compliance"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Frameworks", href: "/compliance/frameworks", current: location.pathname === "/compliance/frameworks" },
-            { name: "Requirements", href: "/compliance/requirements", current: location.pathname === "/compliance/requirements" },
-            { name: "Profiles", href: "/compliance/profiles", current: location.pathname === "/compliance/profiles" },
-            { name: "Mapping", href: "/compliance/mapping", current: location.pathname === "/compliance/mapping" },
-            { name: "Import", href: "/compliance/import", current: location.pathname === "/compliance/import" },
-            { name: "Importer 2", href: "/compliance/importer-2", current: location.pathname === "/compliance/importer-2" }
+            { name: t("navigation.frameworks"), href: "/compliance/frameworks", current: location.pathname === "/compliance/frameworks" },
+            { name: t("navigation.requirements"), href: "/compliance/requirements", current: location.pathname === "/compliance/requirements" },
+            { name: t("navigation.profiles"), href: "/compliance/profiles", current: location.pathname === "/compliance/profiles" },
+            { name: t("navigation.mapping"), href: "/compliance/mapping", current: location.pathname === "/compliance/mapping" },
+            { name: t("navigation.importer"), href: "/compliance/import", current: location.pathname === "/compliance/import" },
+            { name: t("navigation.importer2"), href: "/compliance/importer-2", current: location.pathname === "/compliance/importer-2" }
           ]
         },
         {
-          name: "Privacy",
+          name: t("navigation.privacy"),
           href: "/privacy/dashboard",
           icon: Eye,
           current: location.pathname.startsWith("/privacy"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/privacy/dashboard", current: location.pathname === "/privacy/dashboard" },
-            { name: "DPIA", href: "/privacy/dpia", current: location.pathname === "/privacy/dpia" },
-            { name: "RoPA Register", href: "/privacy/ropa", current: location.pathname === "/privacy/ropa" },
+            { name: t("navigation.dashboard"), href: "/privacy/dashboard", current: location.pathname === "/privacy/dashboard" },
+            { name: t("navigation.dpia"), href: "/privacy/dpia", current: location.pathname === "/privacy/dpia" },
+            { name: t("navigation.ropaRegister"), href: "/privacy/ropa", current: location.pathname === "/privacy/ropa" },
           ],
         },
         {
-          name: "Regulations (RCM)",
+          name: t("navigation.regulations"),
           href: "/regulations",
           icon: Scale,
           current: location.pathname.startsWith("/regulations"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "All Regulations", href: "/regulations", current: location.pathname === "/regulations" },
-            { name: "Impact Dashboard", href: "/regulations/impact-dashboard", current: location.pathname === "/regulations/impact-dashboard" },
+            { name: t("navigation.allRegulations"), href: "/regulations", current: location.pathname === "/regulations" },
+            { name: t("navigation.impactDashboard"), href: "/regulations/impact-dashboard", current: location.pathname === "/regulations/impact-dashboard" },
           ]
         },
         {
@@ -311,16 +318,16 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           current: location.pathname.startsWith("/findings"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "All Findings", href: "/findings", current: location.pathname === "/findings" },
-            { name: "Dashboard", href: "/findings/dashboard", current: location.pathname === "/findings/dashboard" },
-            { name: "Create", href: "/findings/create", current: location.pathname === "/findings/create" },
+            { name: t("navigation.allFindings"), href: "/findings", current: location.pathname === "/findings" },
+            { name: t("navigation.dashboard"), href: "/findings/dashboard", current: location.pathname === "/findings/dashboard" },
+            { name: t("common.create"), href: "/findings/create", current: location.pathname === "/findings/create" },
           ],
         },
       ],
     },
     {
       id: "business-processes",
-      name: "Business Processes",
+      name: t("sidebar.businessProcesses"),
       icon: Workflow,
       color: "from-purple-500 to-pink-500",
       items: [
@@ -332,35 +339,35 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           roles: ["cro", "admin", "super_admin"],
         },
         {
-          name: "Entity Relationships",
+          name: t("navigation.entityRelationships"),
           href: "/relationships",
           icon: Network,
           current: location.pathname.startsWith("/relationships"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
         },
         {
-          name: "Document Management",
+          name: t("navigation.documentManagement"),
           href: "/documents",
           icon: FileText,
           current: location.pathname.startsWith("/documents"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
         },
         {
-          name: "Policies",
+          name: t("navigation.policies"),
           href: "/policies",
           icon: BookOpen,
           current: location.pathname.startsWith("/policies"),
           roles: ["business_unit_manager", "auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "All Policies", href: "/policies", current: location.pathname === "/policies" },
-            { name: "Create / Edit", href: "/policies", current: location.pathname.startsWith("/policies/") },
+            { name: t("navigation.allPolicies"), href: "/policies", current: location.pathname === "/policies" },
+            { name: t("navigation.createEdit"), href: "/policies", current: location.pathname.startsWith("/policies/") },
           ],
         },
       ],
     },
     {
       id: "ai-analytics",
-      name: "AI & Analytics",
+      name: t("sidebar.aiAnalytics"),
       icon: Bot,
       color: "from-indigo-500 to-blue-500",
       items: [
@@ -372,19 +379,19 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
         },
         {
-          name: "AI Governance",
+          name: t("navigation.aiGovernance"),
           href: "/ai-governance",
           icon: Bot,
           current: location.pathname.startsWith("/ai-governance"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/ai-governance/dashboard", current: location.pathname === "/ai-governance/dashboard" },
-            { name: "AI Models", href: "/ai-governance/models", current: location.pathname === "/ai-governance/models" },
-            { name: "Controls Library", href: "/ai-governance/controls", current: location.pathname === "/ai-governance/controls" },
+            { name: t("navigation.dashboard"), href: "/ai-governance/dashboard", current: location.pathname === "/ai-governance/dashboard" },
+            { name: t("navigation.aiModels"), href: "/ai-governance/models", current: location.pathname === "/ai-governance/models" },
+            { name: t("navigation.controlsLibrary"), href: "/ai-governance/controls", current: location.pathname === "/ai-governance/controls" },
           ],
         },
         {
-          name: "Advanced Analytics",
+          name: t("navigation.advancedAnalytics"),
           href: "/analytics",
           icon: BarChart3,
           current: location.pathname.startsWith("/analytics"),
@@ -394,45 +401,45 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     },
     {
       id: "operational-management",
-      name: "Operational Management",
+      name: t("sidebar.operationalManagement"),
       icon: Briefcase,
       color: "from-yellow-500 to-orange-500",
       items: [
         {
-          name: "Resilience Management",
+          name: t("navigation.resilienceManagement"),
           href: "/resilience",
           icon: Shield,
           current: location.pathname.startsWith("/resilience"),
           roles: ["business_unit_manager", "auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/resilience", current: location.pathname === "/resilience" },
-            { name: "Incident Management", href: "/resilience/incidents", current: location.pathname === "/resilience/incidents" },
-            { name: "Business Impact Analysis", href: "/resilience/bia", current: location.pathname.startsWith("/resilience/bia") },
-            { name: "Crisis Management", href: "/resilience/crisis", current: location.pathname === "/resilience/crisis" },
-            { name: "Scenario Analysis", href: "/resilience/scenarios", current: location.pathname === "/resilience/scenarios" },
-            { name: "Metrics Dashboard", href: "/resilience/metrics", current: location.pathname === "/resilience/metrics" }
+            { name: t("navigation.dashboard"), href: "/resilience", current: location.pathname === "/resilience" },
+            { name: t("navigation.incidentManagement"), href: "/resilience/incidents", current: location.pathname === "/resilience/incidents" },
+            { name: t("navigation.businessImpactAnalysis"), href: "/resilience/bia", current: location.pathname.startsWith("/resilience/bia") },
+            { name: t("navigation.crisisManagement"), href: "/resilience/crisis", current: location.pathname === "/resilience/crisis" },
+            { name: t("navigation.scenarioAnalysis"), href: "/resilience/scenarios", current: location.pathname === "/resilience/scenarios" },
+            { name: t("navigation.metricsDashboard"), href: "/resilience/metrics", current: location.pathname === "/resilience/metrics" }
           ]
         },
         {
-          name: "Business Continuity Management",
+          name: t("navigation.businessContinuityManagement"),
           href: "/bcp",
           icon: RefreshCw,
           current: location.pathname.startsWith("/bcp"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/bcp", current: location.pathname === "/bcp" },
-            { name: "Create Plan", href: "/bcp/create", current: location.pathname === "/bcp/create" }
+            { name: t("navigation.dashboard"), href: "/bcp", current: location.pathname === "/bcp" },
+            { name: t("navigation.createPlan"), href: "/bcp/create", current: location.pathname === "/bcp/create" }
           ]
         },
         {
-          name: "Incident Management",
+          name: t("navigation.incidentManagement"),
           href: "/incidents",
           icon: AlertCircle,
           current: location.pathname.startsWith("/incidents"),
           roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
         },
         {
-          name: "Training & Certification",
+          name: t("navigation.trainingCertification"),
           href: "/training",
           icon: GraduationCap,
           current: location.pathname.startsWith("/training"),
@@ -442,25 +449,25 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     },
     {
       id: "system-management",
-      name: "System Management",
+      name: t("sidebar.systemManagement"),
       icon: Settings,
       color: "from-gray-500 to-slate-500",
       items: [
         {
-          name: "Governance",
+          name: t("navigation.governance"),
           href: "/governance",
           icon: Gavel,
           current: location.pathname.startsWith("/governance"),
           roles: ["auditor", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
-            { name: "Dashboard", href: "/governance/dashboard", current: location.pathname === "/governance/dashboard" },
-            { name: "Calendar", href: "/governance/calendar", current: location.pathname === "/governance/calendar" },
-            { name: "Reporting", href: "/governance/reporting", current: location.pathname === "/governance/reporting" },
-            { name: "Training", href: "/governance/training", current: location.pathname === "/governance/training" }
+            { name: t("navigation.dashboard"), href: "/governance/dashboard", current: location.pathname === "/governance/dashboard" },
+            { name: t("navigation.calendar"), href: "/governance/calendar", current: location.pathname === "/governance/calendar" },
+            { name: t("navigation.reporting"), href: "/governance/reporting", current: location.pathname === "/governance/reporting" },
+            { name: t("navigation.training"), href: "/governance/training", current: location.pathname === "/governance/training" }
           ],
         },
         {
-          name: "Asset Management",
+          name: t("navigation.assetManagement"),
           href: "/assets",
           icon: HardDrive,
           current: location.pathname.startsWith("/assets"),
@@ -479,6 +486,56 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           icon: Settings,
           current: location.pathname === "/settings" || location.pathname.startsWith("/settings/"),
           roles: ["admin", "super_admin"],
+        },
+      ],
+    },
+    {
+      id: "reporting",
+      name: t("sidebar.reporting"),
+      icon: FileText,
+      color: "from-teal-500 to-cyan-500",
+      items: [
+        {
+          name: t("navigation.reportBuilder"),
+          href: "/reports/builder",
+          icon: FileText,
+          current: location.pathname === "/reports/builder",
+          roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+        },
+        {
+          name: t("navigation.reportWizard"),
+          href: "/reports/wizard",
+          icon: Bot,
+          current: location.pathname === "/reports/wizard",
+          roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+        },
+        {
+          name: t("navigation.reportTemplates"),
+          href: "/reports/templates",
+          icon: FileText,
+          current: location.pathname === "/reports/templates",
+          roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+        },
+        {
+          name: t("navigation.generatedReports"),
+          href: "/reports/generated",
+          icon: FileText,
+          current: location.pathname === "/reports/generated",
+          roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+        },
+        {
+          name: t("navigation.reportAnalytics"),
+          href: "/reports/analytics",
+          icon: BarChart3,
+          current: location.pathname === "/reports/analytics",
+          roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+        },
+        {
+          name: t("navigation.scheduledReports"),
+          href: "/reports/scheduled",
+          icon: Calendar,
+          current: location.pathname === "/reports/scheduled",
+          roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
         },
       ],
     },
@@ -561,8 +618,8 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
             <div className="ml-3">
-              <h1 className="text-xl font-bold text-gray-900">AI Auditor</h1>
-              <p className="text-xs text-gray-500">GRC Platform</p>
+              <h1 className="text-xl font-bold text-gray-900">{t('layout.aiAuditor')}</h1>
+              <p className="text-xs text-gray-500">{t('layout.grcPlatform')}</p>
             </div>
           </div>
         )}

@@ -304,7 +304,7 @@ const AIControlsList: React.FC = () => {
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="all">All types</SelectItem>
                     <SelectItem value="preventive">Preventive</SelectItem>
                     <SelectItem value="detective">Detective</SelectItem>
                     <SelectItem value="corrective">Corrective</SelectItem>
@@ -320,7 +320,7 @@ const AIControlsList: React.FC = () => {
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All categories</SelectItem>
+                    <SelectItem value="all">All categories</SelectItem>
                     <SelectItem value="data_governance">Data Governance</SelectItem>
                     <SelectItem value="model_governance">Model Governance</SelectItem>
                     <SelectItem value="deployment_governance">Deployment Governance</SelectItem>
@@ -337,7 +337,7 @@ const AIControlsList: React.FC = () => {
                     <SelectValue placeholder="All levels" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All levels</SelectItem>
+                    <SelectItem value="all">All levels</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
@@ -353,7 +353,7 @@ const AIControlsList: React.FC = () => {
                     <SelectValue placeholder="All frameworks" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All frameworks</SelectItem>
+                    <SelectItem value="all">All frameworks</SelectItem>
                     <SelectItem value="eu_ai_act">EU AI Act</SelectItem>
                     <SelectItem value="nist_ai_rmf">NIST AI RMF</SelectItem>
                     <SelectItem value="iso_42001">ISO 42001</SelectItem>
@@ -369,7 +369,7 @@ const AIControlsList: React.FC = () => {
                     <SelectValue placeholder="All frequencies" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All frequencies</SelectItem>
+                    <SelectItem value="all">All frequencies</SelectItem>
                     <SelectItem value="continuous">Continuous</SelectItem>
                     <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>

@@ -21,7 +21,7 @@ interface DocumentWorkflowIntegrationProps {
   onIntegrationChange?: () => void;
 }
 
-const DocumentWorkflowIntegration: React.FC<DocumentWorkflowIntegrationProps> = ({
+const DocumentWorkflowIntegrationComponent: React.FC<DocumentWorkflowIntegrationProps> = ({
   documentId,
   workflowId,
   showCreateButton = true,
@@ -568,4 +568,4 @@ const ApprovalStatusTab: React.FC<{ documentId?: string }> = ({ documentId }) =>
   );
 };
 
-export default DocumentWorkflowIntegration;
+export default DocumentWorkflowIntegrationComponent;

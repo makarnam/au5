@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import WorkflowCalendar from '../../components/workflows/WorkflowCalendar';
-import DocumentWorkflowIntegration from '../../components/workflows/DocumentWorkflowIntegration';
+import DocumentWorkflowIntegrationComponent from '../../components/workflows/DocumentWorkflowIntegration';
 import { workflowCalendarService } from '../../services/workflowCalendarService';
 import { documentWorkflowService } from '../../services/documentWorkflowService';
 import { format } from 'date-fns';
@@ -350,7 +350,7 @@ const WorkflowIntegrationDashboard: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DocumentWorkflowIntegration showCreateButton={true} />
+                              <DocumentWorkflowIntegrationComponent showCreateButton={true} />
             </CardContent>
           </Card>
         </TabsContent>

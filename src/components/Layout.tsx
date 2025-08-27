@@ -18,12 +18,12 @@ import {
   Bot,
   Workflow,
   Home,
-  Globe,
   BookOpen,
   Building2,
   GraduationCap,
   HardDrive,
   Network,
+  Globe,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
@@ -32,6 +32,7 @@ import ErrorBoundary from "./common/ErrorBoundary";
 import NotificationBell from "./notifications/NotificationBell";
 import ComposeNotificationModal from "./notifications/ComposeNotificationModal";
 import EnhancedSidebar from "./EnhancedSidebar";
+import LanguageSelector from "./LanguageSelector";
 
 const Layout: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -40,7 +41,6 @@ const Layout: React.FC = () => {
   const { user, signOut, checkPermission } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [useEnhancedSidebar, setUseEnhancedSidebar] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -91,7 +91,7 @@ const Layout: React.FC = () => {
           current: location.pathname === "/audits/create",
         },
         {
-          name: "Upcoming Schedules",
+          name: t("navigation.upcomingSchedules"),
           href: "/audits/schedules",
           current: location.pathname === "/audits/schedules",
         },
@@ -112,7 +112,7 @@ const Layout: React.FC = () => {
       ],
     },
     {
-      name: "Audit Planning",
+      name: t("navigation.auditPlanning"),
       href: "/audit-planning",
       icon: BarChart3,
       current: location.pathname.startsWith("/audit-planning"),
@@ -126,32 +126,32 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/audit-planning",
           current: location.pathname === "/audit-planning",
         },
         {
-          name: "Audit Universe",
+          name: t("navigation.auditUniverse"),
           href: "/audit-planning/universe",
           current: location.pathname === "/audit-planning/universe",
         },
         {
-          name: "Audit Plans",
+          name: t("navigation.auditPlans"),
           href: "/audit-planning/plans",
           current: location.pathname === "/audit-planning/plans",
         },
         {
-          name: "Resource Management",
+          name: t("navigation.resourceManagement"),
           href: "/audit-planning/resources",
           current: location.pathname === "/audit-planning/resources",
         },
         {
-          name: "Competencies",
+          name: t("navigation.competencies"),
           href: "/audit-planning/competencies",
           current: location.pathname === "/audit-planning/competencies",
         },
         {
-          name: "Training Needs",
+          name: t("navigation.trainingNeeds"),
           href: "/audit-planning/training",
           current: location.pathname === "/audit-planning/training",
         },
@@ -173,44 +173,44 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "All Risks",
+          name: t("navigation.allRisks") || "All Risks",
           href: "/risks",
           current: location.pathname === "/risks",
         },
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/risks/dashboard",
           current: location.pathname === "/risks/dashboard",
         },
         {
-          name: "Second Dashboard",
+          name: t("navigation.secondDashboard") || "Second Dashboard",
           href: "/risks/dashboard-2",
           current: location.pathname === "/risks/dashboard-2",
         },
         {
-          name: "Loss Event Management",
+          name: t("navigation.lossEventManagement") || "Loss Event Management",
           href: "/risks/loss-events",
           current: location.pathname === "/risks/loss-events",
         },
         {
-          name: "Key Indicator Management",
+          name: t("navigation.keyIndicatorManagement") || "Key Indicator Management",
           href: "/risks/key-indicators",
           current: location.pathname === "/risks/key-indicators",
         },
         {
-          name: "Operational Risk Management",
+          name: t("navigation.operationalRiskManagement") || "Operational Risk Management",
           href: "/risks/operational-risk",
           current: location.pathname === "/risks/operational-risk",
         },
         {
-          name: "Create",
+          name: t("common.create"),
           href: "/risks/create",
           current: location.pathname === "/risks/create",
         }
       ]
     },
     {
-      name: "Resilience Management",
+      name: t("navigation.resilienceManagement"),
       href: "/resilience",
       icon: Shield,
       current: location.pathname.startsWith("/resilience"),
@@ -225,32 +225,32 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/resilience",
           current: location.pathname === "/resilience",
         },
         {
-          name: "Incident Management",
+          name: t("navigation.incidentManagement"),
           href: "/resilience/incidents",
           current: location.pathname === "/resilience/incidents",
         },
         {
-          name: "Business Impact Analysis",
+          name: t("navigation.businessImpactAnalysis"),
           href: "/resilience/bia",
           current: location.pathname.startsWith("/resilience/bia"),
         },
         {
-          name: "Crisis Management",
+          name: t("navigation.crisisManagement"),
           href: "/resilience/crisis",
           current: location.pathname === "/resilience/crisis",
         },
         {
-          name: "Scenario Analysis",
+          name: t("navigation.scenarioAnalysis"),
           href: "/resilience/scenarios",
           current: location.pathname === "/resilience/scenarios",
         },
         {
-          name: "Metrics Dashboard",
+          name: t("navigation.metricsDashboard"),
           href: "/resilience/metrics",
           current: location.pathname === "/resilience/metrics",
         }
@@ -270,9 +270,9 @@ const Layout: React.FC = () => {
         "super_admin",
       ],
       children: [
-        { name: "All Findings", href: "/findings", current: location.pathname === "/findings" },
-        { name: "Dashboard", href: "/findings/dashboard", current: location.pathname === "/findings/dashboard" },
-        { name: "Create", href: "/findings/create", current: location.pathname === "/findings/create" },
+        { name: t("navigation.allFindings"), href: "/findings", current: location.pathname === "/findings" },
+        { name: t("navigation.dashboard"), href: "/findings/dashboard", current: location.pathname === "/findings/dashboard" },
+        { name: t("common.create"), href: "/findings/create", current: location.pathname === "/findings/create" },
       ],
     },
     {
@@ -283,19 +283,19 @@ const Layout: React.FC = () => {
       roles: ["cro", "admin", "super_admin"],
       children: [
         {
-          name: "Workflow Templates",
+          name: t("navigation.workflowTemplates"),
           href: "/workflows/templates",
           current: location.pathname === "/workflows/templates",
         },
         {
-          name: "Approval Inbox",
+          name: t("navigation.approvalInbox"),
           href: "/workflows/approvals",
           current: location.pathname === "/workflows/approvals",
         },
       ],
     },
     {
-      name: "Entity Relationships",
+      name: t("navigation.entityRelationships"),
       href: "/relationships",
       icon: Network,
       current: location.pathname.startsWith("/relationships"),
@@ -328,7 +328,7 @@ const Layout: React.FC = () => {
       onClick: () => navigate("/ai"),
     },
     {
-      name: "AI Governance",
+      name: t("navigation.aiGovernance"),
       href: "/ai-governance",
       icon: Bot,
       current: location.pathname.startsWith("/ai-governance"),
@@ -342,24 +342,24 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/ai-governance/dashboard",
           current: location.pathname === "/ai-governance/dashboard",
         },
         {
-          name: "AI Models",
+          name: t("navigation.aiModels"),
           href: "/ai-governance/models",
           current: location.pathname === "/ai-governance/models",
         },
         {
-          name: "Controls Library",
+          name: t("navigation.controlsLibrary"),
           href: "/ai-governance/controls",
           current: location.pathname === "/ai-governance/controls",
         },
       ],
     },
     {
-      name: "Compliance",
+      name: t("navigation.compliance"),
       href: "/compliance/frameworks",
       icon: Shield,
       current: location.pathname.startsWith("/compliance"),
@@ -373,40 +373,39 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Frameworks",
+          name: t("navigation.frameworks"),
           href: "/compliance/frameworks",
           current: location.pathname === "/compliance/frameworks",
         },
         {
-          name: "Requirements",
+          name: t("navigation.requirements"),
           href: "/compliance/requirements",
           current: location.pathname === "/compliance/requirements",
         },
         {
-          name: "Profiles",
+          name: t("navigation.profiles"),
           href: "/compliance/profiles",
           current: location.pathname === "/compliance/profiles",
         },
         {
-          name: "Mapping",
+          name: t("navigation.mapping"),
           href: "/compliance/mapping",
           current: location.pathname === "/compliance/mapping",
         },
         {
-          name: "Import",
+          name: t("navigation.importer"),
           href: "/compliance/import",
           current: location.pathname === "/compliance/import",
-        }
-        ,
+        },
         {
-          name: "Importer 2",
+          name: t("navigation.importer2"),
           href: "/compliance/importer-2",
           current: location.pathname === "/compliance/importer-2",
         }
       ]
      },
     {
-      name: "Privacy",
+      name: t("navigation.privacy"),
       href: "/privacy/dashboard",
       icon: Shield,
       current: location.pathname.startsWith("/privacy"),
@@ -419,13 +418,13 @@ const Layout: React.FC = () => {
         "super_admin",
       ],
       children: [
-        { name: "Dashboard", href: "/privacy/dashboard", current: location.pathname === "/privacy/dashboard" },
-        { name: "DPIA", href: "/privacy/dpia", current: location.pathname === "/privacy/dpia" },
-        { name: "RoPA Register", href: "/privacy/ropa", current: location.pathname === "/privacy/ropa" },
+        { name: t("navigation.dashboard"), href: "/privacy/dashboard", current: location.pathname === "/privacy/dashboard" },
+        { name: t("navigation.dpia"), href: "/privacy/dpia", current: location.pathname === "/privacy/dpia" },
+        { name: t("navigation.ropaRegister"), href: "/privacy/ropa", current: location.pathname === "/privacy/ropa" },
       ],
     },
     {
-      name: "Regulations (RCM)",
+      name: t("navigation.regulations"),
       href: "/regulations",
       icon: Shield,
       current: location.pathname.startsWith("/regulations"),
@@ -438,41 +437,41 @@ const Layout: React.FC = () => {
         "super_admin",
       ],
       children: [
-        { name: "All Regulations", href: "/regulations", current: location.pathname === "/regulations" },
-        { name: "Impact Dashboard", href: "/regulations/impact-dashboard", current: location.pathname === "/regulations/impact-dashboard" },
+        { name: t("navigation.allRegulations"), href: "/regulations", current: location.pathname === "/regulations" },
+        { name: t("navigation.impactDashboard"), href: "/regulations/impact-dashboard", current: location.pathname === "/regulations/impact-dashboard" },
       ]
     },
     {
-      name: "Governance",
+      name: t("navigation.governance"),
       href: "/governance",
       icon: Shield,
       current: location.pathname.startsWith("/governance"),
       roles: ["auditor", "supervisor_auditor", "cro", "admin", "super_admin"],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/governance/dashboard",
           current: location.pathname === "/governance/dashboard",
         },
         {
-          name: "Calendar",
+          name: t("navigation.calendar"),
           href: "/governance/calendar",
           current: location.pathname === "/governance/calendar",
         },
         {
-          name: "Reporting",
+          name: t("navigation.reporting"),
           href: "/governance/reporting",
           current: location.pathname === "/governance/reporting",
         },
         {
-          name: "Training",
+          name: t("navigation.training"),
           href: "/governance/training",
           current: location.pathname === "/governance/training",
         }
       ],
     },
     {
-      name: "Business Continuity Management",
+      name: t("navigation.businessContinuityManagement"),
       href: "/bcp",
       icon: Building2,
       current: location.pathname.startsWith("/bcp"),
@@ -486,26 +485,60 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/bcp",
           current: location.pathname === "/bcp",
         },
         {
-          name: "Create Plan",
+          name: t("navigation.createPlan"),
           href: "/bcp/create",
           current: location.pathname === "/bcp/create",
         }
       ]
     },
     {
-      name: "Advanced Analytics",
+      name: t("navigation.advancedAnalytics"),
       href: "/analytics",
       icon: BarChart3,
       current: location.pathname.startsWith("/analytics"),
       roles: ["reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
     },
     {
-      name: "Document Management",
+      name: t("navigation.reporting"),
+      href: "/reports",
+      icon: FileText,
+      current: location.pathname.startsWith("/reports"),
+      roles: ["auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"],
+      children: [
+        {
+          name: t("navigation.reportBuilder"),
+          href: "/reports/builder",
+          current: location.pathname === "/reports/builder",
+        },
+        {
+          name: t("navigation.reportTemplates"),
+          href: "/reports/templates",
+          current: location.pathname === "/reports/templates",
+        },
+        {
+          name: t("navigation.generatedReports"),
+          href: "/reports/generated",
+          current: location.pathname === "/reports/generated",
+        },
+        {
+          name: t("navigation.reportAnalytics"),
+          href: "/reports/analytics",
+          current: location.pathname === "/reports/analytics",
+        },
+        {
+          name: t("navigation.scheduledReports"),
+          href: "/reports/scheduled",
+          current: location.pathname === "/reports/scheduled",
+        },
+      ],
+    },
+    {
+      name: t("navigation.documentManagement"),
       href: "/documents",
       icon: FileText,
       current: location.pathname.startsWith("/documents"),
@@ -519,7 +552,7 @@ const Layout: React.FC = () => {
       ],
     },
     {
-      name: "Policies",
+      name: t("navigation.policies"),
       href: "/policies",
       icon: BookOpen,
       current: location.pathname.startsWith("/policies"),
@@ -534,19 +567,19 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "All Policies",
+          name: t("navigation.allPolicies"),
           href: "/policies",
           current: location.pathname === "/policies",
         },
         {
-          name: "Create / Edit",
+          name: t("navigation.createEdit"),
           href: "/policies",
           current: location.pathname.startsWith("/policies/"),
         },
       ],
     },
     {
-      name: "Incident Management",
+      name: t("navigation.incidentManagement"),
       href: "/incidents",
       icon: AlertTriangle,
       current: location.pathname.startsWith("/incidents"),
@@ -560,7 +593,7 @@ const Layout: React.FC = () => {
       ],
     },
     {
-      name: "Third Party Risk Management",
+      name: t("navigation.thirdPartyRiskManagement"),
       href: "/third-party-risk-management",
       icon: Building2,
       current: location.pathname.startsWith("/third-party-risk-management"),
@@ -574,59 +607,59 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/third-party-risk-management",
           current: location.pathname === "/third-party-risk-management",
         },
         {
-          name: "Third Party Catalog",
+          name: t("navigation.thirdPartyCatalog"),
           href: "/third-party-risk-management/catalog",
           current: location.pathname === "/third-party-risk-management/catalog",
         },
         {
-          name: "Create Third Party",
+          name: t("navigation.createThirdParty"),
           href: "/third-party-risk-management/create",
           current: location.pathname === "/third-party-risk-management/create",
         },
         {
-          name: "Assessments",
+          name: t("navigation.assessments"),
           href: "/third-party-risk-management/assessments",
           current: location.pathname === "/third-party-risk-management/assessments",
         },
         {
-          name: "Engagements",
+          name: t("navigation.engagements"),
           href: "/third-party-risk-management/engagements",
           current: location.pathname.startsWith("/third-party-risk-management/engagements"),
         },
         {
-          name: "Incident Management",
+          name: t("navigation.incidentManagement"),
           href: "/third-party-risk-management/incidents",
           current: location.pathname === "/third-party-risk-management/incidents",
         },
         {
-          name: "Contract Management",
+          name: t("navigation.contractManagement"),
           href: "/third-party-risk-management/contracts",
           current: location.pathname === "/third-party-risk-management/contracts",
         },
         {
-          name: "Performance Monitoring",
+          name: t("navigation.performanceMonitoring"),
           href: "/third-party-risk-management/performance",
           current: location.pathname === "/third-party-risk-management/performance",
         },
         {
-          name: "Security Monitoring",
+          name: t("navigation.securityMonitoring"),
           href: "/third-party-risk-management/security",
           current: location.pathname === "/third-party-risk-management/security",
         },
         {
-          name: "Due Diligence Workflow",
+          name: t("navigation.dueDiligenceWorkflow"),
           href: "/third-party-risk-management/due-diligence",
           current: location.pathname === "/third-party-risk-management/due-diligence",
         },
       ]
     },
     {
-      name: "IT & Security Risk Management",
+      name: t("navigation.itSecurityRiskManagement"),
       href: "/it-security",
       icon: Shield,
       current: location.pathname.startsWith("/it-security"),
@@ -640,59 +673,59 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/it-security",
           current: location.pathname === "/it-security",
         },
         {
-          name: "Security Incidents",
+          name: t("navigation.securityIncidents"),
           href: "/it-security/incidents",
           current: location.pathname.startsWith("/it-security/incidents"),
         },
         {
-          name: "Vulnerabilities",
+          name: t("navigation.vulnerabilities"),
           href: "/it-security/vulnerabilities",
           current: location.pathname.startsWith("/it-security/vulnerabilities"),
         },
         {
-          name: "IT Controls",
+          name: t("navigation.itControls"),
           href: "/it-security/controls",
           current: location.pathname.startsWith("/it-security/controls"),
         },
         {
-          name: "Security Policies",
+          name: t("navigation.securityPolicies"),
           href: "/it-security/policies",
           current: location.pathname.startsWith("/it-security/policies"),
         },
         {
-          name: "PCI Compliance",
+          name: t("navigation.pciCompliance"),
           href: "/it-security/pci",
           current: location.pathname.startsWith("/it-security/pci"),
         },
         {
-          name: "ISO 27001 (ISMS)",
+          name: t("navigation.iso27001"),
           href: "/it-security/isms",
           current: location.pathname.startsWith("/it-security/isms"),
         },
         {
-          name: "CMMC Management",
+          name: t("navigation.cmmcManagement"),
           href: "/it-security/cmmc",
           current: location.pathname.startsWith("/it-security/cmmc"),
         },
         {
-          name: "Security Monitoring",
+          name: t("navigation.securityMonitoring"),
           href: "/it-security/monitoring",
           current: location.pathname.startsWith("/it-security/monitoring"),
         },
         {
-          name: "Security Assets",
+          name: t("navigation.securityAssets"),
           href: "/it-security/assets",
           current: location.pathname.startsWith("/it-security/assets"),
         },
       ],
     },
     {
-      name: "ESG Management",
+      name: t("navigation.esgManagement"),
       href: "/esg",
       icon: Globe,
       current: location.pathname.startsWith("/esg"),
@@ -706,54 +739,54 @@ const Layout: React.FC = () => {
       ],
       children: [
         {
-          name: "Dashboard",
+          name: t("navigation.dashboard"),
           href: "/esg",
           current: location.pathname === "/esg",
         },
         {
-          name: "Comprehensive ESG",
+          name: t("navigation.comprehensiveEsg"),
           href: "/esg/comprehensive",
           current: location.pathname === "/esg/comprehensive",
         },
         {
-          name: "Programs",
+          name: t("navigation.programs"),
           href: "/esg/programs",
           current: location.pathname === "/esg/programs",
         },
         {
-          name: "Carbon Management",
+          name: t("navigation.carbonManagement"),
           href: "/esg/carbon",
           current: location.pathname === "/esg/carbon",
         },
         {
-          name: "Disclosures",
+          name: t("navigation.disclosures"),
           href: "/esg/disclosures",
           current: location.pathname === "/esg/disclosures",
         },
         {
-          name: "Portfolio Assessment",
+          name: t("navigation.portfolioAssessment"),
           href: "/esg/portfolio",
           current: location.pathname === "/esg/portfolio",
         },
         {
-          name: "Goals Management",
+          name: t("navigation.goalsManagement"),
           href: "/esg/goals",
           current: location.pathname === "/esg/goals",
         },
         {
-          name: "Stakeholder Engagement",
+          name: t("navigation.stakeholderEngagement"),
           href: "/esg/stakeholders",
           current: location.pathname === "/esg/stakeholders",
         },
         {
-          name: "Materiality Calculator",
+          name: t("navigation.materialityCalculator"),
           href: "/esg/materiality",
           current: location.pathname === "/esg/materiality",
         },
       ],
     },
     {
-      name: "Training & Certification",
+      name: t("navigation.trainingCertification"),
       href: "/training",
       icon: GraduationCap,
       current: location.pathname.startsWith("/training"),
@@ -769,7 +802,7 @@ const Layout: React.FC = () => {
       ],
     },
     {
-      name: "Asset Management",
+      name: t("navigation.assetManagement"),
       href: "/assets",
       icon: HardDrive,
       current: location.pathname.startsWith("/assets"),
@@ -802,16 +835,6 @@ const Layout: React.FC = () => {
     },
   ], [location.pathname, t, navigate]);
 
-  const languages = [
-    { code: "en", name: "English", flag: "🇺🇸" },
-    { code: "es", name: "Español", flag: "🇪🇸" },
-    { code: "fr", name: "Français", flag: "🇫🇷" },
-    { code: "de", name: "Deutsch", flag: "🇩🇪" },
-    { code: "tr", name: "Türkçe", flag: "🇹🇷" },
-  ];
-
-  const currentLanguage =
-    languages.find((lang) => lang.code === i18n.language) || languages[0];
 
   // Memoize filtered navigation to prevent unnecessary re-renders
   const filteredNavigation = useMemo(() => 
@@ -827,10 +850,6 @@ const Layout: React.FC = () => {
     navigate("/auth/sign-in", { replace: true });
   }, [signOut, navigate]);
 
-  const changeLanguage = useCallback((languageCode: string) => {
-    i18n.changeLanguage(languageCode);
-    setLanguageMenuOpen(false);
-  }, [i18n]);
 
 
 
@@ -950,7 +969,7 @@ const Layout: React.FC = () => {
             className="w-full px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors flex items-center justify-center"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
-            Switch to Enhanced Menu
+            {t("layout.switchToEnhancedMenu")}
           </button>
         </div>
       </div>
@@ -1054,47 +1073,11 @@ const Layout: React.FC = () => {
                   onClick={() => setComposeOpen(true)}
                   title="Send notification/message"
                 >
-                  New Message
+                  {t("layout.newMessage")}
                 </button>
               </div>
               {/* Language Selector */}
-              <div className="relative">
-                <button
-                  type="button"
-                  className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                  onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-                >
-                  <Globe className="h-5 w-5" />
-                </button>
-
-                <AnimatePresence>
-                  {languageMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
-                    >
-                      <div className="py-1">
-                        {languages.map((language) => (
-                          <button
-                            key={language.code}
-                            onClick={() => changeLanguage(language.code)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
-                              i18n.language === language.code
-                                ? "bg-blue-50 text-blue-600"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            <span>{language.flag}</span>
-                            <span>{language.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <LanguageSelector />
 
               {/* Notifications */}
               <div className="relative">

@@ -242,7 +242,7 @@ const WorkflowAnalyticsDashboard: React.FC = () => {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="risk">Risk</SelectItem>
                   <SelectItem value="audit">Audit</SelectItem>
                   <SelectItem value="finding">Finding</SelectItem>
@@ -259,7 +259,7 @@ const WorkflowAnalyticsDashboard: React.FC = () => {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="pending_approval">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>

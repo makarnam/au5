@@ -406,7 +406,7 @@ const UniversalAIGenerator: React.FC<UniversalAIGeneratorProps> = ({
                   <SelectValue placeholder="Choose a template..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Template</SelectItem>
+                  <SelectItem value="none">No Template</SelectItem>
                   {templates.map(template => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name} ({template.quality}/5)

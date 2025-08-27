@@ -176,9 +176,9 @@ const Profile: React.FC = () => {
   };
 
   const tabs = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "activity", label: "Activity", icon: Activity },
-    { id: "security", label: "Security", icon: Shield },
+    { id: "profile", label: t("pages.profile.information"), icon: User },
+    { id: "activity", label: t("pages.profile.activity"), icon: Activity },
+    { id: "security", label: t("pages.profile.security"), icon: Shield },
   ];
 
   if (!user) {
@@ -242,7 +242,7 @@ const Profile: React.FC = () => {
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
+                  {t("common.edit")}
                 </button>
               ) : (
                 <div className="flex items-center space-x-2">
@@ -328,12 +328,12 @@ const Profile: React.FC = () => {
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  Personal Information
+                  {t("pages.profile.information")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
+                      {t("auth.firstName")}
                     </label>
                     <input
                       type="text"
@@ -350,7 +350,7 @@ const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
+                      {t("auth.lastName")}
                     </label>
                     <input
                       type="text"
@@ -367,7 +367,7 @@ const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
+                      {t("auth.email")}
                     </label>
                     <input
                       type="email"
@@ -378,7 +378,7 @@ const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone
+                      {t("auth.phone")}
                     </label>
                     <input
                       type="tel"
@@ -391,12 +391,12 @@ const Profile: React.FC = () => {
                       }
                       disabled={!isEditing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                      placeholder="Enter phone number"
+                      placeholder={t("common.optional")}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department
+                      {t("user.department")}
                     </label>
                     <input
                       type="text"
@@ -413,7 +413,7 @@ const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Location
+                      {t("user.location")}
                     </label>
                     <input
                       type="text"
@@ -426,13 +426,13 @@ const Profile: React.FC = () => {
                       }
                       disabled={!isEditing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                      placeholder="Enter location"
+                      placeholder={t("common.optional")}
                     />
                   </div>
                 </div>
                 <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio
+                    {t("user.bio")}
                   </label>
                   <textarea
                     value={profileData.bio}
@@ -442,7 +442,7 @@ const Profile: React.FC = () => {
                     disabled={!isEditing}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 resize-none"
-                    placeholder="Tell us about yourself..."
+                    placeholder={t("common.optional")}
                   />
                 </div>
               </div>

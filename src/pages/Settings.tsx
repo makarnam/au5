@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import { languageService } from "../services/languageService";
 import {
   Settings as SettingsIcon,
   Shield,
@@ -25,6 +27,7 @@ import { useAuthStore } from "../store/authStore";
 import { AIProvider } from "../types";
 import { aiService, AIConfiguration } from "../services/aiService";
 import { toast } from "react-hot-toast";
+import LanguageSelector from "../components/LanguageSelector";
 
 const OllamaStatus: React.FC = () => {
   const [status, setStatus] = useState<{
@@ -122,6 +125,7 @@ interface SettingsSection {
 }
 
 const Settings: React.FC = () => {
+  const { t } = useTranslation();
   const { checkPermission } = useAuthStore();
   const [activeSection, setActiveSection] = useState("general");
   const [loading, setLoading] = useState(false);
@@ -147,7 +151,7 @@ const Settings: React.FC = () => {
   });
   const [settings, setSettings] = useState({
     // General Settings
-    language: "en",
+    language: languageService.getCurrentLanguage(),
     timezone: "UTC",
     dateFormat: "MM/dd/yyyy",
     theme: "light",
@@ -182,25 +186,25 @@ const Settings: React.FC = () => {
   const settingsSections: SettingsSection[] = [
     {
       id: "general",
-      title: "General",
+      title: t("pages.settings.general"),
       description: "Basic application preferences and display settings",
       icon: SettingsIcon,
     },
     {
       id: "notifications",
-      title: "Notifications",
+      title: t("pages.settings.notifications"),
       description: "Configure how and when you receive notifications",
       icon: Bell,
     },
     {
       id: "security",
-      title: "Security",
+      title: t("pages.settings.security"),
       description: "Security preferences and authentication settings",
       icon: Shield,
     },
     {
       id: "ai",
-      title: "AI Assistant",
+      title: t("pages.settings.ai"),
       description: "Configure AI models and API settings",
       icon: Bot,
     },
@@ -210,7 +214,7 @@ const Settings: React.FC = () => {
   if (checkPermission(["super_admin", "admin"])) {
     settingsSections.push({
       id: "system",
-      title: "System",
+      title: t("pages.settings.system"),
       description: "System-wide configuration and maintenance",
       icon: Database,
     });
@@ -445,25 +449,17 @@ const Settings: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Display Preferences
+          {t("settings.displayPreferences")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Globe className="w-4 h-4 inline mr-2" />
-              Language
+              {t("settings.language")}
             </label>
-            <select
-              value={settings.language}
-              onChange={(e) => handleInputChange("language", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="tr">Türkçe</option>
-            </select>
+            <div className="mt-1">
+              <LanguageSelector />
+            </div>
           </div>
 
           <div>
