@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/button';
 
@@ -8,11 +9,12 @@ type Posture = { status: string; count: number };
 type Snapshot = { snapshot_date: string; overall_score: number | null };
 
 export default function GovernanceDashboard() {
-  const [frameworks, setFrameworks] = useState<Framework[]>([]);
-  const [frameworkId, setFrameworkId] = useState<string>('');
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [profileId, setProfileId] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+   const { t } = useTranslation();
+   const [frameworks, setFrameworks] = useState<Framework[]>([]);
+   const [frameworkId, setFrameworkId] = useState<string>('');
+   const [profiles, setProfiles] = useState<Profile[]>([]);
+   const [profileId, setProfileId] = useState<string>('');
+   const [loading, setLoading] = useState(false);
 
   const [posture, setPosture] = useState<Posture[]>([]);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -126,50 +128,56 @@ export default function GovernanceDashboard() {
   return (
     <div className="p-4 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Governance Dashboard</h1>
-        <Button variant="outline" onClick={load} disabled={loading}>{loading ? 'Loading...' : 'Reload'}</Button>
+        <h1 className="text-xl font-semibold">{t("governanceDashboard")}</h1>
+        <Button variant="outline" onClick={load} disabled={loading}>{loading ? t("loading") : t("refresh")}</Button>
       </div>
 
       {/* Filters */}
       <div className="border rounded p-4 bg-white grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <div className="text-sm font-medium mb-1">Framework</div>
+          <div className="text-sm font-medium mb-1">{t("framework")}</div>
           <select className="border p-2 rounded w-full" value={frameworkId} onChange={(e) => setFrameworkId(e.target.value)}>
             {frameworks.map(f => <option key={f.id} value={f.id}>{f.name} ({f.code})</option>)}
-            {frameworks.length === 0 && <option value="">No frameworks</option>}
+            {frameworks.length === 0 && <option value="">{t("noFrameworks")}</option>}
           </select>
         </div>
         <div>
-          <div className="text-sm font-medium mb-1">Profile (optional)</div>
+          <div className="text-sm font-medium mb-1">{t("profileOptional")}</div>
           <select className="border p-2 rounded w-full" value={profileId} onChange={(e) => setProfileId(e.target.value)}>
             {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            {profiles.length === 0 && <option value="">No profiles</option>}
+            {profiles.length === 0 && <option value="">{t("noProfiles")}</option>}
           </select>
-          <div className="text-xs opacity-60 mt-1">Profile affects applicability/assessments; posture view is framework-wide.</div>
+          <div className="text-xs opacity-60 mt-1">{t("profileAffectsApplicability")}</div>
         </div>
       </div>
 
       {/* Posture summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {['compliant','partially_compliant','non_compliant','not_applicable','unknown'].map(key => {
+        {[
+          { key: 'compliant', label: t('compliant') },
+          { key: 'partially_compliant', label: t('partiallyCompliant') },
+          { key: 'non_compliant', label: t('nonCompliant') },
+          { key: 'not_applicable', label: t('notApplicable') },
+          { key: 'unknown', label: t('unknown') }
+        ].map(({ key, label }) => {
           const item = posture.find(p => p.status === key);
           const count = item?.count ?? 0;
           return (
             <div key={key} className="bg-white border rounded p-4">
-              <div className="text-sm uppercase opacity-60">{key.replace('_',' ')}</div>
+              <div className="text-sm uppercase opacity-60">{label}</div>
               <div className="text-2xl font-semibold">{count}</div>
             </div>
           );
         })}
         <div className="bg-white border rounded p-4">
-          <div className="text-sm uppercase opacity-60">Total</div>
+          <div className="text-sm uppercase opacity-60">{t("total")}</div>
           <div className="text-2xl font-semibold">{totalReqs}</div>
         </div>
       </div>
 
       {/* Trend */}
       <div className="bg-white border rounded p-4">
-        <div className="font-medium mb-2">Posture Trend (overall score)</div>
+        <div className="font-medium mb-2">{t("postureTrend")}</div>
         <div className="w-full overflow-x-auto">
           <div className="flex items-end gap-2 h-40">
             {snapshots.map((s, idx) => {
@@ -181,7 +189,7 @@ export default function GovernanceDashboard() {
                 </div>
               );
             })}
-            {snapshots.length === 0 && <div className="text-sm opacity-70">No snapshot data.</div>}
+            {snapshots.length === 0 && <div className="text-sm opacity-70">{t("noSnapshotData")}</div>}
           </div>
         </div>
       </div>
@@ -189,20 +197,24 @@ export default function GovernanceDashboard() {
       {/* Exceptions / Attestations / Tasks */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border rounded p-4">
-          <div className="font-medium">Active Exceptions</div>
+          <div className="font-medium">{t("activeExceptions")}</div>
           <div className="text-3xl font-semibold mt-2">{exceptionsCount}</div>
         </div>
         <div className="bg-white border rounded p-4">
-          <div className="font-medium">Attestations (Draft/In Progress)</div>
+          <div className="font-medium">{t("attestationsDraftInProgress")}</div>
           <div className="text-3xl font-semibold mt-2">{attestationsCount}</div>
         </div>
         <div className="bg-white border rounded p-4">
-          <div className="font-medium">Open Compliance Tasks</div>
+          <div className="font-medium">{t("openComplianceTasks")}</div>
           <ul className="mt-2 space-y-1 text-sm">
-            {['open','in_progress','blocked'].map(s => (
-              <li key={s} className="flex justify-between">
-                <span className="capitalize">{s.replace('_',' ')}</span>
-                <span className="font-semibold">{tasksCounts[s] ?? 0}</span>
+            {[
+              { key: 'open', label: t('open') },
+              { key: 'in_progress', label: t('inProgress') },
+              { key: 'blocked', label: t('blocked') }
+            ].map(({ key, label }) => (
+              <li key={key} className="flex justify-between">
+                <span className="capitalize">{label}</span>
+                <span className="font-semibold">{tasksCounts[key] ?? 0}</span>
               </li>
             ))}
           </ul>

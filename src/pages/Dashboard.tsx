@@ -433,7 +433,7 @@ const Dashboard: React.FC = () => {
             </div>
             {metric.link && (
               <div className="flex items-center justify-end mt-2 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-sm font-medium">View Details</span>
+                <span className="text-sm font-medium">{t('dashboard.viewDetails')}</span>
                 <ChevronRight className="w-4 h-4 ml-1" />
               </div>
             )}
@@ -488,19 +488,19 @@ const Dashboard: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-gray-900">{module.metrics.total}</div>
-                  <div className="text-sm text-gray-600">Total</div>
+                   <div className="text-sm text-gray-600">{t('dashboard.total')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">{module.metrics.active}</div>
-                  <div className="text-sm text-gray-600">Active</div>
+                  <div className="text-sm text-gray-600">{t('dashboard.active')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">{module.metrics.critical}</div>
-                  <div className="text-sm text-gray-600">Critical</div>
+                  <div className="text-sm text-gray-600">{t('dashboard.critical')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{module.metrics.completed}</div>
-                  <div className="text-sm text-gray-600">Completed</div>
+                  <div className="text-sm text-gray-600">{t('dashboard.completed')}</div>
                 </div>
               </div>
             </motion.div>
@@ -520,7 +520,7 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <PieChartIcon className="w-5 h-5 mr-2 text-blue-500" />
-              Audits by Status
+              {t('dashboard.auditsByStatus')}
             </h3>
             <button className="text-gray-400 hover:text-gray-600">
               <Filter className="w-4 h-4" />
@@ -557,7 +557,7 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <ShieldCheck className="w-5 h-5 mr-2 text-green-500" />
-              Compliance Status
+              {t('dashboard.complianceStatus')}
             </h3>
             <button className="text-gray-400 hover:text-gray-600">
               <Filter className="w-4 h-4" />
@@ -595,24 +595,24 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
-            Monthly Trends
+            {t('dashboard.monthlyTrends')}
           </h3>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm">
               <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Audits</span>
+              <span>{t('dashboard.audits')}</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
+          <div className="flex items-center space-x-2 text-sm">
               <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-              <span>Findings</span>
+              <span>{t('dashboard.findings')}</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
+          <div className="flex items-center space-x-2 text-sm">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span>Controls</span>
+              <span>{t('dashboard.controls')}</span>
             </div>
-            <div className="flex items-center space-x-2 text-sm">
+          <div className="flex items-center space-x-2 text-sm">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-              <span>Risks</span>
+              <span>{t('dashboard.risks')}</span>
             </div>
           </div>
         </div>
@@ -668,7 +668,7 @@ const Dashboard: React.FC = () => {
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
             <Activity className="w-5 h-5 mr-2 text-purple-500" />
-            Recent Activity
+            {t('dashboard.recentActivity')}
           </h3>
           <div className="space-y-4">
             {recentActivities.map((activity) => (
@@ -707,7 +707,7 @@ const Dashboard: React.FC = () => {
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
             <Target className="w-5 h-5 mr-2 text-indigo-500" />
-            Upcoming Tasks
+            {t('dashboard.upcomingTasks')}
           </h3>
           <div className="space-y-4">
             {upcomingTasks.map((task) => (
@@ -793,7 +793,7 @@ const Dashboard: React.FC = () => {
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
             <BarChart3 className="w-5 h-5 mr-2 text-blue-500" />
-            Audit Type Breakdown
+            {t('dashboard.auditTypeBreakdown')}
           </h3>
           <div className="space-y-4">
             {detailedMetrics.auditBreakdown.map((audit, index) => (
@@ -820,7 +820,7 @@ const Dashboard: React.FC = () => {
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
             <Shield className="w-5 h-5 mr-2 text-green-500" />
-            Control Effectiveness by Category
+            {t('dashboard.controlEffectivenessByCategory')}
           </h3>
           <div className="space-y-4">
             {detailedMetrics.controlEffectiveness.map((control, index) => (
@@ -858,7 +858,7 @@ const Dashboard: React.FC = () => {
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
           <AlertTriangle className="w-5 h-5 mr-2 text-red-500" />
-          Risk Matrix Heatmap
+          {t('dashboard.riskMatrixHeatmap')}
         </h3>
         <div className="grid grid-cols-5 gap-2 mb-4">
           {detailedMetrics.riskMatrix.map((risk, index) => (
@@ -872,12 +872,12 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
         <div className="flex justify-between text-xs text-gray-600">
-          <span>Low Probability</span>
-          <span>High Probability</span>
+          <span>{t('dashboard.lowProbability')}</span>
+          <span>{t('dashboard.highProbability')}</span>
         </div>
         <div className="flex flex-col items-end text-xs text-gray-600 mt-2">
-          <span>High Impact</span>
-          <span>Low Impact</span>
+          <span>{t('dashboard.highImpact')}</span>
+          <span>{t('dashboard.lowImpact')}</span>
         </div>
       </motion.div>
     </>
@@ -917,7 +917,7 @@ const Dashboard: React.FC = () => {
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
           <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
-          GRC Performance Trends
+          {t('dashboard.grcPerformanceTrends')}
         </h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -945,7 +945,7 @@ const Dashboard: React.FC = () => {
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
           <Zap className="w-5 h-5 mr-2 text-yellow-500" />
-          Predictive Insights
+          {t('dashboard.predictiveInsights')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {analyticsData.predictiveInsights.map((insight, index) => (
@@ -993,26 +993,30 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div className="mb-6 lg:mb-0">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Welcome back, {user?.first_name}! 👋
+              {t('dashboard.welcomeBack', { name: user?.first_name || '' })} 👋
             </h1>
             <p className="text-gray-600 text-lg">
-              Your comprehensive GRC overview and insights
+              {t('dashboard.grcOverview')}
             </p>
           </div>
           <div className="flex items-center space-x-4">
             {/* View Toggle */}
             <div className="flex bg-white rounded-lg p-1 shadow-sm border">
-              {['overview', 'detailed', 'analytics'].map((view) => (
+              {[
+                { key: 'overview', label: t('dashboard.overviewView') },
+                { key: 'detailed', label: t('dashboard.detailedView') },
+                { key: 'analytics', label: t('dashboard.analyticsView') }
+              ].map((view) => (
                 <button
-                  key={view}
-                  onClick={() => setSelectedView(view as any)}
+                  key={view.key}
+                  onClick={() => setSelectedView(view.key as any)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    selectedView === view
+                    selectedView === view.key
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  {view.charAt(0).toUpperCase() + view.slice(1)}
+                  {view.label}
                 </button>
               ))}
             </div>
@@ -1023,21 +1027,21 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
             >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="1y">Last year</option>
+              <option value="7d">{t('dashboard.last7Days')}</option>
+              <option value="30d">{t('dashboard.last30Days')}</option>
+              <option value="90d">{t('dashboard.last90Days')}</option>
+              <option value="1y">{t('dashboard.lastYear')}</option>
             </select>
             
             {/* Action Buttons */}
             <div className="flex space-x-2">
               <button className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors border shadow-sm">
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+                {t('dashboard.refresh')}
               </button>
               <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <Download className="w-4 h-4 mr-2" />
-                Export
+                {t('dashboard.export')}
               </button>
             </div>
           </div>

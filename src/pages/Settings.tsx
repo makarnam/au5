@@ -30,6 +30,7 @@ import { toast } from "react-hot-toast";
 import LanguageSelector from "../components/LanguageSelector";
 
 const OllamaStatus: React.FC = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<{
     connected: boolean;
     modelCount: number;
@@ -77,12 +78,12 @@ const OllamaStatus: React.FC = () => {
           <WifiOff className="w-4 h-4 text-red-600" />
         )}
         <span className={status.connected ? "text-green-800" : "text-red-800"}>
-          {status.loading
-            ? "Checking..."
-            : status.connected
-              ? "Connected"
-              : "Disconnected"}
-        </span>
+           {status.loading
+             ? t("settings.checking")
+             : status.connected
+               ? t("settings.connected")
+               : t("settings.disconnected")}
+         </span>
         <button
           onClick={checkOllamaStatus}
           className="text-blue-600 hover:text-blue-800"
@@ -94,7 +95,7 @@ const OllamaStatus: React.FC = () => {
 
       {status.connected && (
         <div className="text-blue-800">
-          <p className="mb-1">{status.modelCount} models available</p>
+          <p className="mb-1">{status.modelCount} {t("settings.modelsAvailable")}</p>
           {status.models.length > 0 && (
             <div className="text-xs text-blue-700">
               {status.models.join(", ")}
@@ -106,12 +107,12 @@ const OllamaStatus: React.FC = () => {
 
       {!status.connected && !status.loading && (
         <div className="text-red-800 text-xs">
-          <p>Ollama not running or not accessible</p>
-          <p>
-            Start Ollama:{" "}
-            <code className="bg-red-100 px-1 rounded">ollama serve</code>
-          </p>
-        </div>
+           <p>{t("settings.ollamaNotRunning")}</p>
+           <p>
+             {t("settings.startOllama")}{" "}
+             <code className="bg-red-100 px-1 rounded">{t("settings.ollamaCommand")}</code>
+           </p>
+         </div>
       )}
     </div>
   );
@@ -352,7 +353,7 @@ const Settings: React.FC = () => {
   };
 
   const handleDeleteAiConfig = async (configId: string) => {
-    if (!confirm("Are you sure you want to delete this AI configuration?")) {
+    if (!confirm(t("settings.deleteAIConfiguration") + "?")) {
       return;
     }
 
@@ -464,51 +465,51 @@ const Settings: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Timezone
+              {t("settings.timezone")}
             </label>
             <select
               value={settings.timezone}
               onChange={(e) => handleInputChange("timezone", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="UTC">UTC</option>
-              <option value="America/New_York">Eastern Time</option>
-              <option value="America/Chicago">Central Time</option>
-              <option value="America/Denver">Mountain Time</option>
-              <option value="America/Los_Angeles">Pacific Time</option>
-              <option value="Europe/London">London</option>
-              <option value="Europe/Paris">Paris</option>
+              <option value="UTC">{t("settings.utc")}</option>
+              <option value="America/New_York">{t("settings.easternTime")}</option>
+              <option value="America/Chicago">{t("settings.centralTime")}</option>
+              <option value="America/Denver">{t("settings.mountainTime")}</option>
+              <option value="America/Los_Angeles">{t("settings.pacificTime")}</option>
+              <option value="Europe/London">{t("settings.london")}</option>
+              <option value="Europe/Paris">{t("settings.paris")}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date Format
+              {t("settings.dateFormat")}
             </label>
             <select
               value={settings.dateFormat}
               onChange={(e) => handleInputChange("dateFormat", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="MM/dd/yyyy">MM/dd/yyyy</option>
-              <option value="dd/MM/yyyy">dd/MM/yyyy</option>
-              <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+              <option value="MM/dd/yyyy">{t("settings.dateFormatMMDDYYYY")}</option>
+              <option value="dd/MM/yyyy">{t("settings.dateFormatDDMMYYYY")}</option>
+              <option value="yyyy-MM-dd">{t("settings.dateFormatYYYYMMDD")}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Monitor className="w-4 h-4 inline mr-2" />
-              Theme
+              {t("settings.theme")}
             </label>
             <select
               value={settings.theme}
               onChange={(e) => handleInputChange("theme", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="auto">Auto</option>
+              <option value="light">{t("settings.lightTheme")}</option>
+              <option value="dark">{t("settings.darkTheme")}</option>
+              <option value="auto">{t("settings.autoTheme")}</option>
             </select>
           </div>
         </div>
@@ -520,16 +521,16 @@ const Settings: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Notification Preferences
+          {t("settings.notificationPreferences")}
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Mail className="w-5 h-5 text-gray-600" />
               <div>
-                <p className="font-medium text-gray-900">Email Notifications</p>
+                <p className="font-medium text-gray-900">{t("settings.emailNotifications")}</p>
                 <p className="text-sm text-gray-500">
-                  Receive notifications via email
+                  {t("settings.receiveEmailNotifications")}
                 </p>
               </div>
             </div>
@@ -550,9 +551,9 @@ const Settings: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Smartphone className="w-5 h-5 text-gray-600" />
               <div>
-                <p className="font-medium text-gray-900">Push Notifications</p>
+                <p className="font-medium text-gray-900">{t("settings.pushNotifications")}</p>
                 <p className="text-sm text-gray-500">
-                  Receive push notifications in browser
+                  {t("settings.receivePushNotifications")}
                 </p>
               </div>
             </div>
@@ -573,9 +574,9 @@ const Settings: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Bell className="w-5 h-5 text-gray-600" />
               <div>
-                <p className="font-medium text-gray-900">Audit Reminders</p>
+                <p className="font-medium text-gray-900">{t("settings.auditReminders")}</p>
                 <p className="text-sm text-gray-500">
-                  Get reminders for upcoming audits
+                  {t("settings.getAuditReminders")}
                 </p>
               </div>
             </div>
@@ -596,9 +597,9 @@ const Settings: React.FC = () => {
             <div className="flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-gray-600" />
               <div>
-                <p className="font-medium text-gray-900">Finding Alerts</p>
+                <p className="font-medium text-gray-900">{t("settings.findingAlerts")}</p>
                 <p className="text-sm text-gray-500">
-                  Alerts for high-priority findings
+                  {t("settings.highPriorityFindingAlerts")}
                 </p>
               </div>
             </div>
@@ -623,7 +624,7 @@ const Settings: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Security Settings
+          {t("settings.securitySettings")}
         </h3>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -631,10 +632,10 @@ const Settings: React.FC = () => {
               <Shield className="w-5 h-5 text-gray-600" />
               <div>
                 <p className="font-medium text-gray-900">
-                  Two-Factor Authentication
+                  {t("settings.twoFactorAuth")}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Add an extra layer of security to your account
+                  {t("settings.addExtraSecurity")}
                 </p>
               </div>
             </div>
@@ -654,7 +655,7 @@ const Settings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Session Timeout (minutes)
+                {t("settings.sessionTimeoutMinutes")}
               </label>
               <input
                 type="number"
@@ -670,7 +671,7 @@ const Settings: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password Expiry (days)
+                {t("settings.passwordExpiryDays")}
               </label>
               <input
                 type="number"
@@ -694,10 +695,10 @@ const Settings: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            AI Configurations
+            {t("settings.aiConfigurations")}
           </h3>
           <p className="text-sm text-gray-600">
-            Manage your AI providers and models
+            {t("settings.manageAIProviders")}
           </p>
         </div>
         <button
@@ -709,7 +710,7 @@ const Settings: React.FC = () => {
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Configuration
+          {t("settings.addConfiguration")}
         </button>
       </div>
 
@@ -718,17 +719,17 @@ const Settings: React.FC = () => {
         {loadingAiConfigs ? (
           <div className="flex items-center justify-center py-8">
             <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-            Loading configurations...
+            {t("settings.loadingConfigurations")}
           </div>
         ) : aiConfigurations.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h4 className="text-lg font-medium text-gray-900 mb-2">
-              No AI Configurations
+              {t("settings.noAIConfigurations")}
             </h4>
-            <p className="text-gray-600 mb-4">
-              Get started by adding your first AI provider configuration.
-            </p>
+          <p className="text-gray-600 mb-4">
+            {t("settings.getStartedAI")}
+          </p>
             <button
               onClick={async () => {
                 await resetAiForm();
@@ -738,7 +739,7 @@ const Settings: React.FC = () => {
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add Your First Configuration
+              {t("settings.addFirstConfiguration")}
             </button>
           </div>
         ) : (
@@ -828,7 +829,7 @@ const Settings: React.FC = () => {
         >
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-gray-900">
-              {editingAiConfig ? "Edit" : "Add"} AI Configuration
+              {editingAiConfig ? t("settings.editAIConfiguration") : t("settings.addAIConfiguration")}
             </h4>
             <button
               onClick={async () => {
@@ -846,7 +847,7 @@ const Settings: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Provider
+                  {t("settings.provider")}
                 </label>
                 <select
                   value={aiFormData.provider}
@@ -878,9 +879,9 @@ const Settings: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Model{" "}
+                  {t("settings.model")}{" "}
                   {loadingModels && (
-                    <span className="text-xs text-gray-500">(Loading...)</span>
+                    <span className="text-xs text-gray-500">({t("settings.loadingModels")})</span>
                   )}
                 </label>
                 <div className="flex space-x-2">
@@ -907,7 +908,7 @@ const Settings: React.FC = () => {
                       </option>
                     ) : (
                       <>
-                        <option value="">Select a model</option>
+                        <option value="">{t("settings.selectAModel")}</option>
                         {getProviderModels(aiFormData.provider).map(
                           (model: string) => (
                             <option key={model} value={model}>
@@ -1129,16 +1130,16 @@ const Settings: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          System Configuration
-        </h3>
+           {t("settings.systemConfiguration")}
+         </h3>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-gray-600" />
               <div>
-                <p className="font-medium text-gray-900">Maintenance Mode</p>
+                <p className="font-medium text-gray-900">{t("settings.maintenanceMode")}</p>
                 <p className="text-sm text-gray-500">
-                  Enable maintenance mode for system updates
+                  {t("settings.enableMaintenanceMode")}
                 </p>
               </div>
             </div>
@@ -1158,7 +1159,7 @@ const Settings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Audit Retention (years)
+                {t("settings.auditRetentionYears")}
               </label>
               <input
                 type="number"
@@ -1174,23 +1175,23 @@ const Settings: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Log Level
+                {t("settings.logLevel")}
               </label>
               <select
                 value={settings.logLevel}
                 onChange={(e) => handleInputChange("logLevel", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="error">Error</option>
-                <option value="warn">Warning</option>
-                <option value="info">Info</option>
-                <option value="debug">Debug</option>
+                <option value="error">{t("settings.error")}</option>
+                <option value="warn">{t("settings.warning")}</option>
+                <option value="info">{t("settings.info")}</option>
+                <option value="debug">{t("settings.debug")}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Backup Frequency
+                {t("settings.backupFrequency")}
               </label>
               <select
                 value={settings.backupFrequency}
@@ -1199,9 +1200,9 @@ const Settings: React.FC = () => {
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="hourly">Hourly</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
+                <option value="hourly">{t("settings.hourly")}</option>
+                <option value="daily">{t("settings.daily")}</option>
+                <option value="weekly">{t("settings.weekly")}</option>
               </select>
             </div>
           </div>
@@ -1217,7 +1218,7 @@ const Settings: React.FC = () => {
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-6">
             <SettingsIcon className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("navigation.settings")}</h1>
           </div>
 
           <nav className="space-y-2">
@@ -1269,7 +1270,7 @@ const Settings: React.FC = () => {
         <div className="border-t border-gray-200 bg-white px-8 py-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
-              Changes are saved automatically when you modify settings.
+              {t("settings.changesSavedAutomatically")}
             </p>
             <div className="flex items-center space-x-3">
               <button
@@ -1277,7 +1278,7 @@ const Settings: React.FC = () => {
                 className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Reset
+                {t("settings.reset")}
               </button>
               <button
                 onClick={handleSave}
@@ -1289,7 +1290,7 @@ const Settings: React.FC = () => {
                 ) : (
                   <Save className="w-4 h-4 mr-2" />
                 )}
-                Save Changes
+                {t("settings.saveChanges")}
               </button>
             </div>
           </div>

@@ -110,30 +110,30 @@ const Profile: React.FC = () => {
 
   const stats = [
     {
-      label: "Audits Completed",
+      label: t("profile.auditsCompleted"),
       value: "23",
-      change: "+3 this month",
+      change: `+3 ${t("profile.thisMonth")}`,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
     },
     {
-      label: "Findings Identified",
+      label: t("profile.findingsIdentified"),
       value: "47",
-      change: "+8 this month",
+      change: `+8 ${t("profile.thisMonth")}`,
       color: "text-red-600",
       bgColor: "bg-red-100",
     },
     {
-      label: "Controls Tested",
+      label: t("profile.controlsTested"),
       value: "156",
-      change: "+12 this month",
+      change: `+12 ${t("profile.thisMonth")}`,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
     {
-      label: "Hours Logged",
+      label: t("profile.hoursLogged"),
       value: "342",
-      change: "+28 this month",
+      change: `+28 ${t("profile.thisMonth")}`,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
     },
@@ -185,7 +185,7 @@ const Profile: React.FC = () => {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
-          <LoadingSpinner size="lg" text="Loading profile..." />
+          <LoadingSpinner size="lg" text={t("profile.loadingProfile")} />
         </div>
       </div>
     );
@@ -225,7 +225,7 @@ const Profile: React.FC = () => {
                   <span className="text-gray-600">{user.department}</span>
                   <span className="text-gray-400">•</span>
                   <span className="text-gray-600">
-                    Joined {formatDate(user.created_at)}
+                    {t("profile.joined")} {formatDate(user.created_at)}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2 mt-2 text-gray-500">
@@ -250,7 +250,7 @@ const Profile: React.FC = () => {
                     onClick={handleCancel}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    Cancel
+                    {t("profile.cancel")}
                   </button>
                   <button
                     onClick={handleSave}
@@ -262,7 +262,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <Save className="w-4 h-4 mr-2" />
                     )}
-                    Save Changes
+                    {t("profile.saveChanges")}
                   </button>
                 </div>
               )}
@@ -453,7 +453,7 @@ const Profile: React.FC = () => {
               {/* Skills */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Skills
+                  {t("profile.skills")}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {profileData.skills.map((skill, index) => (
@@ -468,10 +468,10 @@ const Profile: React.FC = () => {
               </div>
 
               {/* Certifications */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Certifications
-                </h3>
+               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                   {t("profile.certifications")}
+                 </h3>
                 <div className="space-y-2">
                   {profileData.certifications.map((cert, index) => (
                     <div key={index} className="flex items-center space-x-2">
@@ -487,25 +487,25 @@ const Profile: React.FC = () => {
               {/* Account Info */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Account Information
+                  {t("profile.accountInformation")}
                 </h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Member since</span>
+                    <span className="text-gray-600">{t("profile.memberSince")}</span>
                     <span className="font-medium">
                       {formatDate(user.created_at)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Last login</span>
+                    <span className="text-gray-600">{t("profile.lastLogin")}</span>
                     <span className="font-medium">
                       {user.last_login
                         ? formatDateTime(user.last_login)
-                        : "Never"}
+                        : t("profile.never")}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Status</span>
+                    <span className="text-gray-600">{t("profile.status")}</span>
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         user.is_active
@@ -513,7 +513,7 @@ const Profile: React.FC = () => {
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {user.is_active ? "Active" : "Inactive"}
+                      {user.is_active ? t("settings.active") : t("settings.inactive")}
                     </span>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ const Profile: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                 <Activity className="w-5 h-5 mr-2 text-blue-600" />
-                Recent Activity
+                {t("profile.recentActivity")}
               </h3>
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => {
@@ -589,32 +589,32 @@ const Profile: React.FC = () => {
           <div className="max-w-2xl">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Shield className="w-5 h-5 mr-2 text-blue-600" />
-                Security Settings
-              </h3>
+                 <Shield className="w-5 h-5 mr-2 text-blue-600" />
+                 {t("pages.profile.security")}
+               </h3>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      Change Password
+                      {t("profile.changePassword")}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Update your account password
+                      {t("profile.updatePassword")}
                     </p>
                   </div>
                   <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     <Key className="w-4 h-4 mr-2" />
-                    Change Password
+                    {t("profile.changePassword")}
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      Two-Factor Authentication
+                      {t("settings.twoFactorAuth")}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Add an extra layer of security
+                      {t("settings.addExtraSecurity")}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -626,10 +626,10 @@ const Profile: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      Email Notifications
+                      {t("settings.emailNotifications")}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Receive security alerts via email
+                      {t("settings.receiveEmailNotifications")}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
