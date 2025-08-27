@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -16,7 +16,8 @@ import {
   Building2, Gauge, Target as TargetIcon, AlertOctagon, ShieldCheck,
   UserCheck, FileCheck, CalendarCheck, Clock3, Star, Award,
   ChevronRight, ExternalLink, RefreshCw, Maximize2, Minimize2,
-  Link as LinkIcon, GitBranch, GitCommit, GitPullRequest
+  Link as LinkIcon, GitBranch, GitCommit, GitPullRequest, Sun, Moon,
+  Share2, Bookmark, Bell, BellOff
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { formatNumber, formatPercentage, getChartColors } from '../utils';
@@ -69,6 +70,8 @@ const Dashboard: React.FC = () => {
   const [selectedView, setSelectedView] = useState<'overview' | 'detailed' | 'analytics' | 'relationships'>('overview');
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Real data state
   const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetrics | null>(null);
@@ -89,11 +92,15 @@ const Dashboard: React.FC = () => {
     loadDashboardData();
   }, [selectedPeriod, selectedTimeframe]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async (showRefreshIndicator = false) => {
     try {
-      setIsLoading(true);
-      
-      // Load all dashboard data
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      // Load all dashboard data in parallel for better performance
       const [
         metricsData,
         auditStatus,
@@ -108,9 +115,9 @@ const Dashboard: React.FC = () => {
       ] = await Promise.all([
         dashboardService.getDashboardMetrics(selectedPeriod),
         dashboardService.getAuditStatusData(),
-        dashboardService.getComplianceStatus(),
-        dashboardService.getMonthlyTrends(selectedTimeframe),
-        dashboardService.getRecentActivity(),
+        dashboardService.getComplianceData(),
+        dashboardService.getMonthlyTrendData(selectedTimeframe),
+        dashboardService.getRecentActivities(),
         dashboardService.getUpcomingTasks(),
         dashboardService.getRiskHeatmapData(),
         dashboardService.getModuleOverview(),
@@ -129,7 +136,7 @@ const Dashboard: React.FC = () => {
       setGrcMetrics(grcMetricsData);
       setRelationships(relationshipsData);
 
-      // Transform metrics data
+      // Transform metrics data with memoization benefits
       const transformedMetrics: MetricCard[] = [
         {
           title: t('dashboard.activeAudits'),
@@ -154,8 +161,8 @@ const Dashboard: React.FC = () => {
           category: 'risk'
         },
         {
-          title: t('dashboard.activeControls'),
-          value: metricsData.activeControls,
+          title: t('dashboard.effectiveControls'),
+          value: metricsData.effectiveControls,
           change: metricsData.controlChange,
           changeType: metricsData.controlChange > 0 ? 'increase' : 'decrease',
           icon: Shield,
@@ -178,12 +185,15 @@ const Dashboard: React.FC = () => {
       ];
 
       setMetrics(transformedMetrics);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      // In a real app, you might want to show a toast notification here
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  };
+  }, [selectedPeriod, selectedTimeframe, t]);
 
   const handleMetricClick = (link?: string) => {
     if (link) {
@@ -242,11 +252,23 @@ const Dashboard: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 cursor-pointer hover:shadow-md dark:hover:shadow-lg hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
           onClick={() => handleMetricClick(metric.link)}
+          role="button"
+          tabIndex={0}
+          aria-label={`${metric.title}: ${formatNumber(metric.value)}, ${metric.change > 0 ? '+' : ''}${metric.change}% ${metric.changeType === 'increase' ? 'increase' : 'decrease'}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleMetricClick(metric.link);
+            }
+          }}
         >
           <div className="flex items-center justify-between mb-4">
-            <div className={`p-2 rounded-lg`} style={{ backgroundColor: `${metric.color}20` }}>
+            <div
+              className="p-2 rounded-lg transition-colors"
+              style={{ backgroundColor: `${metric.color}20` }}
+            >
               <metric.icon className="w-6 h-6" style={{ color: metric.color }} />
             </div>
             <div className="flex items-center space-x-1">
@@ -256,20 +278,20 @@ const Dashboard: React.FC = () => {
                 <TrendingDown className="w-4 h-4 text-red-500" />
               )}
               <span className={`text-sm font-medium ${
-                metric.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+                metric.changeType === 'increase' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
               }`}>
                 {metric.change > 0 ? '+' : ''}{metric.change}%
               </span>
             </div>
           </div>
-          
+
           <div className="mb-2">
-            <h3 className="text-2xl font-bold text-gray-900">{formatNumber(metric.value)}</h3>
-            <p className="text-sm text-gray-600">{metric.title}</p>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{formatNumber(metric.value)}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{metric.title}</p>
           </div>
-          
-          <div className="flex items-center text-xs text-gray-500">
-            <span>View details</span>
+
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <span>{t('dashboard.viewDetails')}</span>
             <ChevronRight className="w-3 h-3 ml-1" />
           </div>
         </motion.div>
@@ -310,18 +332,24 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('dashboard.welcomeBack', { name: user?.first_name || user?.email || 'User' })}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.welcomeBack', { name: user?.first_name || user?.email || 'User' })}</p>
+          {lastUpdated && (
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              {t('dashboard.lastUpdated', 'Last updated')}: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
         </div>
         <div className="flex items-center space-x-4">
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            aria-label={t('dashboard.selectPeriod', 'Select time period')}
           >
             <option value="7d">{t('dashboard.last7Days')}</option>
             <option value="30d">{t('dashboard.last30Days')}</option>
@@ -329,11 +357,13 @@ const Dashboard: React.FC = () => {
             <option value="1y">{t('dashboard.lastYear')}</option>
           </select>
           <button
-            onClick={loadDashboardData}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            onClick={() => loadDashboardData(true)}
+            disabled={isRefreshing}
+            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={isRefreshing ? t('dashboard.refreshing', 'Refreshing...') : t('dashboard.refresh')}
           >
-            <RefreshCw className="w-4 h-4" />
-            <span>{t('dashboard.refresh')}</span>
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? t('dashboard.refreshing', 'Refreshing...') : t('dashboard.refresh')}</span>
           </button>
         </div>
       </div>
@@ -343,12 +373,12 @@ const Dashboard: React.FC = () => {
       {selectedView === 'overview' && (
         <>
           {renderMetricsGrid()}
-          
+
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Audit Status Chart */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">{t('dashboard.auditStatusDistribution')}</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('dashboard.auditStatusDistribution')}</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -361,7 +391,7 @@ const Dashboard: React.FC = () => {
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {auditStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getChartColors()[index % getChartColors().length]} />
+                      <Cell key={`cell-${index}`} fill={getChartColors(auditStatusData.length)[index]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -370,8 +400,8 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Risk Heatmap */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">{t('dashboard.riskHeatmap')}</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('dashboard.riskHeatmap')}</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <ScatterChart>
                   <CartesianGrid />
@@ -391,23 +421,23 @@ const Dashboard: React.FC = () => {
           {renderRelationshipGraph()}
 
           {/* Cross-Module Relationships */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">{t('dashboard.crossModuleIntegration')}</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('dashboard.crossModuleIntegration')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium mb-2">Audit → Risk</h4>
+                <h4 className="font-medium mb-2">{t('dashboard.auditToRisk')}</h4>
                 <p className="text-sm text-gray-600">Audits identify risks that need assessment</p>
-                <div className="mt-2 text-xs text-blue-600">View related risks</div>
+                <div className="mt-2 text-xs text-blue-600">{t('dashboard.viewDetails')}</div>
               </div>
               <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium mb-2">Risk → Control</h4>
+                <h4 className="font-medium mb-2">{t('dashboard.riskToControl')}</h4>
                 <p className="text-sm text-gray-600">Risks are mitigated by controls</p>
-                <div className="mt-2 text-xs text-blue-600">View related controls</div>
+                <div className="mt-2 text-xs text-blue-600">{t('dashboard.viewDetails')}</div>
               </div>
               <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium mb-2">Control → Compliance</h4>
+                <h4 className="font-medium mb-2">{t('dashboard.controlToCompliance')}</h4>
                 <p className="text-sm text-gray-600">Controls satisfy compliance requirements</p>
-                <div className="mt-2 text-xs text-blue-600">View compliance status</div>
+                <div className="mt-2 text-xs text-blue-600">{t('dashboard.viewDetails')}</div>
               </div>
             </div>
           </div>
@@ -415,8 +445,8 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('dashboard.recentActivity')}</h3>
         <div className="space-y-4">
           {recentActivities.slice(0, 5).map((activity, index) => (
             <motion.div
@@ -424,18 +454,24 @@ const Dashboard: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg"
+              className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
             >
-              <div className={`p-2 rounded-full ${activity.type === 'audit' ? 'bg-blue-100' : activity.type === 'risk' ? 'bg-red-100' : 'bg-green-100'}`}>
-                {activity.type === 'audit' && <FileText className="w-4 h-4 text-blue-600" />}
-                {activity.type === 'risk' && <AlertTriangle className="w-4 h-4 text-red-600" />}
-                {activity.type === 'control' && <Shield className="w-4 h-4 text-green-600" />}
+              <div className={`p-2 rounded-full ${
+                activity.severity === 'critical' ? 'bg-red-100 dark:bg-red-900' :
+                activity.severity === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900' :
+                activity.severity === 'success' ? 'bg-green-100 dark:bg-green-900' :
+                'bg-blue-100 dark:bg-blue-900'
+              }`}>
+                {activity.severity === 'critical' && <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                {activity.severity === 'warning' && <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />}
+                {activity.severity === 'success' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                {activity.severity === 'info' && <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">{activity.description}</p>
-                <p className="text-xs text-gray-500">{activity.timestamp}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.title}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{activity.timestamp}</p>
               </div>
-              <Link to={activity.link} className="text-blue-600 hover:text-blue-800 text-sm">
+              <Link to={activity.link} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
                 View
               </Link>
             </motion.div>

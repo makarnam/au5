@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -32,6 +33,7 @@ interface Report {
 }
 
 const GeneratedReportsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [reports, setReports] = useState<Report[]>([]);
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
@@ -590,7 +592,7 @@ const GeneratedReportsPage: React.FC = () => {
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Raporlar yükleniyor...</p>
+              <p className="mt-2 text-gray-600">{t('common.loading')}</p>
             </div>
           ) : filteredReports.length === 0 ? (
             <div className="text-center py-8">

@@ -106,6 +106,7 @@ import {
   FilePieChart,
   FileLineChart,
   Thermometer,
+  X as CloseIcon,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
@@ -128,6 +129,9 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
   const { user, checkPermission } = useAuthStore();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   // Memoize menuCategories to prevent unnecessary re-renders
   const menuCategories = useMemo(() => [
@@ -575,16 +579,53 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     });
   }, [location.pathname, menuCategories]);
 
-  // Memoize filtered categories to prevent unnecessary re-renders
-  const filteredCategories = useMemo(() => 
-    menuCategories.map(category => ({
+  // Memoize filtered categories with search functionality
+  const filteredCategories = useMemo(() => {
+    // First filter by permissions
+    let categories = menuCategories.map(category => ({
       ...category,
       items: category.items.filter(item =>
         item.roles.some(role => checkPermission(role as any))
       )
-    })).filter(category => category.items.length > 0),
-    [menuCategories, checkPermission]
-  );
+    })).filter(category => category.items.length > 0);
+
+    // Then filter by search query if present
+    if (!searchQuery.trim()) {
+      return categories;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return categories.map(category => {
+      const filteredItems = category.items.filter(item => {
+        // Check if item name matches
+        const itemMatches = item.name.toLowerCase().includes(query);
+
+        // Check if any children match
+        const childrenMatch = item.children?.some(child =>
+          child.name.toLowerCase().includes(query)
+        );
+
+        // Check if category name matches
+        const categoryMatches = category.name.toLowerCase().includes(query);
+
+        return itemMatches || childrenMatch || categoryMatches;
+      });
+
+      // Filter children within items
+      const itemsWithFilteredChildren = filteredItems.map(item => ({
+        ...item,
+        children: item.children?.filter(child =>
+          child.name.toLowerCase().includes(query)
+        )
+      }));
+
+      return {
+        ...category,
+        items: itemsWithFilteredChildren
+      };
+    }).filter(category => category.items.length > 0);
+  }, [menuCategories, checkPermission, searchQuery]);
 
   // Memoize callback functions
   const toggleCategory = useCallback((categoryId: string) => {
@@ -606,8 +647,21 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
     navigate(href);
   }, [navigate]);
 
+
+  const clearSearch = useCallback(() => {
+    setSearchQuery("");
+    setShowSearch(false);
+  }, []);
+
+  const toggleSearch = useCallback(() => {
+    setShowSearch(prev => !prev);
+    if (showSearch) {
+      setSearchQuery("");
+    }
+  }, [showSearch]);
+
   return (
-    <div className={`flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300 ${
+    <div className={`flex flex-col h-full bg-white border-r border-gray-200 ${
       isCollapsed ? 'w-16' : 'w-80'
     }`}>
       {/* Header */}
@@ -628,7 +682,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
             <BarChart3 className="w-6 h-6 text-white" />
           </div>
         )}
-        
+
         {/* Toggle buttons */}
         <div className="flex items-center space-x-1">
           <button
@@ -639,16 +693,63 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
             {isCollapsed ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
           </button>
           {!isCollapsed && (
-            <button
-              onClick={onSwitchToLegacy}
-              className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              title="Switch to legacy menu"
-            >
-              <Palette className="w-4 h-4" />
-            </button>
+            <>
+              <button
+                onClick={toggleSearch}
+                className={`p-1.5 rounded-md transition-colors ${
+                  showSearch
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+                title={showSearch ? "Hide search" : "Show search"}
+              >
+                <Search className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onSwitchToLegacy}
+                className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                title="Switch to legacy menu"
+              >
+                <Palette className="w-4 h-4" />
+              </button>
+            </>
           )}
         </div>
       </div>
+
+      {/* Search Bar */}
+      {!isCollapsed && showSearch && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="px-4 py-3 border-b border-gray-200 bg-gray-50"
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder={t('common.search') || 'Search menu...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              className={`w-full pl-10 pr-10 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                isSearchFocused ? 'border-blue-300' : ''
+              }`}
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
+              >
+                <CloseIcon className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
@@ -675,7 +776,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                 className={`w-full group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   hasActiveItem
                     ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
-                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-200"
                 }`}
                 title={isCollapsed ? category.name : undefined}
               >
@@ -684,7 +785,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                     className={`${isCollapsed ? 'mx-auto' : 'mr-3'} h-5 w-5 transition-colors ${
                       hasActiveItem
                         ? "text-white"
-                        : "text-gray-400 group-hover:text-gray-500"
+                        : "text-slate-500 group-hover:text-slate-700"
                     }`}
                   />
                   {!isCollapsed && <span className="flex-1">{category.name}</span>}
@@ -692,7 +793,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                 {!isCollapsed && (
                   <ChevronDown
                     className={`h-4 w-4 transition-transform ${isExpanded ? "transform rotate-180" : ""} ${
-                      hasActiveItem ? "text-white" : "text-gray-400"
+                      hasActiveItem ? "text-white" : "text-slate-400 group-hover:text-slate-600"
                     }`}
                   />
                 )}
@@ -723,15 +824,15 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                           }}
                           className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center ${
                             item.current
-                              ? "bg-blue-50 text-blue-700 font-medium"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                              ? "bg-blue-50 text-blue-800 font-medium border-l-2 border-blue-500"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                           }`}
                         >
                           <ItemIcon className="mr-2 h-4 w-4" />
                           <span className="flex-1">{item.name}</span>
                           {hasChildren && (
                             <ChevronDown
-                              className={`h-3 w-3 transition-transform ${isItemExpanded ? "transform rotate-180" : ""}`}
+                              className={`h-3 w-3 text-slate-400 transition-transform ${isItemExpanded ? "transform rotate-180" : ""}`}
                             />
                           )}
                         </button>
@@ -751,7 +852,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
                                 className={`w-full text-left px-3 py-1 text-xs rounded-md transition-colors ${
                                   child.current
                                     ? "bg-blue-100 text-blue-800 font-medium"
-                                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                                 }`}
                               >
                                 {child.name}
@@ -771,7 +872,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
       {/* User info at bottom */}
       {!isCollapsed && (
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-white">
@@ -780,7 +881,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               </span>
             </div>
             <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {user?.first_name} {user?.last_name}
               </p>
               <span

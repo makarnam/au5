@@ -8,6 +8,9 @@ import { Toaster } from "react-hot-toast";
 import "./lib/fetchWithSupabaseHeaders";
 import { useAuthStore } from "./store/authStore";
 
+// Ensure clean state on app start
+console.log("main.tsx: Starting app initialization...");
+
 console.log("main.tsx: Starting app initialization...");
 
 // Initialize auth store

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, memo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,6 +24,8 @@ import {
   HardDrive,
   Network,
   Globe,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
@@ -44,6 +46,54 @@ const Layout: React.FC = () => {
   const [composeOpen, setComposeOpen] = useState(false);
   const [useEnhancedSidebar, setUseEnhancedSidebar] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+
+  // Keyboard navigation and shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Close mobile sidebar with Escape
+      if (event.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+
+      // Focus search with Ctrl/Cmd + K (if search is implemented later)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        // Could implement search focus here
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [sidebarOpen]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (userMenuOpen && !target.closest('[data-user-menu]')) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
 
   // Memoize navigation array to prevent unnecessary re-renders
   const navigation = useMemo(() => [
@@ -1007,6 +1057,7 @@ const Layout: React.FC = () => {
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
+              aria-hidden="true"
             >
               <div className="absolute inset-0 bg-gray-600 opacity-75" />
             </motion.div>
@@ -1019,14 +1070,18 @@ const Layout: React.FC = () => {
               className={`fixed inset-y-0 left-0 z-50 bg-white lg:hidden ${
                 useEnhancedSidebar && sidebarCollapsed ? 'w-16' : 'w-80'
               }`}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('navigation.sidebar', 'Navigation sidebar')}
             >
               <div className="absolute top-0 right-0 -mr-12 pt-2">
                 <button
                   type="button"
-                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white bg-gray-100"
                   onClick={() => setSidebarOpen(false)}
+                  aria-label={t('navigation.closeSidebar', 'Close sidebar')}
                 >
-                  <X className="h-6 w-6 text-white" />
+                  <X className="h-6 w-6 text-gray-700" />
                 </button>
               </div>
               {useEnhancedSidebar ? (
@@ -1053,6 +1108,7 @@ const Layout: React.FC = () => {
                 type="button"
                 className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                 onClick={() => setSidebarOpen(true)}
+                aria-label={t('navigation.openSidebar', 'Open sidebar')}
               >
                 <Menu className="h-6 w-6" />
               </button>
@@ -1065,17 +1121,32 @@ const Layout: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Network Status Indicator */}
+              <div className="hidden md:flex items-center space-x-2">
+                {isOnline ? (
+                  <Wifi className="w-4 h-4 text-green-500" />
+                ) : (
+                  <WifiOff className="w-4 h-4 text-red-500" />
+                )}
+                <span className="text-xs text-gray-500 hidden lg:block">
+                  {isOnline ? t('common.online', 'Online') : t('common.offline', 'Offline')}
+                </span>
+              </div>
+
+
               {/* Compose Notification */}
               <div className="hidden md:block">
                 <button
                   type="button"
-                  className="px-3 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                  className="px-3 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
                   onClick={() => setComposeOpen(true)}
                   title="Send notification/message"
+                  aria-label={t("navigation.newMessage")}
                 >
                   {t("navigation.newMessage")}
                 </button>
               </div>
+
               {/* Language Selector */}
               <LanguageSelector />
 
@@ -1085,11 +1156,15 @@ const Layout: React.FC = () => {
               </div>
 
               {/* User Menu */}
-              <div className="relative">
+              <div className="relative" data-user-menu>
                 <button
                   type="button"
                   className="flex items-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-expanded={userMenuOpen}
+                  aria-haspopup="true"
+                  aria-label={t('navigation.userMenu', 'User menu')}
+                  data-user-menu-trigger
                 >
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mr-2">
                     <span className="text-sm font-medium text-white">
@@ -1097,7 +1172,7 @@ const Layout: React.FC = () => {
                       {user?.last_name?.[0]}
                     </span>
                   </div>
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 <AnimatePresence>
@@ -1107,6 +1182,9 @@ const Layout: React.FC = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="user-menu-button"
                     >
                       <div className="px-4 py-3 border-b border-gray-200">
                         <p className="text-sm font-medium text-gray-900">
@@ -1119,13 +1197,14 @@ const Layout: React.FC = () => {
                           {getUserRoleLabel(user?.role || "viewer")}
                         </span>
                       </div>
-                      <div className="py-1">
+                      <div className="py-1" role="none">
                         <button
                           onClick={() => {
                             navigate("/profile");
                             setUserMenuOpen(false);
                           }}
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          role="menuitem"
                         >
                           <User className="h-4 w-4 mr-2" />
                           {t("navigation.profile")}
@@ -1133,6 +1212,7 @@ const Layout: React.FC = () => {
                         <button
                           onClick={handleSignOut}
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          role="menuitem"
                         >
                           <LogOut className="h-4 w-4 mr-2" />
                           {t("navigation.logout")}
@@ -1148,6 +1228,31 @@ const Layout: React.FC = () => {
 
         {/* Main content area */}
         <main className="flex-1 overflow-auto bg-gray-50">
+          {/* Connection status banner (only show when offline) */}
+          <AnimatePresence>
+            {!isOnline && (
+              <motion.div
+                initial={{ opacity: 0, y: -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -50 }}
+                className="bg-red-600 text-white px-4 py-3 flex items-center justify-between"
+              >
+                <div className="flex items-center space-x-2">
+                  <WifiOff className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {t('common.offline', 'You are currently offline')}
+                  </span>
+                </div>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-red-200 hover:text-white text-sm underline"
+                >
+                  {t('common.retry', 'Retry')}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
