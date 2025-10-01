@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import workflows from '../../services/workflows';
-import { WorkflowStep, Workflow } from '../../types';
+import { WorkflowStep, Workflow, UserRole } from '../../types';
 import { Plus, Edit, Trash2, Users, ArrowUp, ArrowDown, CheckCircle } from 'lucide-react';
+import UserSelectionDropdown from './UserSelectionDropdown';
 
 interface WorkflowStepManagerProps {
   workflowId: string;
@@ -290,10 +291,16 @@ const WorkflowStepForm: React.FC<WorkflowStepFormProps> = ({
   onSave,
   onCancel
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    step_name: string;
+    assignee_role: UserRole;
+    assignee_id: string | undefined;
+    required: boolean;
+    comments: string;
+  }>({
     step_name: step?.step_name || '',
-    assignee_role: step?.assignee_role || '',
-    assignee_id: step?.assignee_id || '',
+    assignee_role: step?.assignee_role || 'admin',
+    assignee_id: step?.assignee_id,
     required: step?.required ?? true,
     comments: step?.comments || ''
   });
@@ -320,7 +327,7 @@ const WorkflowStepForm: React.FC<WorkflowStepFormProps> = ({
         <Label htmlFor="assignee_role">Atanan Rol</Label>
         <Select
           value={formData.assignee_role}
-          onValueChange={(value) => setFormData(prev => ({ ...prev, assignee_role: value }))}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, assignee_role: value as UserRole }))}
         >
           <SelectTrigger>
             <SelectValue placeholder="Rol seçin" />
@@ -337,11 +344,12 @@ const WorkflowStepForm: React.FC<WorkflowStepFormProps> = ({
 
       <div>
         <Label htmlFor="assignee_id">Belirli Kullanıcı (Opsiyonel)</Label>
-        <Input
-          id="assignee_id"
+        <UserSelectionDropdown
           value={formData.assignee_id}
-          onChange={(e) => setFormData(prev => ({ ...prev, assignee_id: e.target.value }))}
-          placeholder="Kullanıcı ID (boş bırakılabilir)"
+          onChange={(userId) => setFormData(prev => ({ ...prev, assignee_id: userId || undefined }))}
+          placeholder="Kullanıcı seçin..."
+          filterByRole={formData.assignee_role}
+          disabled={!formData.assignee_role}
         />
       </div>
 

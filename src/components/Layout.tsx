@@ -26,6 +26,7 @@ import {
   Globe,
   Wifi,
   WifiOff,
+  Target,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { getUserRoleLabel, getRoleColor } from "../utils";
@@ -496,7 +497,7 @@ const Layout: React.FC = () => {
       href: "/governance",
       icon: Shield,
       current: location.pathname.startsWith("/governance"),
-      roles: ["auditor", "supervisor_auditor", "cro", "admin", "super_admin"],
+      roles: ["viewer", "business_unit_user", "business_unit_manager", "auditor", "reviewer", "supervisor_auditor", "cro", "admin", "super_admin"], // Temporarily allowing all roles to see governance menu
       children: [
         {
           name: t("navigation.dashboard"),
@@ -512,6 +513,36 @@ const Layout: React.FC = () => {
           name: t("navigation.reporting"),
           href: "/governance/reporting",
           current: location.pathname === "/governance/reporting",
+        },
+        {
+          name: "Strategy Management",
+          href: "/governance/strategy",
+          current: location.pathname === "/governance/strategy",
+        },
+        {
+          name: "Risk Appetite Framework",
+          href: "/governance/risk-appetite",
+          current: location.pathname === "/governance/risk-appetite",
+        },
+        {
+          name: "Stakeholder Management",
+          href: "/governance/stakeholders",
+          current: location.pathname === "/governance/stakeholders",
+        },
+        {
+          name: "Policy Management",
+          href: "/governance/policies",
+          current: location.pathname === "/governance/policies",
+        },
+        {
+          name: "Board Reporting",
+          href: "/governance/board-reporting",
+          current: location.pathname === "/governance/board-reporting",
+        },
+        {
+          name: "Integration",
+          href: "/governance/integration",
+          current: location.pathname === "/governance/integration",
         },
         {
           name: t("navigation.training"),

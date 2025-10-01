@@ -15,7 +15,8 @@
       "alwaysAllow": [
         "postgrestRequest",
         "sqlToRest"
-      ]
+      ],
+      "disabled": true
     }
   }
 }

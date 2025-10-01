@@ -993,9 +993,14 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div className="mb-6 lg:mb-0">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              {t('dashboard.welcomeBack', {
-                name: user?.first_name || user?.email?.split('@')[0] || 'User'
-              })} 👋
+              {(() => {
+                const userName = user ? (
+                  user.first_name && user.last_name
+                    ? `${user.first_name} ${user.last_name}`
+                    : user.first_name || user.email?.split('@')[0] || 'User'
+                ) : 'User';
+                return t('dashboard.welcomeBack', { name: userName });
+              })()} 👋
             </h1>
             <p className="text-gray-600 text-lg">
               {t('dashboard.grcOverview')}

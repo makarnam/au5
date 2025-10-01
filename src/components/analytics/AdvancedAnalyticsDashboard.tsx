@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
 import { supabase } from '../../lib/supabase';
+import advancedAnalyticsService from '../../services/advancedAnalyticsService';
 
 interface AnalyticsData {
   auditMetrics: any[];
@@ -19,6 +20,8 @@ interface AnalyticsData {
   performanceMetrics: any[];
   teamWorkload: any[];
   aiUsage: any[];
+  predictiveData: any[];
+  trendAnalysis: any;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
@@ -30,7 +33,9 @@ export default function AdvancedAnalyticsDashboard() {
     complianceMetrics: [],
     performanceMetrics: [],
     teamWorkload: [],
-    aiUsage: []
+    aiUsage: [],
+    predictiveData: [],
+    trendAnalysis: null
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
@@ -77,13 +82,30 @@ export default function AdvancedAnalyticsDashboard() {
         .select('*')
         .limit(12);
 
+      // Load predictive analytics data
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 6);
+      const endDate = new Date();
+
+      const riskAggregatedData = await advancedAnalyticsService.aggregateRiskData(
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0],
+        'month'
+      );
+
+      const trendAnalysis = await advancedAnalyticsService.analyzeTrends(riskAggregatedData);
+
+      const predictiveModel = await advancedAnalyticsService.generatePredictions(riskAggregatedData, 6);
+
       setData({
         auditMetrics: auditData || [],
         riskMetrics: riskData || [],
         complianceMetrics: complianceData || [],
         performanceMetrics: performanceData || [],
         teamWorkload: workloadData || [],
-        aiUsage: aiData || []
+        aiUsage: aiData || [],
+        predictiveData: predictiveModel.predictions || [],
+        trendAnalysis
       });
     } catch (error) {
       console.error('Error loading analytics data:', error);
@@ -144,6 +166,7 @@ export default function AdvancedAnalyticsDashboard() {
           <TabsTrigger value="compliance">Compliance Analytics</TabsTrigger>
           <TabsTrigger value="performance">Performance Analytics</TabsTrigger>
           <TabsTrigger value="ai">AI Analytics</TabsTrigger>
+          <TabsTrigger value="predictive">Predictive Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -473,6 +496,84 @@ export default function AdvancedAnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="predictive" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Trend Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Trend Direction:</span>
+                    <Badge variant={
+                      data.trendAnalysis?.trend === 'increasing' ? 'destructive' :
+                      data.trendAnalysis?.trend === 'decreasing' ? 'default' : 'secondary'
+                    }>
+                      {data.trendAnalysis?.trend || 'stable'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Slope:</span>
+                    <span className="text-sm">{data.trendAnalysis?.slope?.toFixed(3) || '0.000'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Confidence:</span>
+                    <span className="text-sm">{data.trendAnalysis?.confidence ? (data.trendAnalysis.confidence * 100).toFixed(1) : '0.0'}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Predictions (Next 6 Months)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={data.predictiveData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Line type="monotone" dataKey="value" stroke="#ff7300" strokeDasharray="5 5" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Advanced Analytics Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {data.auditMetrics.length > 0 ? data.auditMetrics[data.auditMetrics.length - 1]?.total_audits || 0 : 0}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Total Audits</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {data.complianceMetrics.length > 0 ?
+                      Math.round(data.complianceMetrics[0]?.compliance_score || 0) : 0}%
+                  </div>
+                  <p className="text-sm text-muted-foreground">Avg Compliance Score</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {data.predictiveData.length}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Prediction Points</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

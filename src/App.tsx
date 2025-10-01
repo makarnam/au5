@@ -241,6 +241,14 @@ import GovernanceDashboard from "./pages/governance/Dashboard";
 import GovernanceCalendar from "./pages/governance/Calendar";
 import GovernanceReporting from "./pages/governance/Reporting";
 import GovernanceTraining from "./pages/governance/Training";
+import StrategyManagement from "./pages/governance/StrategyManagement";
+import RiskAppetiteFramework from "./pages/governance/RiskAppetiteFramework";
+import RiskAppetiteManagement from "./pages/governance/RiskAppetiteManagement";
+import ToleranceMonitoring from "./pages/governance/ToleranceMonitoring";
+import StakeholderManagement from "./pages/governance/StakeholderManagement";
+import GovernancePolicyManagement from "./pages/governance/PolicyManagement";
+import BoardReporting from "./pages/governance/BoardReporting";
+import GovernanceIntegration from "./pages/governance/GovernanceIntegration";
 
 function App() {
   console.log("App component rendering...");
@@ -544,11 +552,19 @@ function App() {
           <Route path="analytics/workflow" element={<WorkflowAnalyticsPage />} />
 
           {/* Governance */}
-          <Route path="governance" element={<GovernanceDashboard />} />
-          <Route path="governance/dashboard" element={<GovernanceDashboard />} />
-          <Route path="governance/calendar" element={<GovernanceCalendar />} />
-          <Route path="governance/reporting" element={<GovernanceReporting />} />
-          <Route path="governance/training" element={<GovernanceTraining />} />
+           <Route path="governance" element={<GovernanceDashboard />} />
+           <Route path="governance/dashboard" element={<GovernanceDashboard />} />
+           <Route path="governance/calendar" element={<GovernanceCalendar />} />
+           <Route path="governance/reporting" element={<GovernanceReporting />} />
+           <Route path="governance/training" element={<GovernanceTraining />} />
+           <Route path="governance/strategy" element={<StrategyManagement />} />
+           <Route path="governance/risk-appetite" element={<RiskAppetiteFramework />} />
+           <Route path="governance/risk-appetite-management" element={<RiskAppetiteManagement />} />
+           <Route path="governance/tolerance-monitoring" element={<ToleranceMonitoring />} />
+           <Route path="governance/stakeholders" element={<StakeholderManagement />} />
+           <Route path="governance/policies" element={<GovernancePolicyManagement />} />
+           <Route path="governance/board-reporting" element={<BoardReporting />} />
+           <Route path="governance/integration" element={<GovernanceIntegration />} />
 
           {/* Reporting */}
           <Route path="reports" element={<ReportBuilderPage />} />

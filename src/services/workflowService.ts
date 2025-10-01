@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { emailService } from './emailService';
 
 export interface Workflow {
   id: string;
@@ -275,6 +276,9 @@ class WorkflowService {
     // Create approval request steps based on workflow
     await this.createApprovalRequestSteps(data.id, requestData.workflow_id);
 
+    // Send email notifications to assignees
+    await this.sendWorkflowAssignmentEmails(data.id);
+
     return data;
   }
 
@@ -287,6 +291,10 @@ class WorkflowService {
       .single();
 
     if (error) throw error;
+
+    // Send email notifications based on action
+    await this.sendWorkflowStepUpdateEmails(stepId, updateData.action, data);
+
     return data;
   }
 
@@ -520,6 +528,93 @@ class WorkflowService {
       requester_name: item.requester?.full_name,
       workflow_name: item.workflow?.name
     })) || [];
+  }
+
+  // Email Notification Methods
+  private async sendWorkflowAssignmentEmails(requestId: string): Promise<void> {
+    try {
+      // Get approval request with workflow details
+      const request = await this.getApprovalRequestById(requestId);
+      if (!request) return;
+
+      // Get workflow steps
+      const steps = await this.getApprovalRequestSteps(requestId);
+
+      // Send email to each assignee
+      for (const step of steps) {
+        if (step.assignee_id && step.status === 'pending') {
+          await emailService.sendWorkflowStepAssignmentEmail(
+            step.assignee_id,
+            request.workflow_name || 'Workflow',
+            step.step_name,
+            request.entity_type,
+            request.entity_id, // This should be entity name, but we have ID
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+            'medium',
+            `Please review and approve the ${request.entity_type} request.`
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error sending workflow assignment emails:', error);
+      // Don't throw error to avoid breaking workflow creation
+    }
+  }
+
+  private async sendWorkflowStepUpdateEmails(stepId: string, action: string, stepData: ApprovalRequestStep): Promise<void> {
+    try {
+      // Get step details with request info
+      const { data: stepWithRequest, error } = await supabase
+        .from('approval_request_steps')
+        .select(`
+          *,
+          request:approval_requests(
+            entity_type,
+            entity_id,
+            workflow:workflows(name),
+            requester:users!approval_requests_requested_by_fkey(full_name)
+          )
+        `)
+        .eq('id', stepId)
+        .single();
+
+      if (error || !stepWithRequest) return;
+
+      const request = stepWithRequest.request;
+      const workflowName = request.workflow?.name || 'Workflow';
+
+      // Send completion email to requester
+      if (action === 'approve' && request.requester?.id) {
+        await emailService.sendWorkflowCompletionEmail(
+          request.requester.id,
+          workflowName,
+          request.entity_type,
+          request.entity_id,
+          new Date().toISOString(),
+          'Completed',
+          `Step "${stepData.step_name}" has been approved.`
+        );
+      }
+
+      // Send rejection email to requester
+      if (action === 'reject' && request.requester?.id) {
+        await emailService.sendWorkflowEscalationEmail(
+          request.requester.id,
+          workflowName,
+          stepData.step_name,
+          request.entity_type,
+          request.entity_id,
+          stepData.assignee_name || 'Unknown',
+          new Date().toISOString(),
+          0,
+          `Step "${stepData.step_name}" has been rejected. ${stepData.comments || ''}`
+        );
+      }
+
+    } catch (error) {
+      console.error('Error sending workflow step update emails:', error);
+      // Don't throw error to avoid breaking workflow updates
+    }
   }
 }
 

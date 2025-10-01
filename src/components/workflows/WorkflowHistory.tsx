@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabase';
 interface WorkflowAction {
   id: string;
   request_id: string;
-  step_id: string;
+  step_order: number;
+  step_name: string;
   action: 'approve' | 'reject' | 'request_revision' | 'skip';
   action_by: string;
   action_at: string;
@@ -12,10 +13,6 @@ interface WorkflowAction {
   user?: {
     full_name?: string;
     email: string;
-  };
-  step?: {
-    step_name: string;
-    step_order: number;
   };
 }
 
@@ -41,19 +38,16 @@ export default function WorkflowHistory({ requestId, className = "" }: WorkflowH
       setError(null);
 
       const { data, error } = await supabase
-        .from('approval_actions')
+        .from('approval_request_steps')
         .select(`
           *,
-          user:users!approval_actions_action_by_fkey (
+          user:users!approval_request_steps_action_by_fkey (
             full_name,
             email
-          ),
-          step:approval_request_steps!approval_actions_step_id_fkey (
-            step_name,
-            step_order
           )
         `)
         .eq('request_id', requestId)
+        .not('action', 'is', null)
         .order('action_at', { ascending: true });
 
       if (error) throw error;
@@ -162,11 +156,9 @@ export default function WorkflowHistory({ requestId, className = "" }: WorkflowH
                     <span className="font-medium capitalize">
                       {action.action.replace('_', ' ')}
                     </span>
-                    {action.step && (
-                      <span className="text-sm opacity-75">
-                        • Step {action.step.step_order}: {action.step.step_name}
-                      </span>
-                    )}
+                    <span className="text-sm opacity-75">
+                      • Step {action.step_order}: {action.step_name}
+                    </span>
                   </div>
                   
                   <div className="text-sm space-y-1">

@@ -462,11 +462,19 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
           href: "/governance",
           icon: Gavel,
           current: location.pathname.startsWith("/governance"),
-          roles: ["auditor", "supervisor_auditor", "cro", "admin", "super_admin"],
+          roles: ["viewer", "business_unit_user", "business_unit_manager", "auditor", "supervisor_auditor", "cro", "admin", "super_admin"],
           children: [
             { name: t("navigation.dashboard"), href: "/governance/dashboard", current: location.pathname === "/governance/dashboard" },
             { name: t("navigation.calendar"), href: "/governance/calendar", current: location.pathname === "/governance/calendar" },
             { name: t("navigation.reporting"), href: "/governance/reporting", current: location.pathname === "/governance/reporting" },
+            { name: "Strategy Management", href: "/governance/strategy", current: location.pathname === "/governance/strategy" },
+            { name: "Risk Appetite Framework", href: "/governance/risk-appetite", current: location.pathname === "/governance/risk-appetite" },
+            { name: "Risk Appetite Management", href: "/governance/risk-appetite-management", current: location.pathname === "/governance/risk-appetite-management" },
+            { name: "Tolerance Monitoring", href: "/governance/tolerance-monitoring", current: location.pathname === "/governance/tolerance-monitoring" },
+            { name: "Stakeholder Management", href: "/governance/stakeholders", current: location.pathname === "/governance/stakeholders" },
+            { name: "Policy Management", href: "/governance/policies", current: location.pathname === "/governance/policies" },
+            { name: "Board Reporting", href: "/governance/board-reporting", current: location.pathname === "/governance/board-reporting" },
+            { name: "Integration", href: "/governance/integration", current: location.pathname === "/governance/integration" },
             { name: t("navigation.training"), href: "/governance/training", current: location.pathname === "/governance/training" }
           ],
         },
@@ -872,7 +880,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
 
       {/* User info at bottom */}
       {!isCollapsed && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-white">
@@ -881,7 +889,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
               </span>
             </div>
             <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-gray-900">
                 {user?.first_name} {user?.last_name}
               </p>
               <span
