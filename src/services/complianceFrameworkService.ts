@@ -11,6 +11,7 @@ export type ComplianceFramework = {
   authority?: string | null;
   category?: string | null;
   is_active: boolean;
+  ai_generated: boolean;
   created_by?: UUID | null;
   created_at: string;
   updated_at: string;
@@ -571,6 +572,272 @@ export const ComplianceFrameworkService = {
         requirements,
       },
       error: requirementsError,
+    };
+  },
+
+  // =====================================================================================
+  // ENHANCED FRAMEWORK MANAGEMENT
+  // =====================================================================================
+
+  async validateFrameworkCode(code: string, excludeId?: UUID) {
+    const query = supabase
+      .from('compliance_frameworks')
+      .select('id')
+      .eq('code', code)
+      .eq('is_active', true);
+
+    if (excludeId) {
+      query.neq('id', excludeId);
+    }
+
+    const { data, error } = await query;
+    return { isValid: !data || data.length === 0, error };
+  },
+
+  async getFrameworkStats(frameworkId: UUID) {
+    const { data: requirements } = await this.listRequirements(frameworkId);
+    const { data: sections } = await this.listSections(frameworkId);
+    const { data: profiles } = await this.listProfiles(frameworkId);
+    const { data: assessments } = await this.listAssessments(frameworkId);
+
+    return {
+      requirementsCount: requirements?.length || 0,
+      sectionsCount: sections?.length || 0,
+      profilesCount: profiles?.length || 0,
+      assessmentsCount: assessments?.length || 0,
+    };
+  },
+
+  async duplicateFramework(frameworkId: UUID, newCode: string, newName: string) {
+    // Get original framework
+    const { data: original, error: fetchError } = await this.getFramework(frameworkId);
+    if (fetchError || !original) return { data: null, error: fetchError };
+
+    // Create new framework
+    const newFramework = {
+      ...original,
+      code: newCode,
+      name: newName,
+      ai_generated: false,
+    };
+    delete newFramework.id;
+    delete newFramework.created_at;
+    delete newFramework.updated_at;
+
+    const { data: framework, error: createError } = await this.createFramework(newFramework);
+    if (createError || !framework) return { data: null, error: createError };
+
+    // Copy sections
+    const { data: sections } = await this.listSections(frameworkId);
+    if (sections) {
+      const sectionsToCreate = sections.map(section => {
+        const { id, created_at, updated_at, ...sectionData } = section;
+        return {
+          ...sectionData,
+          framework_id: framework.id,
+        };
+      });
+
+      await supabase.from('compliance_sections').insert(sectionsToCreate);
+    }
+
+    // Copy requirements
+    const { data: requirements } = await this.listRequirements(frameworkId);
+    if (requirements) {
+      const requirementsToCreate = requirements.map(req => {
+        const { id, created_at, updated_at, ...reqData } = req;
+        return {
+          ...reqData,
+          framework_id: framework.id,
+        };
+      });
+
+      await supabase.from('compliance_requirements').insert(requirementsToCreate);
+    }
+
+    return { data: framework, error: null };
+  },
+
+  // =====================================================================================
+  // ENHANCED AI INTEGRATION
+  // =====================================================================================
+
+  async generateFrameworkWithAI(frameworkSpec: {
+    name: string;
+    code: string;
+    description?: string;
+    category?: string;
+    authority?: string;
+    version?: string;
+  }) {
+    // This would integrate with AI service to generate a complete framework
+    console.log('Generating framework with AI:', frameworkSpec);
+
+    // For now, create a basic framework and mark as AI generated
+    const framework = {
+      ...frameworkSpec,
+      ai_generated: true,
+      is_active: true,
+    };
+
+    return this.createFramework(framework);
+  },
+
+  async enhanceRequirementWithAI(requirementId: UUID, enhancementType: 'guidance' | 'evidence' | 'implementation') {
+    // This would use AI to enhance specific aspects of requirements
+    console.log('Enhancing requirement with AI:', requirementId, enhancementType);
+
+    const { data: requirement } = await this.getRequirement(requirementId);
+    if (!requirement) return { data: null, error: new Error('Requirement not found') };
+
+    // Placeholder for AI enhancement
+    const enhancements = {
+      guidance: 'AI-generated guidance for this requirement...',
+      evidence: 'Suggested evidence collection methods...',
+      implementation: 'Implementation recommendations...',
+    };
+
+    return {
+      data: {
+        requirement,
+        enhancement: enhancements[enhancementType],
+        type: enhancementType,
+      },
+      error: null,
+    };
+  },
+
+  async analyzeFrameworkGaps(frameworkId: UUID, targetFrameworkId: UUID) {
+    // Compare two frameworks to identify gaps
+    const { data: sourceReqs } = await this.listRequirements(frameworkId);
+    const { data: targetReqs } = await this.listRequirements(targetFrameworkId);
+
+    // Simple gap analysis (would be enhanced with AI)
+    const gaps = targetReqs?.filter(targetReq =>
+      !sourceReqs?.some(sourceReq =>
+        sourceReq.title.toLowerCase().includes(targetReq.title.toLowerCase().split(' ')[0])
+      )
+    ) || [];
+
+    return {
+      data: {
+        sourceFrameworkId: frameworkId,
+        targetFrameworkId: targetFrameworkId,
+        gaps: gaps,
+        coverage: sourceReqs && targetReqs ? ((targetReqs.length - gaps.length) / targetReqs.length) * 100 : 0,
+      },
+      error: null,
+    };
+  },
+
+  // =====================================================================================
+  // BULK OPERATIONS
+  // =====================================================================================
+
+  async bulkUpdateRequirements(frameworkId: UUID, updates: { id: UUID; updates: Partial<ComplianceRequirement> }[]) {
+    const promises = updates.map(({ id, updates: reqUpdates }) =>
+      this.updateRequirement(id, reqUpdates)
+    );
+
+    const results = await Promise.allSettled(promises);
+    const successful = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    return {
+      data: { successful, failed, total: updates.length },
+      error: failed > 0 ? new Error(`${failed} updates failed`) : null,
+    };
+  },
+
+  async bulkDeleteRequirements(requirementIds: UUID[]) {
+    const { error } = await supabase
+      .from('compliance_requirements')
+      .delete()
+      .in('id', requirementIds);
+
+    return { error };
+  },
+
+  // =====================================================================================
+  // ADVANCED MAPPING OPERATIONS
+  // =====================================================================================
+
+  async getFrameworkMappings(frameworkId: UUID) {
+    // Get all mappings for a framework's requirements
+    const { data: requirements } = await this.listRequirements(frameworkId);
+    if (!requirements) return { data: [], error: null };
+
+    const requirementIds = requirements.map(r => r.id);
+
+    const { data: mappings, error } = await supabase
+      .from('compliance_mappings')
+      .select(`
+        *,
+        compliance_requirements (*)
+      `)
+      .in('requirement_id', requirementIds);
+
+    return { data: mappings || [], error };
+  },
+
+  async createBulkMappings(mappings: Partial<ComplianceMapping>[]) {
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id || null;
+
+    const toInsert = mappings.map(mapping => ({
+      ...mapping,
+      mapped_by: userId,
+      mapped_at: new Date().toISOString(),
+    }));
+
+    return supabase
+      .from('compliance_mappings')
+      .insert(toInsert)
+      .select();
+  },
+
+  // =====================================================================================
+  // COMPLIANCE DASHBOARD METRICS
+  // =====================================================================================
+
+  async getComplianceDashboardData(frameworkId?: UUID) {
+    // Get overall compliance metrics
+    const { data: metrics, error: metricsError } = await supabase.rpc('compute_compliance_snapshot', {
+      p_framework: frameworkId || null,
+      p_profile: null,
+    });
+
+    // Get framework statistics
+    const { data: frameworks } = await this.listFrameworks();
+    const { data: profiles } = await this.listProfiles(frameworkId);
+
+    // Get recent assessments
+    const { data: recentAssessments } = await supabase
+      .from('compliance_assessments')
+      .select(`
+        *,
+        compliance_requirements (*),
+        compliance_profiles (*)
+      `)
+      .order('updated_at', { ascending: false })
+      .limit(10);
+
+    // Get compliance trends (last 30 days) - only if frameworkId is provided
+    let trends: any[] = [];
+    if (frameworkId) {
+      const { data: trendsData } = await this.getComplianceTrends(frameworkId, undefined, 30);
+      trends = trendsData || [];
+    }
+
+    return {
+      data: {
+        metrics,
+        frameworks: frameworks || [],
+        profiles: profiles || [],
+        recentAssessments: recentAssessments || [],
+        trends,
+      },
+      error: metricsError,
     };
   },
 };

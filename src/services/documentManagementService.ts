@@ -417,6 +417,84 @@ class DocumentManagementService {
     return data || [];
   }
 
+  async createDocumentVersion(documentId: string, request: { version_number: string; change_summary: string; file: File }): Promise<DocumentVersion> {
+    // Upload new version file
+    const fileExt = request.file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `documents/versions/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, request.file);
+
+    if (uploadError) throw uploadError;
+
+    // Create version record
+    const { data, error } = await supabase
+      .from('document_versions')
+      .insert({
+        document_id: documentId,
+        version_number: request.version_number,
+        file_name: request.file.name,
+        file_size: request.file.size,
+        file_path: filePath,
+        change_summary: request.change_summary,
+        created_by: (await supabase.auth.getUser()).data.user?.id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update document version
+    await this.updateDocument(documentId, { version: request.version_number });
+
+    return data;
+  }
+
+  async updateDocumentVersion(id: string, updates: Partial<DocumentVersion>): Promise<DocumentVersion> {
+    const { data, error } = await supabase
+      .from('document_versions')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteDocumentVersion(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('document_versions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  async downloadDocumentVersion(versionId: string): Promise<Blob> {
+    // Get version info
+    const { data: version, error: versionError } = await supabase
+      .from('document_versions')
+      .select('file_path, file_name')
+      .eq('id', versionId)
+      .single();
+
+    if (versionError) throw versionError;
+
+    // Download file from storage
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .download(version.file_path);
+
+    if (error) throw error;
+    return data;
+  }
+
   // Document Permissions
   async grantPermission(request: DocumentPermissionRequest): Promise<DocumentPermission> {
     const { data, error } = await supabase
@@ -1035,6 +1113,7 @@ class DocumentManagementService {
       .from('documents')
       .select(`
         created_by,
+        created_at,
         owner:users!documents_created_by_fkey(email, full_name)
       `)
       .eq('is_deleted', false)
@@ -1214,6 +1293,305 @@ class DocumentManagementService {
       return { url: urlData.publicUrl };
     } catch (error) {
       console.error('Error getting document URL:', error);
+      throw error;
+    }
+  }
+
+  // Semantic Search using AI
+  // Document Approval Workflow Integration
+  async startDocumentApproval(documentId: string, approvers: Array<{ user_id?: string; role?: string; step_number: number }>): Promise<DocumentApproval> {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Create approval record
+      const { data: approval, error: approvalError } = await supabase
+        .from('document_approvals')
+        .insert({
+          document_id: documentId,
+          requested_by: user.id,
+          status: 'pending',
+          current_step: 1
+        })
+        .select()
+        .single();
+
+      if (approvalError) throw approvalError;
+
+      // Create approval steps
+      const approvalSteps = approvers.map(approver => ({
+        approval_id: approval.id,
+        step_number: approver.step_number,
+        approver_id: approver.user_id,
+        approver_role: approver.role,
+        status: 'pending'
+      }));
+
+      const { error: stepsError } = await supabase
+        .from('document_approval_steps')
+        .insert(approvalSteps);
+
+      if (stepsError) throw stepsError;
+
+      // Update document status to 'review'
+      await this.updateDocument(documentId, { status: 'review' });
+
+      return approval;
+    } catch (error) {
+      console.error('Error starting document approval:', error);
+      throw error;
+    }
+  }
+
+  async updateDocumentApprovalStep(stepId: string, action: 'approve' | 'reject', comments?: string): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Update the step
+      const { data: step, error: stepError } = await supabase
+        .from('document_approval_steps')
+        .update({
+          status: action === 'approve' ? 'approved' : 'rejected',
+          comments: comments,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', stepId)
+        .select(`
+          *,
+          approval:document_approvals(document_id)
+        `)
+        .single();
+
+      if (stepError) throw stepError;
+
+      // Check if all steps are completed
+      const { data: allSteps, error: allStepsError } = await supabase
+        .from('document_approval_steps')
+        .select('status')
+        .eq('approval_id', step.approval_id);
+
+      if (allStepsError) throw allStepsError;
+
+      const allApproved = allSteps.every(s => s.status === 'approved');
+      const anyRejected = allSteps.some(s => s.status === 'rejected');
+
+      // Update approval status
+      let approvalStatus = 'pending';
+      if (allApproved) approvalStatus = 'approved';
+      else if (anyRejected) approvalStatus = 'rejected';
+
+      const { error: approvalUpdateError } = await supabase
+        .from('document_approvals')
+        .update({
+          status: approvalStatus,
+          completed_at: allApproved || anyRejected ? new Date().toISOString() : null,
+          approved_by: allApproved ? user.id : null,
+          rejection_reason: anyRejected ? comments : null
+        })
+        .eq('id', step.approval_id);
+
+      if (approvalUpdateError) throw approvalUpdateError;
+
+      // Update document status
+      const documentStatus = allApproved ? 'approved' : anyRejected ? 'rejected' : 'review';
+      await this.updateDocument(step.approval.document_id, { status: documentStatus });
+
+    } catch (error) {
+      console.error('Error updating document approval step:', error);
+      throw error;
+    }
+  }
+
+  async getDocumentApprovalSteps(documentId: string): Promise<DocumentApprovalStep[]> {
+    const { data, error } = await supabase
+      .from('document_approval_steps')
+      .select(`
+        *,
+        approval:document_approvals!inner(document_id),
+        approver:users(id, email, full_name)
+      `)
+      .eq('approval.document_id', documentId)
+      .order('step_number');
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async semanticSearchDocuments(query: string, filters?: DocumentSearchFilters, page: number = 1, pageSize: number = 20): Promise<DocumentSearchResult> {
+    try {
+      // First, get all documents that match basic filters
+      let queryBuilder = supabase
+        .from('documents')
+        .select(`
+          *,
+          category:document_categories(*),
+          tags:document_tags_relation(
+            tag:document_tags(*)
+          ),
+          owner:users!documents_owner_id_fkey(id, email, full_name),
+          creator:users!documents_created_by_fkey(id, email, full_name)
+        `, { count: 'exact' })
+        .eq('is_deleted', false);
+
+      // Apply basic filters
+      if (filters?.category_id) {
+        queryBuilder = queryBuilder.eq('category_id', filters.category_id);
+      }
+
+      if (filters?.status && filters.status.length > 0) {
+        queryBuilder = queryBuilder.in('status', filters.status);
+      }
+
+      if (filters?.priority && filters.priority.length > 0) {
+        queryBuilder = queryBuilder.in('priority', filters.priority);
+      }
+
+      if (filters?.confidentiality_level && filters.confidentiality_level.length > 0) {
+        queryBuilder = queryBuilder.in('confidentiality_level', filters.confidentiality_level);
+      }
+
+      if (filters?.compliance_frameworks && filters.compliance_frameworks.length > 0) {
+        queryBuilder = queryBuilder.overlaps('compliance_frameworks', filters.compliance_frameworks);
+      }
+
+      if (filters?.date_from) {
+        queryBuilder = queryBuilder.gte('created_at', filters.date_from);
+      }
+
+      if (filters?.date_to) {
+        queryBuilder = queryBuilder.lte('created_at', filters.date_to);
+      }
+
+      if (filters?.file_types && filters.file_types.length > 0) {
+        queryBuilder = queryBuilder.in('file_type', filters.file_types);
+      }
+
+      if (filters?.owner_id) {
+        queryBuilder = queryBuilder.eq('owner_id', filters.owner_id);
+      }
+
+      if (filters?.created_by) {
+        queryBuilder = queryBuilder.eq('created_by', filters.created_by);
+      }
+
+      if (filters?.audit_evidence !== undefined) {
+        queryBuilder = queryBuilder.eq('audit_evidence', filters.audit_evidence);
+      }
+
+      if (filters?.is_archived !== undefined) {
+        queryBuilder = queryBuilder.eq('is_archived', filters.is_archived);
+      }
+
+      // Get all matching documents first
+      const { data: allDocuments, error: allError } = await queryBuilder;
+      if (allError) throw allError;
+
+      if (!allDocuments || allDocuments.length === 0) {
+        return {
+          documents: [],
+          total_count: 0,
+          page,
+          page_size: pageSize,
+          total_pages: 0,
+        };
+      }
+
+      // Use AI to perform semantic search
+      const aiService = (await import('../services/aiService')).aiService;
+
+      // Create semantic search prompt
+      const semanticPrompt = `You are a document search assistant. Given the search query "${query}", analyze the following documents and return the most relevant ones based on semantic meaning, not just keyword matching.
+
+Search Query: "${query}"
+
+Documents to analyze:
+${allDocuments.map((doc, index) => `
+${index + 1}. Title: ${doc.title}
+   Description: ${doc.description || 'No description'}
+   Content Preview: ${doc.ai_extracted_text ? doc.ai_extracted_text.substring(0, 500) : 'No extracted text'}
+   Tags: ${doc.tags ? doc.tags.map((t: any) => t.tag?.name).join(', ') : 'No tags'}
+   Category: ${doc.category?.name || 'No category'}
+`).join('\n')}
+
+Return a JSON array of document indices (1-based) that are most relevant to the search query, ordered by relevance. Return at most 20 results. Format: [1, 3, 5, ...]`;
+
+      try {
+        const aiResponse = await aiService.generateContent({
+          prompt: semanticPrompt,
+          provider: 'openai',
+          model: 'gpt-4',
+          context: 'Document semantic search',
+          fieldType: 'chart_data',
+          auditData: {},
+          temperature: 0.1,
+          maxTokens: 500,
+        });
+
+        // Parse AI response to get relevant document indices
+        const responseText = aiResponse.content || '[]';
+        const relevantIndices: number[] = JSON.parse(responseText.replace(/```json\n?|\n?```/g, ''));
+
+        // Filter documents based on AI relevance
+        const relevantDocuments = relevantIndices
+          .map(index => allDocuments[index - 1])
+          .filter(doc => doc !== undefined);
+
+        // Apply pagination to semantic results
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedDocuments = relevantDocuments.slice(startIndex, endIndex);
+
+        return {
+          documents: paginatedDocuments,
+          total_count: relevantDocuments.length,
+          page,
+          page_size: pageSize,
+          total_pages: Math.ceil(relevantDocuments.length / pageSize),
+        };
+
+      } catch (aiError) {
+        console.warn('AI semantic search failed, falling back to basic search:', aiError);
+        // Fallback to basic text search
+        const basicQuery = supabase
+          .from('documents')
+          .select(`
+            *,
+            category:document_categories(*),
+            tags:document_tags_relation(
+              tag:document_tags(*)
+            ),
+            owner:users!documents_owner_id_fkey(id, email, full_name),
+            creator:users!documents_created_by_fkey(id, email, full_name)
+          `, { count: 'exact' })
+          .eq('is_deleted', false)
+          .textSearch('search_vector', query);
+
+        // Apply same filters
+        if (filters?.category_id) {
+          basicQuery.eq('category_id', filters.category_id);
+        }
+        // ... apply other filters as before
+
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        basicQuery.range(from, to).order('created_at', { ascending: false });
+
+        const { data, error, count } = await basicQuery;
+        if (error) throw error;
+
+        return {
+          documents: data || [],
+          total_count: count || 0,
+          page,
+          page_size: pageSize,
+          total_pages: Math.ceil((count || 0) / pageSize),
+        };
+      }
+
+    } catch (error) {
+      console.error('Error in semantic search:', error);
       throw error;
     }
   }

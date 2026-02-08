@@ -33,8 +33,10 @@ export interface DocumentVersion {
   file_path: string;
   file_hash?: string;
   change_summary?: string;
+  is_current?: boolean;
   created_by: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface DocumentPermission {
@@ -207,7 +209,7 @@ export interface Document {
   // Document metadata
   category_id?: string;
   version: string;
-  status: 'draft' | 'review' | 'approved' | 'archived' | 'deleted';
+  status: 'draft' | 'review' | 'approved' | 'rejected' | 'archived' | 'deleted';
   priority: 'low' | 'medium' | 'high' | 'critical';
   confidentiality_level: 'public' | 'internal' | 'confidential' | 'restricted';
   

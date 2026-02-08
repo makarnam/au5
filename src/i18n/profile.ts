@@ -22,6 +22,9 @@ export const profileTranslations = {
     loadingProfile: "Loading profile...",
     cancel: "Cancel",
     saveChanges: "Save Changes",
+    department: "Department",
+    location: "Location",
+    bio: "Bio",
     // Skills
     riskAssessment: "Risk Assessment",
     internalControls: "Internal Controls",
@@ -72,6 +75,9 @@ export const profileTranslations = {
     loadingProfile: "Cargando perfil...",
     cancel: "Cancelar",
     saveChanges: "Guardar Cambios",
+    department: "Departamento",
+    location: "Ubicación",
+    bio: "Biografía",
     // Skills
     riskAssessment: "Evaluación de Riesgos",
     internalControls: "Controles Internos",
@@ -122,6 +128,9 @@ export const profileTranslations = {
     loadingProfile: "Profil yükleniyor...",
     cancel: "İptal",
     saveChanges: "Değişiklikleri Kaydet",
+    department: "Departman",
+    location: "Konum",
+    bio: "Biyografi",
     // Skills
     riskAssessment: "Risk Değerlendirmesi",
     internalControls: "İç Kontroller",

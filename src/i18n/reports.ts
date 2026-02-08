@@ -3,6 +3,10 @@ export const reportsTranslations = {
   en: {
     reportBuilder: "Report Builder",
     reportBuilderDescription: "Create comprehensive GRC reports with AI-powered content generation",
+    dashboard: {
+      title: "Reports Dashboard",
+      subtitle: "Analyze and visualize your GRC data",
+    },
     reportDetails: "Report Details",
     reportTitle: "Report Title",
     reportTitlePlaceholder: "Enter report title",
@@ -97,6 +101,10 @@ export const reportsTranslations = {
   es: {
     reportBuilder: "Constructor de Reportes",
     reportBuilderDescription: "Crear reportes integrales de GRC con generación de contenido impulsada por IA",
+    dashboard: {
+      title: "Panel de Reportes",
+      subtitle: "Analice y visualice sus datos de GRC",
+    },
     reportDetails: "Detalles del Reporte",
     reportTitle: "Título del Reporte",
     reportTitlePlaceholder: "Ingrese el título del reporte",
@@ -191,6 +199,10 @@ export const reportsTranslations = {
   tr: {
     reportBuilder: "Rapor Oluşturucu",
     reportBuilderDescription: "AI destekli içerik üretimi ile kapsamlı GRC raporları oluşturun",
+    dashboard: {
+      title: "Raporlar Paneli",
+      subtitle: "GRC verilerinizi analiz edin ve görselleştirin",
+    },
     reportDetails: "Rapor Detayları",
     reportTitle: "Rapor Başlığı",
     reportTitlePlaceholder: "Rapor başlığını girin",

@@ -119,4 +119,124 @@ export const policyService = {
   async deleteVersion(id: string) {
     return await supabase.from('policy_versions').delete().eq('id', id);
   },
+
+  // Analytics methods
+  async getPolicyAnalytics() {
+    // Get total policies count
+    const { data: totalPolicies, error: totalError } = await supabase
+      .from('policies')
+      .select('id', { count: 'exact' });
+
+    if (totalError) return { data: null, error: totalError };
+
+    // Get active policies count
+    const { data: activePolicies, error: activeError } = await supabase
+      .from('policies')
+      .select('id', { count: 'exact' })
+      .eq('is_active', true);
+
+    if (activeError) return { data: null, error: activeError };
+
+    // Get total versions count
+    const { data: totalVersions, error: versionsError } = await supabase
+      .from('policy_versions')
+      .select('id', { count: 'exact' });
+
+    if (versionsError) return { data: null, error: versionsError };
+
+    // Get version status distribution
+    const { data: versionStatuses, error: statusError } = await supabase
+      .from('policy_versions')
+      .select('status')
+      .then(({ data, error }) => {
+        if (error) return { data: null, error };
+        const statusCounts = data?.reduce((acc: Record<string, number>, item) => {
+          acc[item.status] = (acc[item.status] || 0) + 1;
+          return acc;
+        }, {}) || {};
+        return { data: statusCounts, error: null };
+      });
+
+    if (statusError) return { data: null, error: statusError };
+
+    // Get policies by owner
+    const { data: policiesByOwner, error: ownerError } = await supabase
+      .from('policies')
+      .select('owner_id')
+      .then(({ data, error }) => {
+        if (error) return { data: null, error };
+        const ownerCounts = data?.reduce((acc: Record<string, number>, item) => {
+          const owner = item.owner_id || 'Unassigned';
+          acc[owner] = (acc[owner] || 0) + 1;
+          return acc;
+        }, {}) || {};
+        return { data: ownerCounts, error: null };
+      });
+
+    if (ownerError) return { data: null, error: ownerError };
+
+    // Get recent policy activity (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: recentPolicies, error: recentError } = await supabase
+      .from('policies')
+      .select('id', { count: 'exact' })
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    if (recentError) return { data: null, error: recentError };
+
+    const { data: recentVersions, error: recentVersionsError } = await supabase
+      .from('policy_versions')
+      .select('id', { count: 'exact' })
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    if (recentVersionsError) return { data: null, error: recentVersionsError };
+
+    return {
+      data: {
+        totalPolicies: totalPolicies?.length || 0,
+        activePolicies: activePolicies?.length || 0,
+        inactivePolicies: (totalPolicies?.length || 0) - (activePolicies?.length || 0),
+        totalVersions: totalVersions?.length || 0,
+        versionStatuses: versionStatuses || {},
+        policiesByOwner: policiesByOwner || {},
+        recentPolicies: recentPolicies?.length || 0,
+        recentVersions: recentVersions?.length || 0,
+      },
+      error: null,
+    };
+  },
+
+  async getPolicyTrends(months: number = 12) {
+    const trends = [];
+    const now = new Date();
+
+    for (let i = months - 1; i >= 0; i--) {
+      const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+
+      const { data: policies, error: policiesError } = await supabase
+        .from('policies')
+        .select('id', { count: 'exact' })
+        .gte('created_at', startDate.toISOString())
+        .lt('created_at', endDate.toISOString());
+
+      const { data: versions, error: versionsError } = await supabase
+        .from('policy_versions')
+        .select('id', { count: 'exact' })
+        .gte('created_at', startDate.toISOString())
+        .lt('created_at', endDate.toISOString());
+
+      if (policiesError || versionsError) continue;
+
+      trends.push({
+        month: startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        policies: policies?.length || 0,
+        versions: versions?.length || 0,
+      });
+    }
+
+    return { data: trends, error: null };
+  },
 };

@@ -102,33 +102,33 @@ interface AuditFormProps {
   mode: "create" | "edit";
 }
 
-const getAuditTypes = (t: any): { value: AuditType; label: string }[] => [
-  { value: "internal", label: t("audit.type.internal") },
-  { value: "external", label: t("audit.type.external") },
-  { value: "compliance", label: t("audit.type.compliance") },
-  { value: "operational", label: t("audit.type.operational") },
-  { value: "financial", label: t("audit.type.financial") },
-  { value: "it", label: t("audit.type.it") },
-  { value: "quality", label: t("audit.type.quality") },
-  { value: "environmental", label: t("audit.type.environmental") },
+const getAuditTypes = (): { value: AuditType; labelKey: string }[] => [
+  { value: "internal", labelKey: "audits.internal" },
+  { value: "external", labelKey: "audits.external" },
+  { value: "compliance", labelKey: "audits.compliance" },
+  { value: "operational", labelKey: "audits.operational" },
+  { value: "financial", labelKey: "audits.financial" },
+  { value: "it", labelKey: "audits.it" },
+  { value: "quality", labelKey: "audits.quality" },
+  { value: "environmental", labelKey: "audits.environmental" },
 ];
 
-const getAuditStatuses = (t: any): { value: AuditStatus; label: string }[] => [
-  { value: "draft", label: t("audit.status.draft") },
-  { value: "planning", label: t("audit.status.planning") },
-  { value: "in_progress", label: t("audit.status.inProgress") },
-  { value: "testing", label: t("audit.status.testing") },
-  { value: "reporting", label: t("audit.status.reporting") },
-  { value: "completed", label: t("audit.status.completed") },
-  { value: "cancelled", label: t("audit.status.cancelled") },
+const getAuditStatuses = (): { value: AuditStatus; labelKey: string }[] => [
+  { value: "draft", labelKey: "audits.draft" },
+  { value: "planning", labelKey: "audits.planning" },
+  { value: "in_progress", labelKey: "audits.inProgress" },
+  { value: "testing", labelKey: "audits.testing" },
+  { value: "reporting", labelKey: "audits.reporting" },
+  { value: "completed", labelKey: "audits.completed" },
+  { value: "cancelled", labelKey: "audits.cancelled" },
 ];
 
 const getSteps = (t: any) => [
-  { id: 1, name: t("audit.steps.basicInformation"), icon: FileText },
-  { id: 2, name: t("audit.steps.teamSchedule"), icon: Users },
-  { id: 3, name: t("audit.steps.scopeObjectives"), icon: Target },
-  { id: 4, name: t("audit.steps.methodology"), icon: Settings },
-  { id: 5, name: t("audit.steps.reviewSubmit"), icon: Check },
+  { id: 1, name: t("audits.steps.basicInformation"), icon: FileText },
+  { id: 2, name: t("audits.steps.teamSchedule"), icon: Users },
+  { id: 3, name: t("audits.steps.scopeObjectives"), icon: Target },
+  { id: 4, name: t("audits.steps.methodology"), icon: Settings },
+  { id: 5, name: t("audits.steps.reviewSubmit"), icon: Check },
 ];
 
 export default function AuditForm({
@@ -144,8 +144,14 @@ export default function AuditForm({
   const [users, setUsers] = useState<User[]>([]);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
 
-  const auditTypes = getAuditTypes(t);
-  const auditStatuses = getAuditStatuses(t);
+  const auditTypes = getAuditTypes().map(type => ({
+    ...type,
+    label: t(type.labelKey)
+  }));
+  const auditStatuses = getAuditStatuses().map(status => ({
+    ...status,
+    label: t(status.labelKey)
+  }));
   const steps = getSteps(t);
 
   const {
@@ -475,13 +481,13 @@ export default function AuditForm({
           >
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("audit.title")} *
+                {t("audits.title")} *
               </label>
               <input
                 {...register("title")}
                 type="text"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={t("audit.title")}
+                placeholder={t("audits.title")}
               />
               {errors.title && (
                 <p className="mt-1 text-sm text-red-600">
@@ -530,7 +536,7 @@ export default function AuditForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t("audit.auditType")} *
+                  {t("audits.auditType")} *
                 </label>
                 <select
                   {...register("audit_type")}
@@ -573,7 +579,7 @@ export default function AuditForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("audit.businessUnit")} *
+                {t("audits.businessUnit")} *
               </label>
               <select
                 {...register("business_unit_id")}
@@ -605,7 +611,7 @@ export default function AuditForm({
           >
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("audit.leadAuditor")} *
+                {t("audits.leadAuditor")} *
               </label>
               <select
                 {...register("lead_auditor_id")}
@@ -631,7 +637,7 @@ export default function AuditForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("audit.teamMembers")}
+                {t("audits.teamMembers")}
               </label>
               <select
                 {...register("team_members")}
@@ -655,7 +661,7 @@ export default function AuditForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t("audit.startDate")} *
+                  {t("audits.startDate")} *
                 </label>
                 <input
                   {...register("start_date")}
@@ -671,7 +677,7 @@ export default function AuditForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t("audit.endDate")} *
+                  {t("audits.endDate")} *
                 </label>
                 <input
                   {...register("end_date")}
@@ -688,7 +694,7 @@ export default function AuditForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t("audit.plannedHours")} *
+                {t("audits.plannedHours")} *
               </label>
               <input
                 {...register("planned_hours", { valueAsNumber: true })}
@@ -718,7 +724,7 @@ export default function AuditForm({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  {t("audit.objectives")} *
+                  {t("audits.objectives")} *
                 </label>
                 <button
                   type="button"
@@ -742,7 +748,7 @@ export default function AuditForm({
                       {...register(`objectives.${index}` as const)}
                       type="text"
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder={`${t("audit.objectives")} ${index + 1}`}
+                      placeholder={`${t("audits.objectives")} ${index + 1}`}
                     />
                     <button
                       type="button"
@@ -761,7 +767,7 @@ export default function AuditForm({
                 >
                   <Plus className="w-4 h-4" />
                   <span>
-                    {t("common.add")} {t("audit.objectives")}
+                    {t("common.add")} {t("audits.objectives")}
                   </span>
                 </button>
               </div>
@@ -776,7 +782,7 @@ export default function AuditForm({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  {t("audit.scope")} *
+                  {t("audits.scope")} *
                 </label>
                 <button
                   type="button"
@@ -796,7 +802,7 @@ export default function AuditForm({
                 {...register("scope")}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={t("audit.scope")}
+                placeholder={t("audits.scope")}
               />
               {errors.scope && (
                 <p className="mt-1 text-sm text-red-600">
@@ -818,7 +824,7 @@ export default function AuditForm({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  {t("audit.methodology")} *
+                  {t("audits.methodology")} *
                 </label>
                 <button
                   type="button"
@@ -838,7 +844,7 @@ export default function AuditForm({
                 {...register("methodology")}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={t("audit.methodology")}
+                placeholder={t("audits.methodology")}
               />
               {errors.methodology && (
                 <p className="mt-1 text-sm text-red-600">
@@ -888,8 +894,7 @@ export default function AuditForm({
                     <span className="font-medium text-gray-700">Type:</span>
                     <span className="ml-2 text-gray-600">
                       {
-                        auditTypes.find((t) => t.value === formData.audit_type)
-                          ?.label
+                        auditTypes.find((t) => t.value === formData.audit_type)?.label || formData.audit_type
                       }
                     </span>
                   </div>
@@ -897,8 +902,7 @@ export default function AuditForm({
                     <span className="font-medium text-gray-700">Status:</span>
                     <span className="ml-2 text-gray-600">
                       {
-                        auditStatuses.find((s) => s.value === formData.status)
-                          ?.label
+                        auditStatuses.find((s) => s.value === formData.status)?.label || formData.status
                       }
                     </span>
                   </div>
@@ -939,7 +943,7 @@ export default function AuditForm({
                 {teamMembers.length > 0 && (
                   <div>
                     <span className="font-medium text-gray-700">
-                      {t("audit.teamMembers")}:
+                      {t("audits.teamMembers")}:
                     </span>
                     <ul className="mt-1 text-sm text-gray-600">
                       {teamMembers.map((member) => (
@@ -978,12 +982,12 @@ export default function AuditForm({
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">
-            {mode === "create" ? t("audit.newAudit") : t("audit.editAudit")}
+            {mode === "create" ? t("audits.newAudit") : t("audits.editAudit")}
           </h1>
           <p className="mt-2 text-gray-600">
             {mode === "create"
-              ? "Set up a comprehensive audit plan with AI assistance"
-              : "Update audit details and configuration"}
+              ? t("audits.newAuditSubtitle")
+              : t("audits.editAuditSubtitle")}
           </p>
         </div>
 
@@ -1081,7 +1085,7 @@ export default function AuditForm({
               >
                 {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>
-                  {mode === "create" ? t("audit.newAudit") : t("common.update")}
+                  {mode === "create" ? t("audits.newAudit") : t("common.update")}
                 </span>
               </button>
             )}

@@ -62,19 +62,15 @@ export const sidebarTranslations = {
     // Operational Management
     operationalManagement: "Operational Management",
 
-    // System Management
-    systemManagement: "System Management",
-
     // Reporting
     reporting: "Reporting",
+    reportWizard: "Audit Report Creation Wizard",
   },
   es: {
-    // Main Navigation
     dashboard: "Panel de Control",
     audits: "Auditorías",
     controls: "Controles",
     risks: "Riesgos",
-    reports: "Reportes",
     compliance: "Cumplimiento",
     governance: "Gobierno",
     settings: "Configuración",
@@ -135,6 +131,7 @@ export const sidebarTranslations = {
 
     // Reporting
     reporting: "Reportes",
+    reportWizard: "Asistente de Creación de Reportes de Auditoría",
   },
   tr: {
     // Main Navigation
@@ -203,5 +200,6 @@ export const sidebarTranslations = {
 
     // Reporting
     reporting: "Raporlama",
-  },
+    reportWizard: "Denetim Raporu Oluşturma Sihirbazı",
+  }
 };

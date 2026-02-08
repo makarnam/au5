@@ -4,23 +4,16 @@ import {
   Search, 
   Filter, 
   Edit, 
-  Eye, 
-  Calendar,
   Users,
-  TrendingUp,
-  Clock,
   AlertTriangle,
-  CheckCircle,
-  Download,
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  BarChart3,
-  Target,
   UserCheck,
   CalendarDays
 } from 'lucide-react';
 import { auditPlanningService } from '../../services/auditPlanningService';
+import { supabase } from '../../lib/supabase';
 import { 
   AuditorCompetency,
   AuditorAvailability,
@@ -31,7 +24,7 @@ import {
   AuditorRole,
   AuditorCompetencyFormData,
   AuditorAvailabilityFormData,
-  ResourceAllocationFormData
+  AuditPlanItem
 } from '../../types/auditPlanning';
 
 interface CompetencyModalProps {
@@ -327,6 +320,8 @@ const ResourceManagement: React.FC = () => {
   const [competencies, setCompetencies] = useState<AuditorCompetency[]>([]);
   const [availability, setAvailability] = useState<AuditorAvailability[]>([]);
   const [allocations, setAllocations] = useState<AuditResourceAllocation[]>([]);
+  const [planItems, setPlanItems] = useState<AuditPlanItem[]>([]);
+  const [selectedPlanItem, setSelectedPlanItem] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -343,24 +338,34 @@ const ResourceManagement: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    loadPlanItems();
   }, []);
 
-  const loadData = async () => {
+  useEffect(() => {
+    if (selectedPlanItem) {
+      loadAllocations(selectedPlanItem);
+    }
+  }, [selectedPlanItem]);
+
+    const loadData = async () => {
     try {
       setLoading(true);
-      // Load competencies for a sample user (in real app, you'd get the current user or selected user)
-      const competenciesData = await auditPlanningService.getAuditorCompetencies('sample-user-id');
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        setError('User not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      const competenciesData = await auditPlanningService.getAuditorCompetencies(user.id);
       setCompetencies(competenciesData);
       
-      // Load availability for the same user
       const startDate = new Date().toISOString().split('T')[0];
       const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const availabilityData = await auditPlanningService.getAuditorAvailability('sample-user-id', startDate, endDate);
+      const availabilityData = await auditPlanningService.getAuditorAvailability(user.id, startDate, endDate);
       setAvailability(availabilityData);
       
-      // Load resource allocations
-      const allocationsData = await auditPlanningService.getResourceAllocations('sample-plan-item-id');
-      setAllocations(allocationsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load resource data');
     } finally {
@@ -368,9 +373,36 @@ const ResourceManagement: React.FC = () => {
     }
   };
 
+  const loadPlanItems = async () => {
+    try {
+      // This is a simplified call. In a real app, you might want to get items for a specific plan.
+      const allPlans = await auditPlanningService.getAllAuditPlans();
+      if (allPlans.length > 0) {
+        const items = await auditPlanningService.getAuditPlanItems(allPlans[0].id);
+        setPlanItems(items);
+        if (items.length > 0) {
+          setSelectedPlanItem(items[0].id);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load plan items');
+    }
+  };
+
+  const loadAllocations = async (planItemId: string) => {
+    try {
+      const allocationsData = await auditPlanningService.getResourceAllocations(planItemId);
+      setAllocations(allocationsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load allocations');
+    }
+  };
+
   const handleCreateCompetency = async (formData: AuditorCompetencyFormData) => {
     try {
-      await auditPlanningService.createAuditorCompetency(formData);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+      await auditPlanningService.createAuditorCompetency({ ...formData, user_id: user.id });
       setIsCompetencyModalOpen(false);
       loadData();
     } catch (err) {
@@ -380,7 +412,9 @@ const ResourceManagement: React.FC = () => {
 
   const handleCreateAvailability = async (formData: AuditorAvailabilityFormData) => {
     try {
-      await auditPlanningService.createAuditorAvailability(formData);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+      await auditPlanningService.createAuditorAvailability({ ...formData, user_id: user.id });
       setIsAvailabilityModalOpen(false);
       loadData();
     } catch (err) {
@@ -740,6 +774,16 @@ const ResourceManagement: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium text-gray-900">Resource Allocation</h3>
+              <select
+                value={selectedPlanItem}
+                onChange={(e) => setSelectedPlanItem(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select an Audit Plan Item</option>
+                {planItems.map(item => (
+                  <option key={item.id} value={item.id}>{item.audit_title}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="overflow-x-auto">

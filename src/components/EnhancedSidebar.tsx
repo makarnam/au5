@@ -265,6 +265,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
             { name: t("navigation.dashboard"), href: "/audit-planning", current: location.pathname === "/audit-planning" },
             { name: t("navigation.auditUniverse"), href: "/audit-planning/universe", current: location.pathname === "/audit-planning/universe" },
             { name: t("navigation.auditPlans"), href: "/audit-planning/plans", current: location.pathname === "/audit-planning/plans" },
+            { name: t("common.create"), href: "/audit-planning/plans/create", current: location.pathname === "/audit-planning/plans/create" },
             { name: t("navigation.resourceManagement"), href: "/audit-planning/resources", current: location.pathname === "/audit-planning/resources" },
             { name: t("navigation.competencies"), href: "/audit-planning/competencies", current: location.pathname === "/audit-planning/competencies" },
             { name: t("navigation.trainingNeeds"), href: "/audit-planning/training", current: location.pathname === "/audit-planning/training" },

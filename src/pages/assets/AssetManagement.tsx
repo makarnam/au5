@@ -3,20 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { 
-  HardDrive, 
-  Shield, 
-  Tag, 
-  MapPin, 
-  Clock, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import {
+  HardDrive,
+  Shield,
+  Tag,
+  MapPin,
+  Clock,
   Activity,
   ArrowRight,
   Server,
   Database,
   Network,
   Globe,
-  Building
+  Building,
+  Plus
 } from "lucide-react";
+import AssetLifecycleManager from "../../components/assets/AssetLifecycleManager";
 
 const AssetManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -94,70 +97,83 @@ const AssetManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Asset Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {assetCategories.map((category) => {
-          const Icon = category.icon;
-          return (
-            <Card key={category.title} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-lg ${category.color}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <Badge variant="secondary">{category.count}</Badge>
-                </div>
-                <CardTitle className="text-lg">{category.title}</CardTitle>
-                <CardDescription>{category.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    {category.features.map((feature, index) => (
-                      <div key={index} className="flex items-center text-sm text-gray-600">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></div>
-                        {feature}
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    onClick={() => navigate(category.route)}
-                    className="w-full mt-4"
-                    variant="outline"
-                  >
-                    Manage {category.title}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="lifecycle">Lifecycle Management</TabsTrigger>
+        </TabsList>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common asset management tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex-col">
-              <Plus className="h-6 w-6 mb-2" />
-              Add New Asset
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Activity className="h-6 w-6 mb-2" />
-              Asset Discovery
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Shield className="h-6 w-6 mb-2" />
-              Security Scan
-            </Button>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Asset Categories Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {assetCategories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <Card key={category.title} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className={`p-2 rounded-lg ${category.color}`}>
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <Badge variant="secondary">{category.count}</Badge>
+                    </div>
+                    <CardTitle className="text-lg">{category.title}</CardTitle>
+                    <CardDescription>{category.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        {category.features.map((feature, index) => (
+                          <div key={index} className="flex items-center text-sm text-gray-600">
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></div>
+                            {feature}
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={() => navigate(category.route)}
+                        className="w-full mt-4"
+                        variant="outline"
+                      >
+                        Manage {category.title}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common asset management tasks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button variant="outline" className="h-20 flex-col">
+                  <Plus className="h-6 w-6 mb-2" />
+                  Add New Asset
+                </Button>
+                <Button variant="outline" className="h-20 flex-col">
+                  <Activity className="h-6 w-6 mb-2" />
+                  Asset Discovery
+                </Button>
+                <Button variant="outline" className="h-20 flex-col">
+                  <Shield className="h-6 w-6 mb-2" />
+                  Security Scan
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="lifecycle" className="space-y-6">
+          <AssetLifecycleManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 export const governanceTranslations = {
   en: {
     governanceDashboard: "Governance Dashboard",
+    governanceDashboardDesc: "Monitor compliance posture and governance activities",
     framework: "Framework",
     noFrameworks: "No frameworks available",
     profileOptional: "Profile (Optional)",
@@ -20,9 +21,11 @@ export const governanceTranslations = {
     open: "Open",
     inProgress: "In Progress",
     blocked: "Blocked",
+    totalRequirements: "Total Requirements",
   },
   es: {
     governanceDashboard: "Panel de Gobernanza",
+    governanceDashboardDesc: "Monitorear la postura de cumplimiento y las actividades de gobernanza",
     framework: "Marco",
     noFrameworks: "No hay marcos disponibles",
     profileOptional: "Perfil (Opcional)",
@@ -41,9 +44,11 @@ export const governanceTranslations = {
     open: "Abierto",
     inProgress: "En Progreso",
     blocked: "Bloqueado",
+    totalRequirements: "Requisitos Totales",
   },
   tr: {
     governanceDashboard: "Yönetim Panosu",
+    governanceDashboardDesc: "Uyumluluk duruşunu ve yönetişim faaliyetlerini izleyin",
     framework: "Çerçeve",
     noFrameworks: "Kullanılabilir çerçeve yok",
     profileOptional: "Profil (İsteğe Bağlı)",
@@ -62,5 +67,6 @@ export const governanceTranslations = {
     open: "Açık",
     inProgress: "Devam Ediyor",
     blocked: "Engellendi",
+    totalRequirements: "Toplam Gereksinimler",
   },
 };

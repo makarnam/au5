@@ -323,7 +323,7 @@ JSON FORMAT:
       });
 
       console.log('Ollama HTTP Response Status:', response.status);
-      console.log('Ollama HTTP Response Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Ollama HTTP Response Headers:', Object.fromEntries(Array.from(response.headers)));
 
       if (!response.ok) {
         if (response.status === 404) {

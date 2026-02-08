@@ -32,7 +32,7 @@ import AuditPlanningDashboard from "./pages/audit-planning/AuditPlanningDashboar
 import AuditUniversePage from "./pages/audit-planning/AuditUniverse";
 import AuditPlans from "./pages/audit-planning/AuditPlans";
 import ResourceManagement from "./pages/audit-planning/ResourceManagement";
-import CreateAuditPlanPage from "./pages/audit-planning/CreatePlanPage";
+import CreateAuditPlanPage from "./pages/audit-planning/CreateAuditPlanPage";
 import PlanDetailsPage from "./pages/audit-planning/PlanDetailsPage";
 import CompetencyManagement from "./pages/audit-planning/CompetencyManagement";
 import TrainingNeeds from "./pages/audit-planning/TrainingNeeds";

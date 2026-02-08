@@ -6,12 +6,12 @@ type Workflow = {
   id: string;
   name: string;
   description?: string | null;
-  entity_type: 'audit' | 'finding';
+  entity_type: 'audit' | 'finding' | 'control';
 };
 
 type ApprovalRequest = {
   id: string;
-  entity_type: 'audit' | 'finding';
+  entity_type: 'audit' | 'finding' | 'control';
   entity_id: string;
   workflow_id: string;
   current_step: number;
@@ -20,7 +20,7 @@ type ApprovalRequest = {
 };
 
 type Props = {
-  entityType: 'audit' | 'finding';
+  entityType: 'audit' | 'finding' | 'control';
   entityId: string;
 };
 
@@ -96,7 +96,10 @@ export default function WorkflowCenter({ entityType, entityId }: Props) {
 
   return (
     <div className="p-4 border rounded">
-      <h2 className="text-lg font-semibold">Workflow & Approval</h2>
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        Workflow & Approval
+        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">New</span>
+      </h2>
       {err ? <div className="mt-2 text-rose-700 bg-rose-50 border border-rose-200 p-3 rounded">{err}</div> : null}
 
       <div className="mt-3 grid gap-4 md:grid-cols-2">

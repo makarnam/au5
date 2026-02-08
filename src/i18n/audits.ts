@@ -59,6 +59,18 @@ export const auditsTranslations = {
     // Audit creation translations
     newAudit: "Create New Audit",
     editAudit: "Edit Audit",
+    newAuditSubtitle: "Set up a comprehensive audit plan with AI assistance",
+    editAuditSubtitle: "Update audit details and configuration",
+    title: "Title",
+    auditType: "Audit Type",
+    businessUnit: "Business Unit",
+    teamMembers: "Team Members",
+    startDate: "Start Date",
+    endDate: "End Date",
+    plannedHours: "Planned Hours",
+    objectives: "Objectives",
+    scope: "Scope",
+    methodology: "Methodology",
     steps: {
       basicInformation: "Basic Information",
       teamSchedule: "Team & Schedule",
@@ -126,6 +138,18 @@ export const auditsTranslations = {
     // Audit creation translations
     newAudit: "Crear Nueva Auditoría",
     editAudit: "Editar Auditoría",
+    newAuditSubtitle: "Configura un plan de auditoría integral con asistencia de IA",
+    editAuditSubtitle: "Actualizar detalles de auditoría y configuración",
+    title: "Título",
+    auditType: "Tipo de Auditoría",
+    businessUnit: "Unidad de Negocio",
+    teamMembers: "Miembros del Equipo",
+    startDate: "Fecha de Inicio",
+    endDate: "Fecha de Fin",
+    plannedHours: "Horas Planificadas",
+    objectives: "Objetivos",
+    scope: "Alcance",
+    methodology: "Metodología",
     steps: {
       basicInformation: "Información Básica",
       teamSchedule: "Equipo y Programación",
@@ -179,8 +203,6 @@ export const auditsTranslations = {
     tryAgain: "Tekrar Dene",
     view: "Görüntüle",
     edit: "Düzenle",
-    schedule: "Planla",
-    delete: "Sil",
 
     // Page-level translations
     pages: {
@@ -193,6 +215,18 @@ export const auditsTranslations = {
     // Audit creation translations
     newAudit: "Yeni Denetim Oluştur",
     editAudit: "Denetimi Düzenle",
+    newAuditSubtitle: "AI yardımıyla kapsamlı bir denetim planı oluşturun",
+    editAuditSubtitle: "Denetim ayrıntılarını ve yapılandırmasını güncelleyin",
+    title: "Başlık",
+    auditType: "Denetim Tipi",
+    businessUnit: "İş Birimi",
+    teamMembers: "Ekip Üyeleri",
+    startDate: "Başlangıç Tarihi",
+    endDate: "Bitiş Tarihi",
+    plannedHours: "Planlanan Saatler",
+    objectives: "Hedefler",
+    scope: "Kapsam",
+    methodology: "Metodoloji",
     steps: {
       basicInformation: "Temel Bilgiler",
       teamSchedule: "Ekip ve Program",

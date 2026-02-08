@@ -33,6 +33,7 @@ import { aiService } from "../services/aiService";
 import { useAuthStore } from "../store/authStore";
 import { supabase } from "../lib/supabase";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 // Wizard step types
 type WizardStep = 'audit-selection' | 'executive-summary' | 'control-sets' | 'risk-assessment' | 'findings-selection' | 'final-report';
@@ -109,6 +110,7 @@ interface WizardData {
 
 const ReportCreationWizard: React.FC = () => {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<WizardStep>('audit-selection');
   const [wizardData, setWizardData] = useState<WizardData>({
     selectedAudit: null,
@@ -150,12 +152,12 @@ const ReportCreationWizard: React.FC = () => {
 
   // Wizard steps configuration
   const steps = [
-    { id: 'audit-selection', title: 'Denetim Seçimi', icon: Search },
-    { id: 'executive-summary', title: 'Yönetim Özeti', icon: FileText },
-    { id: 'control-sets', title: 'Kontrol Setleri', icon: Shield },
-    { id: 'risk-assessment', title: 'Risk Değerlendirmesi', icon: AlertTriangle },
-    { id: 'findings-selection', title: 'Bulgular', icon: Target },
-    { id: 'final-report', title: 'Final Rapor', icon: CheckCircle }
+    { id: 'audit-selection', title: t('reportWizard.steps.auditSelection'), icon: Search },
+    { id: 'executive-summary', title: t('reportWizard.steps.executiveSummary'), icon: FileText },
+    { id: 'control-sets', title: t('reportWizard.steps.controlSets'), icon: Shield },
+    { id: 'risk-assessment', title: t('reportWizard.steps.riskAssessment'), icon: AlertTriangle },
+    { id: 'findings-selection', title: t('reportWizard.steps.findingsSelection'), icon: Target },
+    { id: 'final-report', title: t('reportWizard.steps.finalReport'), icon: CheckCircle }
   ];
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -178,7 +180,7 @@ const ReportCreationWizard: React.FC = () => {
       setAudits(data || []);
     } catch (error) {
       console.error('Error loading audits:', error);
-      toast.error('Denetimler yüklenirken hata oluştu');
+      toast.error(t('reportWizard.toasts.loadAuditsError'));
     } finally {
       setIsLoading(false);
     }
@@ -355,7 +357,7 @@ const ReportCreationWizard: React.FC = () => {
 
     } catch (error) {
       console.error('Error loading related data:', error);
-      toast.error('İlgili veriler yüklenirken hata oluştu');
+      toast.error(t('reportWizard.toasts.loadRelatedDataError'));
     } finally {
       setIsLoading(false);
     }
@@ -390,7 +392,7 @@ const ReportCreationWizard: React.FC = () => {
 
       if (controlSetsError) {
         console.error('Error loading available control sets:', controlSetsError);
-        toast.error('Kontrol setleri yüklenirken hata oluştu');
+        toast.error(t('reportWizard.toasts.loadControlSetsError'));
         return;
       }
 
@@ -419,7 +421,7 @@ const ReportCreationWizard: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading available control sets:', error);
-      toast.error('Kontrol setleri yüklenirken hata oluştu');
+      toast.error(t('reportWizard.toasts.loadControlSetsError'));
     }
   };
 
@@ -467,7 +469,7 @@ const ReportCreationWizard: React.FC = () => {
     setWizardData(prev => ({
       ...prev,
       selectedAudit: audit,
-      reportTitle: `${audit.title} - Denetim Raporu`,
+      reportTitle: `${audit.title} - ${t('reportWizard.reportSuffix')}`,
       reportDescription: audit.description
     }));
     loadRelatedData(audit.id);
@@ -580,7 +582,7 @@ const ReportCreationWizard: React.FC = () => {
           }));
         }, 100);
 
-        toast.success('Yönetim özeti başarıyla oluşturuldu!');
+        toast.success(t('reportWizard.executiveSummary.generationSuccess'));
       } else {
         console.error('AI service returned error:', response.error);
         throw new Error(response.error || 'AI generation failed');
@@ -588,7 +590,7 @@ const ReportCreationWizard: React.FC = () => {
     } catch (error) {
       console.error('Error generating executive summary:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Yönetim özeti oluşturulurken hata oluştu: ${errorMessage}`);
+      toast.error(t('reportWizard.executiveSummary.generationError', { error: errorMessage }));
     } finally {
       setIsGenerating(false);
     }
@@ -630,7 +632,7 @@ const ReportCreationWizard: React.FC = () => {
       if (wizardData.executiveSummary) {
         sections.push({
           id: 'executive-summary',
-          name: 'Yönetim Özeti',
+          name: t('reportWizard.steps.executiveSummary'),
           type: 'text',
           content: wizardData.executiveSummary,
           ai_generated: true,
@@ -647,7 +649,7 @@ const ReportCreationWizard: React.FC = () => {
 
         sections.push({
           id: 'control-sets',
-          name: 'Kontrol Setleri ve Kontroller',
+          name: t('reportWizard.steps.controlSets') + ' ve Kontroller',
           type: 'text',
           content: controlContent,
           ai_generated: false,
@@ -696,7 +698,7 @@ Risklerin etkili yönetimi için aşağıdaki önlemler önerilir:
 
         sections.push({
           id: 'risk-assessment',
-          name: 'Risk Değerlendirmesi',
+          name: t('reportWizard.steps.riskAssessment'),
           type: 'risk',
           content: riskContent,
           ai_generated: false,
@@ -764,7 +766,7 @@ Bulgu sayısı ve şiddet seviyesi göz önüne alındığında, organizasyonun 
 
         sections.push({
           id: 'findings',
-          name: 'Bulgular',
+          name: t('reportWizard.steps.findingsSelection'),
           type: 'finding',
           content: findingsContent,
           ai_generated: false,
@@ -785,10 +787,10 @@ Bulgu sayısı ve şiddet seviyesi göz önüne alındığında, organizasyonun 
       }));
 
       setCurrentStep('final-report');
-      toast.success('Final rapor başarıyla oluşturuldu!');
+      toast.success(t('reportWizard.finalReport.generationSuccess'));
     } catch (error) {
       console.error('Error generating final report:', error);
-      toast.error('Final rapor oluşturulurken hata oluştu');
+      toast.error(t('reportWizard.finalReport.generationError'));
     } finally {
       setIsGenerating(false);
     }
@@ -826,11 +828,11 @@ Bulgu sayısı ve şiddet seviyesi göz önüne alındığında, organizasyonun 
 
       if (error) throw error;
 
-      toast.success('Rapor başarıyla kaydedildi!');
+      toast.success(t('reportWizard.finalReport.saveSuccess'));
       // Redirect to report builder or show success message
     } catch (error) {
       console.error('Error saving report:', error);
-      toast.error('Rapor kaydedilirken hata oluştu');
+      toast.error(t('reportWizard.finalReport.saveError'));
     } finally {
       setIsSaving(false);
     }
@@ -932,10 +934,10 @@ Bulgu sayısı ve şiddet seviyesi göz önüne alındığında, organizasyonun 
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-full mr-4">
               <FileText className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Denetim Raporu Oluşturma Sihirbazı</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('reportWizard.title')}</h1>
           </motion.div>
           <p className="text-gray-600 text-lg">
-            Adım adım profesyonel denetim raporları oluşturun
+            {t('reportWizard.subtitle')}
           </p>
         </div>
 
@@ -1159,6 +1161,7 @@ const AuditSelectionStep: React.FC<{
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
 }> = ({ audits, selectedAudit, onSelectAudit, isLoading, searchTerm, onSearchChange, statusFilter, onStatusFilterChange }) => {
+  const { t } = useTranslation();
   const filteredAudits = audits.filter(audit => {
     const matchesSearch = audit.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          audit.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1174,10 +1177,10 @@ const AuditSelectionStep: React.FC<{
       <CardHeader>
         <CardTitle className="flex items-center">
           <Search className="w-5 h-5 mr-2 text-blue-600" />
-          Denetim Seçimi
+          {t('reportWizard.auditSelection.title')}
         </CardTitle>
         <p className="text-gray-600">
-          Rapor oluşturmak istediğiniz denetimi seçin
+          {t('reportWizard.auditSelection.description')}
         </p>
       </CardHeader>
       <CardContent>
@@ -1187,7 +1190,7 @@ const AuditSelectionStep: React.FC<{
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Denetim ara... (başlık, açıklama, birim)"
+                placeholder={t('reportWizard.auditSelection.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-10"
@@ -1195,14 +1198,14 @@ const AuditSelectionStep: React.FC<{
             </div>
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Durum filtresi" />
+                <SelectValue placeholder={t('reportWizard.auditSelection.statusFilter')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Durumlar</SelectItem>
-                <SelectItem value="planned">Planlandı</SelectItem>
-                <SelectItem value="in_progress">Devam Ediyor</SelectItem>
-                <SelectItem value="completed">Tamamlandı</SelectItem>
-                <SelectItem value="cancelled">İptal Edildi</SelectItem>
+                <SelectItem value="all">{t('reportWizard.auditSelection.all')}</SelectItem>
+                <SelectItem value="planned">{t('reportWizard.auditSelection.statusOptions.planned')}</SelectItem>
+                <SelectItem value="in_progress">{t('reportWizard.auditSelection.statusOptions.inProgress')}</SelectItem>
+                <SelectItem value="completed">{t('reportWizard.auditSelection.statusOptions.completed')}</SelectItem>
+                <SelectItem value="cancelled">{t('reportWizard.auditSelection.statusOptions.cancelled')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1311,16 +1314,17 @@ const ExecutiveSummaryStep: React.FC<{
   onGenerate: () => void;
   isGenerating: boolean;
 }> = ({ audit, executiveSummary, onSummaryChange, onGenerate, isGenerating }) => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <FileText className="w-5 h-5 mr-2 text-blue-600" />
-            Yönetim Özeti
+            {t('reportWizard.executiveSummary.title')}
           </CardTitle>
           <p className="text-gray-600">
-            Seçilen denetim için otomatik yönetim özeti oluşturun
+            {t('reportWizard.executiveSummary.description')}
           </p>
         </CardHeader>
         <CardContent>
@@ -1331,7 +1335,7 @@ const ExecutiveSummaryStep: React.FC<{
           </div>
 
           <div className="flex justify-between items-center mb-4">
-            <Label htmlFor="executiveSummary">Yönetim Özeti</Label>
+            <Label htmlFor="executiveSummary">{t('reportWizard.executiveSummary.title')}</Label>
             <div className="flex space-x-2">
               <Button
                 onClick={() => onSummaryChange('Bu bir test içeriğidir. AI özeti burada görünecektir.')}
@@ -1373,12 +1377,12 @@ const ExecutiveSummaryStep: React.FC<{
                 {isGenerating ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Oluşturuluyor...
+                    {t('reportWizard.executiveSummary.generating')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    AI ile Oluştur
+                    {t('reportWizard.executiveSummary.generateWithAI')}
                   </>
                 )}
               </Button>
@@ -1390,7 +1394,7 @@ const ExecutiveSummaryStep: React.FC<{
             value={executiveSummary}
             onChange={(e) => onSummaryChange(e.target.value)}
             rows={8}
-            placeholder="Denetimin yönetim özeti burada görünecek..."
+            placeholder={t('reportWizard.executiveSummary.placeholder')}
             className="w-full"
           />
           {executiveSummary && (
@@ -1420,6 +1424,7 @@ const ControlSetsStep: React.FC<{
   typeFilter: string;
   onTypeFilterChange: (value: string) => void;
 }> = ({ controlSets, selectedControlSets, onToggleControlSet, isLoading, selectedAudit, searchTerm, onSearchChange, typeFilter, onTypeFilterChange }) => {
+  const { t } = useTranslation();
   const associateControlSetWithAudit = async (controlSet: ControlSet) => {
     if (!selectedAudit) return;
 
@@ -1486,7 +1491,7 @@ const ControlSetsStep: React.FC<{
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Kontrol seti ara... (isim, açıklama)"
+                placeholder={t('reportWizard.controlSets.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-10"
@@ -1494,12 +1499,12 @@ const ControlSetsStep: React.FC<{
             </div>
             <Select value={typeFilter} onValueChange={onTypeFilterChange}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Tip filtresi" />
+                <SelectValue placeholder={t('reportWizard.controlSets.typeFilter')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Tipler</SelectItem>
-                <SelectItem value="audit-specific">Denetime Özel</SelectItem>
-                <SelectItem value="general">Genel Havuz</SelectItem>
+                <SelectItem value="all">{t('reportWizard.controlSets.typeOptions.all')}</SelectItem>
+                <SelectItem value="audit-specific">{t('reportWizard.controlSets.typeOptions.auditSpecific')}</SelectItem>
+                <SelectItem value="general">{t('reportWizard.controlSets.typeOptions.general')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1512,7 +1517,7 @@ const ControlSetsStep: React.FC<{
                   <span>Ara: "{searchTerm}"</span>
                 )}
                 {typeFilter !== 'all' && (
-                  <span>Tip: {typeFilter === 'audit-specific' ? 'Denetime Özel' : 'Genel Havuz'}</span>
+                  <span>Tip: {typeFilter === 'audit-specific' ? t('reportWizard.controlSets.typeOptions.auditSpecific') : t('reportWizard.controlSets.typeOptions.general')}</span>
                 )}
                 <span className="text-gray-500">
                   ({filteredControlSets.length} / {controlSets.length} kontrol seti)

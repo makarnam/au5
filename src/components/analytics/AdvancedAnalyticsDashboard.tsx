@@ -93,9 +93,9 @@ export default function AdvancedAnalyticsDashboard() {
         'month'
       );
 
-      const trendAnalysis = await advancedAnalyticsService.analyzeTrends(riskAggregatedData);
+      const trendAnalysis = riskAggregatedData ? await advancedAnalyticsService.analyzeTrends(riskAggregatedData) : null;
 
-      const predictiveModel = await advancedAnalyticsService.generatePredictions(riskAggregatedData, 6);
+      const predictiveModel = riskAggregatedData ? await advancedAnalyticsService.generatePredictions(riskAggregatedData, 6) : null;
 
       setData({
         auditMetrics: auditData || [],
@@ -104,7 +104,7 @@ export default function AdvancedAnalyticsDashboard() {
         performanceMetrics: performanceData || [],
         teamWorkload: workloadData || [],
         aiUsage: aiData || [],
-        predictiveData: predictiveModel.predictions || [],
+        predictiveData: predictiveModel?.predictions || [],
         trendAnalysis
       });
     } catch (error) {

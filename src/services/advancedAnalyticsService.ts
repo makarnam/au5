@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import { withErrorHandling, handleSupabaseError } from "../lib/errorHandler";
+import { withErrorHandling } from "../lib/errorHandler";
 
 export type UUID = string;
 
@@ -55,7 +55,7 @@ const advancedAnalyticsService = {
     startDate: string,
     endDate: string,
     groupBy: 'category' | 'level' | 'status' | 'month' = 'month'
-  ): Promise<AnalyticsDataPoint[]> {
+  ): Promise<AnalyticsDataPoint[] | null> {
     return withErrorHandling(async () => {
       let query = supabase
         .from('risks')

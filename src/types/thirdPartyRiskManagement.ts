@@ -147,6 +147,9 @@ export interface ThirdPartySecurityMonitoring {
   monitoring_type: 'continuous' | 'periodic' | 'incident_based' | 'compliance_check';
   monitoring_date: string;
   security_score?: number;
+  uptime_percentage?: number;
+  response_time?: number;
+  compliance_score?: number;
   risk_level?: 'low' | 'medium' | 'high' | 'critical';
   security_controls_assessed?: number;
   security_controls_compliant?: number;

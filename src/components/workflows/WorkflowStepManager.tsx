@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import workflows from '../../services/workflows';
-import { WorkflowStep, Workflow, UserRole } from '../../types';
-import { Plus, Edit, Trash2, Users, ArrowUp, ArrowDown, CheckCircle } from 'lucide-react';
+import { WorkflowStep, UserRole } from '../../types';
+import { Plus, Edit, Trash2, Users, ArrowUp, ArrowDown } from 'lucide-react';
 import UserSelectionDropdown from './UserSelectionDropdown';
 
 interface WorkflowStepManagerProps {
@@ -47,8 +47,8 @@ const WorkflowStepManager: React.FC<WorkflowStepManagerProps> = ({
       const result = await workflows.getWorkflowSteps(workflowId);
       if (result.data) {
         const sortedSteps = result.data.sort((a, b) => a.step_order - b.step_order);
-        setSteps(sortedSteps);
-        onStepsChange?.(sortedSteps);
+        setSteps(sortedSteps as WorkflowStep[]);
+        onStepsChange?.(sortedSteps as WorkflowStep[]);
       }
     } catch (error) {
       console.error('Workflow adımları yüklenirken hata:', error);

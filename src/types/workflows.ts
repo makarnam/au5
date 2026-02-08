@@ -5,7 +5,7 @@
 
 export type UUID = string;
 
-export type WorkflowEntityType = 'audit' | 'finding';
+export type WorkflowEntityType = 'audit' | 'finding' | 'control';
 
 export type ApprovalRequestStatus =
   | 'pending_approval'

@@ -8,13 +8,16 @@ import { authTranslations } from "./auth";
 import { navigationTranslations } from "./navigation";
 import { sidebarTranslations } from "./sidebar";
 import { dashboardTranslations } from "./dashboard";
-import { settingsTranslations } from "./settings";
+import { controlsTranslations } from "./controls";
 import { profileTranslations } from "./profile";
 import { governanceTranslations } from "./governance";
 import { reportsTranslations } from "./reports";
 import { auditsTranslations } from "./audits";
-import { controlsTranslations } from "./controls";
 import { risksTranslations } from "./risks";
+import { auditPlanningTranslations } from "./audit-planning";
+import { settingsTranslations } from "./settings";
+import { reportWizardTranslations } from "./report-wizard";
+import { otherTranslations } from "./other";
 
 // Combine all translations
 const en = {
@@ -30,6 +33,9 @@ const en = {
   audits: auditsTranslations.en,
   controls: controlsTranslations.en,
   risks: risksTranslations.en,
+  reportWizard: reportWizardTranslations.en,
+  auditPlanning: auditPlanningTranslations.en,
+  other: otherTranslations.en,
 };
 
 const es = {
@@ -45,6 +51,9 @@ const es = {
   audits: auditsTranslations.es,
   controls: controlsTranslations.es,
   risks: risksTranslations.es,
+  reportWizard: reportWizardTranslations.es,
+  auditPlanning: auditPlanningTranslations.es,
+  other: otherTranslations.es,
 };
 
 const tr = {
@@ -60,6 +69,9 @@ const tr = {
   audits: auditsTranslations.tr,
   controls: controlsTranslations.tr,
   risks: risksTranslations.tr,
+  reportWizard: reportWizardTranslations.tr,
+  auditPlanning: auditPlanningTranslations.tr,
+  other: otherTranslations.tr,
 };
 
 const resources = {

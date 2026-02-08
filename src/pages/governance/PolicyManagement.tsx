@@ -2,7 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
+import PolicyLifecycleManager from '../../components/policies/PolicyLifecycleManager';
+import PolicyComplianceMapping from '../../components/policies/PolicyComplianceMapping';
+import PolicyAnalytics from '../../components/policies/PolicyAnalytics';
 import {
   FileText,
   TrendingUp,
@@ -152,23 +156,29 @@ export default function PolicyManagement() {
             {t("policyManagementDesc", "Manage governance policies and regulatory compliance")}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => {/* Export functionality */}}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {t("export", "Export")}
-          </Button>
-          <Button
-            onClick={() => setShowCreateForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {t("createPolicy", "Create Policy")}
-          </Button>
-        </div>
       </div>
+
+      <Tabs defaultValue="lifecycle" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="lifecycle">Policy Lifecycle</TabsTrigger>
+          <TabsTrigger value="compliance">Compliance Mapping</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="legacy">Legacy View</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="lifecycle" className="space-y-6">
+          <PolicyLifecycleManager />
+        </TabsContent>
+
+        <TabsContent value="compliance" className="space-y-6">
+          <PolicyComplianceMapping />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <PolicyAnalytics />
+        </TabsContent>
+
+        <TabsContent value="legacy" className="space-y-6">
 
       {/* Stats Cards */}
       <motion.div
@@ -370,6 +380,8 @@ export default function PolicyManagement() {
           )}
         </div>
       </motion.div>
+        </TabsContent>
+      </Tabs>
     </motion.div>
   );
 }

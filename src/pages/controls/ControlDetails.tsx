@@ -24,6 +24,7 @@ import { useAuthStore } from "../../store/authStore";
 import { ControlSet, Control } from "../../types";
 import { controlService } from "../../services/controlService";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import WorkflowCenter from "../workflows/WorkflowCenter";
 import { formatDate, cn } from "../../utils";
 
 // Safe number utilities to prevent NaN errors
@@ -585,6 +586,11 @@ const ControlDetails: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Workflow & Approval */}
+      <div className="px-6 pb-10">
+        {controlSet?.id ? <WorkflowCenter entityType="control" entityId={controlSet.id} /> : null}
       </div>
     </div>
   );

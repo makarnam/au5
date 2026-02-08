@@ -14,6 +14,8 @@ import {
   Share2,
   MoreHorizontal,
   File,
+  GitBranch,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -22,7 +24,11 @@ import { Badge } from "../../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { Switch } from "../../components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
 import { documentManagementService } from "../../services/documentManagementService";
+import DocumentVersionControl from "../../components/documents/DocumentVersionControl";
+import { toast } from "react-hot-toast";
 import {
   Document,
   DocumentCategory,
@@ -45,6 +51,11 @@ const DocumentManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [selectedDocumentForVersions, setSelectedDocumentForVersions] = useState<Document | null>(null);
+  const [useSemanticSearch, setUseSemanticSearch] = useState(false);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [selectedDocumentForApproval, setSelectedDocumentForApproval] = useState<Document | null>(null);
+  const [approvalApprovers, setApprovalApprovers] = useState<Array<{ user_id?: string; role?: string; step_number: number }>>([]);
 
   useEffect(() => {
     loadData();
@@ -106,8 +117,10 @@ const DocumentManagement: React.FC = () => {
 
   const searchDocuments = async () => {
     try {
-      console.log('Searching documents with filters:', searchFilters);
-      const result = await documentManagementService.searchDocuments(searchFilters, currentPage, 20);
+      console.log('Searching documents with filters:', searchFilters, 'Semantic:', useSemanticSearch);
+      const result = useSemanticSearch && searchFilters.search
+        ? await documentManagementService.semanticSearchDocuments(searchFilters.search, searchFilters, currentPage, 20)
+        : await documentManagementService.searchDocuments(searchFilters, currentPage, 20);
       console.log('Search results:', result);
       setDocuments(result.documents);
       setTotalPages(result.total_pages);
@@ -137,6 +150,36 @@ const DocumentManagement: React.FC = () => {
       setSelectedDocuments([]);
     } else {
       setSelectedDocuments(documents.map(doc => doc.id));
+    }
+  };
+
+  const handleStartApproval = async (document: Document) => {
+    setSelectedDocumentForApproval(document);
+    // Default approvers - can be customized
+    setApprovalApprovers([
+      { role: 'Compliance Officer', step_number: 1 },
+      { role: 'Department Head', step_number: 2 },
+      { role: 'Legal Review', step_number: 3 }
+    ]);
+    setShowApprovalDialog(true);
+  };
+
+  const handleSubmitApproval = async () => {
+    if (!selectedDocumentForApproval) return;
+
+    try {
+      await documentManagementService.startDocumentApproval(
+        selectedDocumentForApproval.id,
+        approvalApprovers
+      );
+      toast.success('Document approval workflow started successfully');
+      setShowApprovalDialog(false);
+      setSelectedDocumentForApproval(null);
+      // Refresh documents
+      searchDocuments();
+    } catch (error) {
+      console.error('Error starting approval:', error);
+      toast.error('Failed to start document approval');
     }
   };
 
@@ -260,12 +303,27 @@ const DocumentManagement: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Search</label>
+                <div className="flex items-center space-x-2">
+                  <label className="text-xs text-gray-600">AI Semantic</label>
+                  <Switch
+                    checked={useSemanticSearch}
+                    onCheckedChange={setUseSemanticSearch}
+                  />
+                  <Badge variant="outline" className="text-xs">New</Badge>
+                </div>
+              </div>
               <Input
-                placeholder="Search documents..."
+                placeholder={useSemanticSearch ? "Ask questions like 'security policies' or 'compliance reports'..." : "Search documents..."}
                 value={searchFilters.search || ''}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
+              {useSemanticSearch && (
+                <p className="text-xs text-gray-500">
+                  AI-powered semantic search understands context and meaning, not just keywords
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -404,21 +462,39 @@ const DocumentManagement: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center justify-between mt-4 pt-2 border-t">
-                      <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Share2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-3 w-3" />
-                      </Button>
-                    </div>
+                     <div className="flex space-x-1">
+                       <Button variant="ghost" size="sm">
+                         <Eye className="h-3 w-3" />
+                       </Button>
+                       <Button variant="ghost" size="sm">
+                         <Download className="h-3 w-3" />
+                       </Button>
+                       <Button
+                         variant="ghost"
+                         size="sm"
+                         onClick={() => setSelectedDocumentForVersions(document)}
+                         title="Version Control"
+                       >
+                         <GitBranch className="h-3 w-3" />
+                       </Button>
+                       {document.status === 'draft' && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleStartApproval(document)}
+                           title="Start Approval Workflow"
+                         >
+                           <CheckCircle className="h-3 w-3" />
+                         </Button>
+                       )}
+                       <Button variant="ghost" size="sm">
+                         <Share2 className="h-3 w-3" />
+                       </Button>
+                     </div>
+                     <Button variant="ghost" size="sm">
+                       <MoreHorizontal className="h-3 w-3" />
+                     </Button>
+                   </div>
                   </CardContent>
                 </Card>
               ))}
@@ -486,6 +562,24 @@ const DocumentManagement: React.FC = () => {
                         <Button variant="ghost" size="sm">
                           <Download className="h-3 w-3" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedDocumentForVersions(document)}
+                          title="Version Control"
+                        >
+                          <GitBranch className="h-3 w-3" />
+                        </Button>
+                        {document.status === 'draft' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleStartApproval(document)}
+                            title="Start Approval Workflow"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm">
                           <Share2 className="h-3 w-3" />
                         </Button>
@@ -537,6 +631,7 @@ const DocumentManagement: React.FC = () => {
             <TabsTrigger value="categories">Category Distribution</TabsTrigger>
             <TabsTrigger value="activity">User Activity</TabsTrigger>
             <TabsTrigger value="compliance">Compliance Coverage</TabsTrigger>
+            {selectedDocumentForVersions && <TabsTrigger value="versions">Version Control</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="trends" className="space-y-4">
@@ -629,8 +724,81 @@ const DocumentManagement: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {selectedDocumentForVersions && (
+            <TabsContent value="versions" className="space-y-4">
+              <DocumentVersionControl documentId={selectedDocumentForVersions.id} />
+            </TabsContent>
+          )}
         </Tabs>
       )}
+
+      {/* Approval Workflow Dialog */}
+      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Start Document Approval Workflow</DialogTitle>
+            <DialogDescription>
+              Configure approval steps for "{selectedDocumentForApproval?.title}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Approval Steps</h4>
+              {approvalApprovers.map((approver, index) => (
+                <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
+                  <span className="text-sm font-medium w-8">{approver.step_number}.</span>
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Approver Role (e.g., Compliance Officer)"
+                      value={approver.role || ''}
+                      onChange={(e) => {
+                        const newApprovers = [...approvalApprovers];
+                        newApprovers[index].role = e.target.value;
+                        setApprovalApprovers(newApprovers);
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newApprovers = approvalApprovers.filter((_, i) => i !== index);
+                      setApprovalApprovers(newApprovers);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              onClick={() => {
+                setApprovalApprovers([
+                  ...approvalApprovers,
+                  { role: '', step_number: approvalApprovers.length + 1 }
+                ]);
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              Add Approval Step
+            </Button>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => setShowApprovalDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitApproval} disabled={approvalApprovers.length === 0}>
+              Start Approval Workflow
+              <Badge variant="outline" className="ml-2">New</Badge>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
