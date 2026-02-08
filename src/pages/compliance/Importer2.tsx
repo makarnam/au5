@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/button';
 import { ComplianceService } from '../../services/compliance';
 import riskService from '../../services/riskService';
-import { controlService } from '../../services/controlService-fixed';
+import { controlService } from '../../services/controlService';
 
 type UUID = string;
 

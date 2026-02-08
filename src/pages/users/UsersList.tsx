@@ -22,11 +22,8 @@ import {
   Settings,
 } from 'lucide-react';
 import { userManagementService } from '../../services/userManagementService';
-import { userManagementServiceFixed2 } from '../../services/userManagementService-fixed2';
-import { userManagementServiceFixed3 } from '../../services/userManagementService-fixed3';
 import { User, UserFilters, UserSearchParams, PaginatedUserResponse } from '../../types/userManagement';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import DebugUserLoading from '../../components/DebugUserLoading';
 
 const UsersList: React.FC = () => {
   const { t } = useTranslation();
@@ -52,23 +49,7 @@ const UsersList: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      // Try multiple fixed services in order, fallback to original if all fail
-      let response;
-      try {
-        // Try the latest fixed service first
-        response = await userManagementServiceFixed3.getUsersNoSearch(searchParams);
-        console.log('Fixed3 service succeeded');
-      } catch (fixed3Error) {
-        console.log('Fixed3 service failed, trying Fixed2:', fixed3Error);
-        try {
-          response = await userManagementServiceFixed2.getUsersNoSearch(searchParams);
-          console.log('Fixed2 service succeeded');
-        } catch (fixed2Error) {
-          console.log('Fixed2 service failed, trying original:', fixed2Error);
-          response = await userManagementService.getUsers(searchParams);
-          console.log('Original service succeeded');
-        }
-      }
+      const response = await userManagementService.getUsers(searchParams);
       setUsers(response.users);
       setTotalPages(response.total_pages);
       setTotalUsers(response.total);
@@ -174,9 +155,6 @@ const UsersList: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Debug Component - Remove after fixing */}
-      <DebugUserLoading />
-      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
