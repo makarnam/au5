@@ -231,7 +231,10 @@ export default function GovernanceIntegration() {
             {t("refresh", "Refresh")}
           </Button>
           <Button
-            onClick={() => {/* Configure integrations */}}
+            onClick={() => {
+              // Show configuration modal - for now, refresh integrations
+              loadIntegrations();
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Settings className="w-4 h-4 mr-2" />
@@ -422,7 +425,10 @@ export default function GovernanceIntegration() {
               <Network className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Integration Links</h3>
               <p className="text-gray-600 mb-6">Set up integration links between governance and other modules</p>
-              <Button onClick={() => {/* Setup integrations */}}>
+              <Button onClick={() => {
+                // Initialize integration setup - refresh to load sample data
+                loadIntegrations();
+              }}>
                 <Link className="w-4 h-4 mr-2" />
                 Setup Integration
               </Button>

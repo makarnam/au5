@@ -209,7 +209,26 @@ export default function BoardReporting() {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => {/* Export functionality */}}
+            onClick={() => {
+              if (reports.length === 0) return;
+              const csvContent = [
+                ['Title', 'Type', 'Status', 'Period Start', 'Period End', 'Created At'].join(','),
+                ...reports.map(r => [
+                  `"${r.title.replace(/"/g, '""')}"`,
+                  r.report_type,
+                  r.status,
+                  r.period_start || '',
+                  r.period_end || '',
+                  new Date(r.created_at).toLocaleDateString()
+                ].join(','))
+              ].join('\n');
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = `board-reports-${new Date().toISOString().split('T')[0]}.csv`;
+              link.click();
+              URL.revokeObjectURL(link.href);
+            }}
           >
             <Download className="w-4 h-4 mr-2" />
             {t("export", "Export")}

@@ -354,7 +354,17 @@ const IncidentManagement: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <h5 className="font-medium text-gray-900">Actions</h5>
                       <button
-                        onClick={() => {/* Add action modal */}}
+                        onClick={() => {
+                          const description = prompt('Enter action description:');
+                          if (description) {
+                            handleAddAction(incident.id, {
+                              description,
+                              action_type: 'containment',
+                              assigned_to: 'Current User',
+                              status: 'pending'
+                            });
+                          }
+                        }}
                         className="text-sm text-blue-600 hover:text-blue-900"
                       >
                         Add Action

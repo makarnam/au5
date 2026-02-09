@@ -211,7 +211,29 @@ export default function StakeholderManagement() {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => {/* Export functionality */}}
+            onClick={() => {
+              if (stakeholders.length === 0) return;
+              const csvContent = [
+                ['Name', 'Title', 'Organization', 'Email', 'Phone', 'Type', 'Influence', 'Interest', 'Status'].join(','),
+                ...stakeholders.map(s => [
+                  `"${s.name.replace(/"/g, '""')}"`,
+                  `"${s.title.replace(/"/g, '""')}"`,
+                  `"${s.organization.replace(/"/g, '""')}"`,
+                  s.email,
+                  s.phone || '',
+                  s.stakeholder_type,
+                  s.influence_level,
+                  s.interest_level,
+                  s.relationship_status
+                ].join(','))
+              ].join('\n');
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(blob);
+              link.download = `stakeholders-${new Date().toISOString().split('T')[0]}.csv`;
+              link.click();
+              URL.revokeObjectURL(link.href);
+            }}
           >
             <Download className="w-4 h-4 mr-2" />
             {t("export", "Export")}
