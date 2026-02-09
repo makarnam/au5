@@ -231,7 +231,13 @@ const PerformanceMonitoring: React.FC = () => {
     });
   };
 
-  const getPerformanceLevelColor = (level: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getPerformanceLevelColor = (level?: string) => {
+    if (!level) return 'bg-gray-100 text-gray-800 border-gray-200';
     switch (level) {
       case 'excellent': return 'bg-green-100 text-green-800 border-green-200';
       case 'good': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -242,7 +248,8 @@ const PerformanceMonitoring: React.FC = () => {
     }
   };
 
-  const getPerformanceLevelIcon = (level: string) => {
+  const getPerformanceLevelIcon = (level?: string) => {
+    if (!level) return <Target className="w-4 h-4" />;
     switch (level) {
       case 'excellent': return <Star className="w-4 h-4" />;
       case 'good': return <CheckCircle className="w-4 h-4" />;
@@ -251,10 +258,6 @@ const PerformanceMonitoring: React.FC = () => {
       case 'unacceptable': return <AlertTriangle className="w-4 h-4" />;
       default: return <Target className="w-4 h-4" />;
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
   };
 
   const calculateAverageScore = (data: ThirdPartyPerformance[]) => {
@@ -326,7 +329,7 @@ const PerformanceMonitoring: React.FC = () => {
               </select>
             </div>
             <div className="flex items-end">
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button variant="outline" className="flex items-center gap-2" onClick={() => alert('Export functionality coming soon')}>
                 <Download className="w-4 h-4" />
                 Export Report
               </Button>
@@ -476,12 +479,12 @@ const PerformanceMonitoring: React.FC = () => {
                         <h3 className="font-semibold text-lg">
                           {thirdParties.find(tp => tp.id === performance.third_party_id)?.name || 'Unknown Third Party'}
                         </h3>
-                        <Badge className={getPerformanceLevelColor(performance.performance_level)}>
-                          <div className="flex items-center gap-1">
-                            {getPerformanceLevelIcon(performance.performance_level)}
-                            {performance.performance_level.toUpperCase()}
-                          </div>
-                        </Badge>
+                          <Badge className={getPerformanceLevelColor(performance.performance_level)}>
+                            <div className="flex items-center gap-1">
+                              {getPerformanceLevelIcon(performance.performance_level)}
+                              {(performance.performance_level || 'N/A').toUpperCase()}
+                            </div>
+                          </Badge>
                         <Badge variant="outline">
                           {performance.performance_period.toUpperCase()}
                         </Badge>
@@ -522,7 +525,7 @@ const PerformanceMonitoring: React.FC = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => alert('Edit functionality coming soon')}>
                         <Edit className="w-4 h-4" />
                       </Button>
                     </div>
@@ -776,7 +779,7 @@ const PerformanceMonitoring: React.FC = () => {
                   <div><span className="font-medium">Date Range:</span> {formatDate(selectedPerformance.period_start_date)} - {formatDate(selectedPerformance.period_end_date)}</div>
                   <div><span className="font-medium">Performance Level:</span>
                     <Badge className={`ml-2 ${getPerformanceLevelColor(selectedPerformance.performance_level)}`}>
-                      {selectedPerformance.performance_level.toUpperCase()}
+                      {(selectedPerformance.performance_level || 'N/A').toUpperCase()}
                     </Badge>
                   </div>
                 </div>

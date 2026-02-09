@@ -101,7 +101,7 @@ export default function GovernanceReporting() {
     let finalAssess: AssessmentRow[] = [];
     if (assessRows && assessRows.length > 0) {
       const reqIds = Array.from(new Set(assessRows.map((r: any) => r.requirement_id))).filter(Boolean);
-      let reqMap: Record<string, { code: string; title: string }> = {};
+      const reqMap: Record<string, { code: string; title: string }> = {};
       if (reqIds.length > 0) {
         const { data: reqs } = await supabase
           .from('compliance_requirements')

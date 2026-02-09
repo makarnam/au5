@@ -163,7 +163,7 @@ const AIEnhancedDocumentUpload: React.FC<AIEnhancedDocumentUploadProps> = ({
     const fileName = file.name.toLowerCase();
     const fileType = file.type;
 
-    let analysis: AIAnalysis = {
+    const analysis: AIAnalysis = {
       confidence: 0.85 + Math.random() * 0.1,
       suggestedCategory: 'General',
       suggestedTags: [],

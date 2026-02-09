@@ -407,7 +407,16 @@ export default function StakeholderManagement() {
                           <MessageCircle className="w-4 h-4 mr-1" />
                           Communicate
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // TODO: Open edit form when implemented
+                            console.log('Edit stakeholder:', stakeholder.id);
+                            setSelectedStakeholder(stakeholder);
+                            setShowCreateForm(true);
+                          }}
+                        >
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>

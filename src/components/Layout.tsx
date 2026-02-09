@@ -936,6 +936,29 @@ const Layout: React.FC = () => {
 
   // Create a separate component for the legacy sidebar content
   const LegacySidebarContent = () => {
+    // Track expanded menu items using a Set of item names
+    const [expandedItems, setExpandedItems] = useState<Set<string>>(() => {
+      const initiallyExpanded = new Set<string>();
+      filteredNavigation.forEach(item => {
+        if (item.current && item.children && item.children.length > 0) {
+          initiallyExpanded.add(item.name);
+        }
+      });
+      return initiallyExpanded;
+    });
+
+    const toggleExpanded = (itemName: string) => {
+      setExpandedItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(itemName)) {
+          newSet.delete(itemName);
+        } else {
+          newSet.add(itemName);
+        }
+        return newSet;
+      });
+    };
+
     return (
       <div className="flex flex-col h-full">
         {/* Logo */}
@@ -956,7 +979,7 @@ const Layout: React.FC = () => {
           {filteredNavigation.map((item) => {
             const Icon = item.icon;
             const hasChildren = item.children && item.children.length > 0;
-            const [isExpanded, setIsExpanded] = useState(item.current || false);
+            const isExpanded = expandedItems.has(item.name);
 
             return (
               <div key={item.name} className="space-y-1">
@@ -966,7 +989,7 @@ const Layout: React.FC = () => {
                       navigate(item.href);
                       setSidebarOpen(false);
                     } else {
-                      setIsExpanded(!isExpanded);
+                      toggleExpanded(item.name);
                     }
                   }}
                   className={`w-full group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${

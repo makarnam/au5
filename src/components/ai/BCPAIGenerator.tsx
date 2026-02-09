@@ -528,7 +528,7 @@ export default function BCPAIGenerator({
                           </button>
                           <button
                             onClick={handleRegenerate}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                           >
                             <RefreshCw className="w-4 h-4" />
                             Regenerate

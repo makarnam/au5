@@ -464,7 +464,7 @@ Focus on practical, implementable solutions that provide real business value.`;
     const completeness = totalSections > 0 ? (aiGeneratedSections / totalSections) * 100 : 0;
 
     // Basic quality scoring based on content length and structure
-    let accuracy = 70; // Base score
+    const accuracy = 70; // Base score
     let relevance = 75; // Base score
     let compliance_alignment = 80; // Base score
 

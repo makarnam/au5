@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { motion } from 'framer-motion';
 import { 
   Shield, 
   AlertTriangle, 
@@ -17,9 +18,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  ArrowRight
 } from 'lucide-react';
-import { itSecurityService, ITSecurityDashboardMetrics } from '../../services/itSecurityService';
+import { itSecurityDashboardService } from '../../services/itSecurityService';
+import { ITSecurityDashboardMetrics } from '../../types/itSecurity';
 import { Link } from 'react-router-dom';
 
 const ITSecurityDashboard: React.FC = () => {
@@ -34,7 +38,7 @@ const ITSecurityDashboard: React.FC = () => {
   const loadMetrics = async () => {
     try {
       setLoading(true);
-      const data = await itSecurityService.dashboard.getMetrics();
+      const data = await itSecurityDashboardService.getMetrics();
       setMetrics(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load metrics');
@@ -92,327 +96,473 @@ const ITSecurityDashboard: React.FC = () => {
   if (!metrics) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">IT & Security Risk Management</h1>
-          <p className="text-gray-600 mt-2">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">IT & Security Risk Management</h1>
+          <p className="text-gray-600 text-lg">
             Comprehensive IT and cybersecurity risk management across technology infrastructure and operations
           </p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={loadMetrics}>
-            <Activity className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div>
+        <Button 
+          variant="outline" 
+          onClick={loadMetrics}
+          className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </motion.div>
 
       {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
         {/* Incidents */}
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Incidents</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_incidents}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <span className={`inline-block w-2 h-2 rounded-full ${getSeverityColor('critical')} mr-1`}></span>
-              {metrics.critical_incidents} critical
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <Clock className="h-3 w-3 mr-1" />
-              {metrics.open_incidents} open
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-red-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-red-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Security Incidents</CardTitle>
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-3xl font-bold text-gray-900">{metrics.total_incidents}</div>
+              <div className="flex items-center text-sm text-gray-600">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${getSeverityColor('critical')} mr-2`}></span>
+                <span className="font-medium">{metrics.critical_incidents}</span>
+                <span className="ml-1">critical</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                <span className="font-medium">{metrics.open_incidents}</span>
+                <span className="ml-1">open</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Vulnerabilities */}
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vulnerabilities</CardTitle>
-            <Bug className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_vulnerabilities}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <span className={`inline-block w-2 h-2 rounded-full ${getSeverityColor('high')} mr-1`}></span>
-              {metrics.high_critical_vulnerabilities} high/critical
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              {metrics.patched_vulnerabilities_30d} patched (30d)
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Vulnerabilities</CardTitle>
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Bug className="h-5 w-5 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-3xl font-bold text-gray-900">{metrics.total_vulnerabilities}</div>
+              <div className="flex items-center text-sm text-gray-600">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${getSeverityColor('high')} mr-2`}></span>
+                <span className="font-medium">{metrics.high_critical_vulnerabilities}</span>
+                <span className="ml-1">high/critical</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                <span className="font-medium">{metrics.patched_vulnerabilities_30d}</span>
+                <span className="ml-1">patched (30d)</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Controls */}
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">IT Controls</CardTitle>
-            <Shield className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_controls}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              {metrics.implemented_controls} implemented
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <Activity className="h-3 w-3 mr-1" />
-              {metrics.effective_controls} effective
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">IT Controls</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Shield className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-3xl font-bold text-gray-900">{metrics.total_controls}</div>
+              <div className="flex items-center text-sm text-gray-600">
+                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                <span className="font-medium">{metrics.implemented_controls}</span>
+                <span className="ml-1">implemented</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Activity className="h-4 w-4 mr-2 text-purple-500" />
+                <span className="font-medium">{metrics.effective_controls}</span>
+                <span className="ml-1">effective</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Assets */}
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Assets</CardTitle>
-            <Server className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_assets}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <span className={`inline-block w-2 h-2 rounded-full ${getSeverityColor('critical')} mr-1`}></span>
-              {metrics.critical_assets} critical
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              {metrics.assets_with_vulnerabilities} at risk
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-green-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Security Assets</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Server className="h-5 w-5 text-green-600" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-3xl font-bold text-gray-900">{metrics.total_assets}</div>
+              <div className="flex items-center text-sm text-gray-600">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${getSeverityColor('critical')} mr-2`}></span>
+                <span className="font-medium">{metrics.critical_assets}</span>
+                <span className="ml-1">critical</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <AlertTriangle className="h-4 w-4 mr-2 text-orange-500" />
+                <span className="font-medium">{metrics.assets_with_vulnerabilities}</span>
+                <span className="ml-1">at risk</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="incidents">Incidents</TabsTrigger>
-          <TabsTrigger value="vulnerabilities">Vulnerabilities</TabsTrigger>
-          <TabsTrigger value="controls">Controls</TabsTrigger>
-          <TabsTrigger value="compliance">Compliance</TabsTrigger>
-          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-        </TabsList>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 h-12 bg-gray-100/50 p-1 rounded-lg">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">Overview</TabsTrigger>
+            <TabsTrigger value="incidents" className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">Incidents</TabsTrigger>
+            <TabsTrigger value="vulnerabilities" className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">Vulnerabilities</TabsTrigger>
+            <TabsTrigger value="controls" className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">Controls</TabsTrigger>
+            <TabsTrigger value="compliance" className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">Compliance</TabsTrigger>
+            <TabsTrigger value="monitoring" className="data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">Monitoring</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Compliance Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Lock className="h-5 w-5 mr-2" />
-                  Compliance Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>PCI DSS Compliance</span>
-                  <Badge className={getStatusColor('active')}>
-                    {metrics.pci_compliance_score.toFixed(1)}%
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>ISO 27001 Status</span>
-                  <Badge className={getStatusColor(metrics.isms_certification_status)}>
-                    {metrics.isms_certification_status.replace('_', ' ')}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>CMMC Level</span>
-                  <Badge className={getStatusColor('active')}>
-                    Level {metrics.cmmc_current_level}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Security Monitoring */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Eye className="h-5 w-5 mr-2" />
-                  Security Monitoring
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>Alerts (24h)</span>
-                  <Badge variant="outline">{metrics.security_alerts_24h}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>False Positive Rate</span>
-                  <Badge variant="outline">{metrics.false_positive_rate.toFixed(1)}%</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Policies Due Review</span>
-                  <Badge variant="outline">{metrics.policies_due_review}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Link to="/it-security/incidents/create">
-                  <Button variant="outline" className="w-full h-20 flex flex-col">
-                    <AlertTriangle className="h-6 w-6 mb-2" />
-                    Report Incident
-                  </Button>
-                </Link>
-                <Link to="/it-security/vulnerabilities/create">
-                  <Button variant="outline" className="w-full h-20 flex flex-col">
-                    <Bug className="h-6 w-6 mb-2" />
-                    Add Vulnerability
-                  </Button>
-                </Link>
-                <Link to="/it-security/controls/create">
-                  <Button variant="outline" className="w-full h-20 flex flex-col">
-                    <Shield className="h-6 w-6 mb-2" />
-                    Create Control
-                  </Button>
-                </Link>
-                <Link to="/it-security/policies/create">
-                  <Button variant="outline" className="w-full h-20 flex flex-col">
-                    <FileText className="h-6 w-6 mb-2" />
-                    New Policy
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="incidents" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Security Incidents</span>
-                <Link to="/it-security/incidents">
-                  <Button variant="outline">View All</Button>
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Incident management interface will be implemented here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="vulnerabilities" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Vulnerability Management</span>
-                <Link to="/it-security/vulnerabilities">
-                  <Button variant="outline">View All</Button>
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Bug className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Vulnerability management interface will be implemented here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="controls" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>IT Controls Management</span>
-                <Link to="/it-security/controls">
-                  <Button variant="outline">View All</Button>
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Controls management interface will be implemented here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="compliance" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Compliance Programs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link to="/it-security/pci">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-2">
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Compliance Status */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <Card className="shadow-sm hover:shadow-lg transition-all duration-300">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center text-lg">
+                      <div className="p-2 bg-blue-100 rounded-lg mr-3">
                         <Lock className="h-5 w-5 text-blue-600" />
-                        <span className="font-medium">PCI DSS</span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-2">Payment Card Industry Compliance</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-                <Link to="/it-security/isms">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-2">
-                        <Shield className="h-5 w-5 text-green-600" />
-                        <span className="font-medium">ISO 27001</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">Information Security Management</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-                <Link to="/it-security/cmmc">
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-2">
-                        <Activity className="h-5 w-5 text-purple-600" />
-                        <span className="font-medium">CMMC</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">Cybersecurity Maturity Model</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      Compliance Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="font-medium text-gray-700">PCI DSS Compliance</span>
+                      <Badge className={getStatusColor('active')} variant="secondary">
+                        {metrics.pci_compliance_score.toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="font-medium text-gray-700">ISO 27001 Status</span>
+                      <Badge className={getStatusColor(metrics.isms_certification_status)} variant="secondary">
+                        {metrics.isms_certification_status.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="font-medium text-gray-700">CMMC Level</span>
+                      <Badge className={getStatusColor('active')} variant="secondary">
+                        Level {metrics.cmmc_current_level}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
-        <TabsContent value="monitoring" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Security Monitoring</span>
-                <Link to="/it-security/monitoring">
-                  <Button variant="outline">View All</Button>
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Security monitoring interface will be implemented here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              {/* Security Monitoring */}
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <Card className="shadow-sm hover:shadow-lg transition-all duration-300">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center text-lg">
+                      <div className="p-2 bg-purple-100 rounded-lg mr-3">
+                        <Eye className="h-5 w-5 text-purple-600" />
+                      </div>
+                      Security Monitoring
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="font-medium text-gray-700">Alerts (24h)</span>
+                      <Badge variant="outline" className="font-semibold">{metrics.security_alerts_24h}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="font-medium text-gray-700">False Positive Rate</span>
+                      <Badge variant="outline" className="font-semibold">{metrics.false_positive_rate.toFixed(1)}%</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="font-medium text-gray-700">Policies Due Review</span>
+                      <Badge variant="outline" className="font-semibold">{metrics.policies_due_review}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="shadow-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Link to="/it-security/incidents/create">
+                      <motion.div
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button variant="outline" className="w-full h-24 flex flex-col hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200">
+                          <div className="p-2 bg-red-100 rounded-lg mb-2">
+                            <AlertTriangle className="h-6 w-6 text-red-600" />
+                          </div>
+                          <span className="font-medium">Report Incident</span>
+                        </Button>
+                      </motion.div>
+                    </Link>
+                    <Link to="/it-security/vulnerabilities/create">
+                      <motion.div
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button variant="outline" className="w-full h-24 flex flex-col hover:bg-orange-50 hover:border-orange-300 hover:shadow-md transition-all duration-200">
+                          <div className="p-2 bg-orange-100 rounded-lg mb-2">
+                            <Bug className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <span className="font-medium">Add Vulnerability</span>
+                        </Button>
+                      </motion.div>
+                    </Link>
+                    <Link to="/it-security/controls/create">
+                      <motion.div
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button variant="outline" className="w-full h-24 flex flex-col hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                          <div className="p-2 bg-blue-100 rounded-lg mb-2">
+                            <Shield className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <span className="font-medium">Create Control</span>
+                        </Button>
+                      </motion.div>
+                    </Link>
+                    <Link to="/it-security/policies/create">
+                      <motion.div
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button variant="outline" className="w-full h-24 flex flex-col hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all duration-200">
+                          <div className="p-2 bg-green-100 rounded-lg mb-2">
+                            <FileText className="h-6 w-6 text-green-600" />
+                          </div>
+                          <span className="font-medium">New Policy</span>
+                        </Button>
+                      </motion.div>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="incidents" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Security Incidents</span>
+                  <Link to="/it-security/incidents">
+                    <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                      View All
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="p-4 bg-red-50 rounded-full inline-block mb-4">
+                    <AlertTriangle className="h-12 w-12 text-red-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">Incident management interface will be implemented here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="vulnerabilities" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Vulnerability Management</span>
+                  <Link to="/it-security/vulnerabilities">
+                    <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                      View All
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="p-4 bg-orange-50 rounded-full inline-block mb-4">
+                    <Bug className="h-12 w-12 text-orange-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">Vulnerability management interface will be implemented here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="controls" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>IT Controls Management</span>
+                  <Link to="/it-security/controls">
+                    <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                      View All
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="p-4 bg-blue-50 rounded-full inline-block mb-4">
+                    <Shield className="h-12 w-12 text-blue-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">Controls management interface will be implemented here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="compliance" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Compliance Programs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Link to="/it-security/pci">
+                    <motion.div
+                      whileHover={{ scale: 1.03, y: -4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-blue-300 bg-gradient-to-br from-white to-blue-50/50">
+                        <CardContent className="p-6">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="p-3 bg-blue-100 rounded-lg">
+                              <Lock className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <span className="font-semibold text-lg">PCI DSS</span>
+                          </div>
+                          <p className="text-sm text-gray-600">Payment Card Industry Compliance</p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Link>
+                  <Link to="/it-security/isms">
+                    <motion.div
+                      whileHover={{ scale: 1.03, y: -4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-green-300 bg-gradient-to-br from-white to-green-50/50">
+                        <CardContent className="p-6">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="p-3 bg-green-100 rounded-lg">
+                              <Shield className="h-6 w-6 text-green-600" />
+                            </div>
+                            <span className="font-semibold text-lg">ISO 27001</span>
+                          </div>
+                          <p className="text-sm text-gray-600">Information Security Management</p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Link>
+                  <Link to="/it-security/cmmc">
+                    <motion.div
+                      whileHover={{ scale: 1.03, y: -4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-purple-300 bg-gradient-to-br from-white to-purple-50/50">
+                        <CardContent className="p-6">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="p-3 bg-purple-100 rounded-lg">
+                              <Activity className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <span className="font-semibold text-lg">CMMC</span>
+                          </div>
+                          <p className="text-sm text-gray-600">Cybersecurity Maturity Model</p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="monitoring" className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Security Monitoring</span>
+                  <Link to="/it-security/monitoring">
+                    <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                      View All
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="p-4 bg-purple-50 rounded-full inline-block mb-4">
+                    <Eye className="h-12 w-12 text-purple-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">Security monitoring interface will be implemented here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
     </div>
   );
 };

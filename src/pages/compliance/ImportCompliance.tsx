@@ -331,7 +331,7 @@ export default function ImportCompliance() {
       setPhase('idle');
       setMessage('Parsing file...');
       setRowErrors([]);
-      let fwPreview: PreviewRow<FrameworkRow>[] = [];
+      const fwPreview: PreviewRow<FrameworkRow>[] = [];
       let reqPreview: PreviewRow<RequirementRow>[] = [];
 
       if (mode === 'csv' || mode === 'excel') {
@@ -501,7 +501,7 @@ export default function ImportCompliance() {
 
     try {
       // Upsert frameworks first (by code)
-      let frameworkIdByCode: Record<string, string> = {};
+      const frameworkIdByCode: Record<string, string> = {};
 
       for (const row of frameworkPreview) {
         if (!row.ok || !row.data) continue;

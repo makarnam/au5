@@ -1,35 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Input } from '../../components/ui/input';
-import { 
-  Building2, 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit, 
-  Eye, 
-  Trash2, 
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  Building2,
+  Search,
+  Filter,
+  Plus,
+  Edit,
+  Eye,
+  Trash2,
   Download,
-  Calendar,
   AlertTriangle,
   Shield,
   TrendingUp,
   Users,
   DollarSign,
   Globe,
-  Phone,
-  Mail,
-  ExternalLink,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { thirdPartyRiskManagementService } from '../../services/thirdPartyRiskManagementService';
 import { ThirdParty, ThirdPartySearchFilters } from '../../types/thirdPartyRiskManagement';
-import { Link } from 'react-router-dom';
 
 const ThirdPartyCatalog: React.FC = () => {
+  const navigate = useNavigate();
   const [thirdParties, setThirdParties] = useState<ThirdParty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +34,6 @@ const ThirdPartyCatalog: React.FC = () => {
   const [filters, setFilters] = useState<ThirdPartySearchFilters>({});
   const [showFilters, setShowFilters] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<any[]>([]);
-  const [selectedThirdParty, setSelectedThirdParty] = useState<ThirdParty | null>(null);
 
   const vendorTypes = [
     'supplier', 'service_provider', 'contractor', 'partner', 'consultant',
@@ -48,6 +42,14 @@ const ThirdPartyCatalog: React.FC = () => {
 
   const riskClassifications = ['low', 'medium', 'high', 'critical'];
   const statuses = ['active', 'inactive', 'suspended', 'terminated'];
+
+  // Stats
+  const statsLoading = false;
+  const totalRisk = thirdParties.filter(t => t.risk_classification === 'high' || t.risk_classification === 'critical').length;
+  const totalActive = thirdParties.filter(t => t.status === 'active').length;
+  const totalAssessmentOverdue = thirdParties.filter(t => 
+    t.next_assessment_date && new Date(t.next_assessment_date) < new Date()
+  ).length;
 
   useEffect(() => {
     loadThirdParties();
@@ -108,30 +110,32 @@ const ThirdPartyCatalog: React.FC = () => {
         if (result.error) {
           throw new Error('Failed to delete third party');
         }
+        toast.success('Third party deleted successfully');
         loadThirdParties();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to delete third party');
+        toast.error('Failed to delete third party');
       }
     }
   };
 
   const getRiskLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active': return 'bg-green-100 text-green-800 border-green-200';
-      case 'inactive': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'suspended': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'terminated': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'suspended': return 'bg-yellow-100 text-yellow-800';
+      case 'terminated': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -140,441 +144,443 @@ const ThirdPartyCatalog: React.FC = () => {
     return new Date(nextAssessmentDate) < new Date();
   };
 
-  const isContractExpiringSoon = (contractEndDate?: string) => {
-    if (!contractEndDate) return false;
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    return new Date(contractEndDate) <= thirtyDaysFromNow;
-  };
+  const filteredThirdParties = thirdParties.filter(tp => {
+    const matchesSearch = !searchTerm || 
+      tp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tp.legal_name?.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesSearch;
+  });
 
   if (loading && thirdParties.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="p-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="text-center text-gray-600 mt-4">Loading third parties...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Third Parties</h3>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={loadThirdParties}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Third Party Catalog</h1>
-          <p className="text-gray-600 mt-2">Manage and monitor all third-party vendors and suppliers</p>
+          <p className="text-gray-600 mt-2">
+            Manage and monitor all third-party vendors and suppliers
+          </p>
         </div>
-        <div className="flex space-x-3">
-          <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-            {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
-          </Button>
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+
+        <div className="flex space-x-3 mt-4 sm:mt-0">
+          <button
+            onClick={() => {
+              // TODO: Implement export functionality
+              console.log('Export third parties');
+              alert('Export functionality will be implemented');
+            }}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          >
+            <Download className="w-4 h-4 mr-2" />
             Export
-          </Button>
-          <Button asChild>
-            <Link to="/third-party-risk-management/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Third Party
-            </Link>
-          </Button>
+          </button>
+          <button
+            onClick={() => navigate('/third-party-risk-management/create')}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Third Party
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Building2 className="w-6 h-6 text-blue-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Total Third Parties</p>
+              <p className="text-2xl font-semibold text-gray-900">{loading ? '...' : total}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Shield className="w-6 h-6 text-green-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Active</p>
+              <p className="text-2xl font-semibold text-gray-900">{loading ? '...' : totalActive}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <AlertTriangle className="w-6 h-6 text-orange-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">High Risk</p>
+              <p className="text-2xl font-semibold text-gray-900">{loading ? '...' : totalRisk}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <TrendingUp className="w-6 h-6 text-red-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Assessment Overdue</p>
+              <p className="text-2xl font-semibold text-gray-900">{loading ? '...' : totalAssessmentOverdue}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="flex space-x-3">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search by name, legal name, or vendor ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by name or legal name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+            {showFilters ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+          </button>
+
+          <button
+            onClick={handleSearch}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Search
+          </button>
+        </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Risk Classification
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filters.risk_classification?.[0] || ''}
+                  onChange={(e) => handleFilterChange('risk_classification', e.target.value ? [e.target.value] : undefined)}
+                >
+                  <option value="">All</option>
+                  {riskClassifications.map(classification => (
+                    <option key={classification} value={classification}>
+                      {classification.charAt(0).toUpperCase() + classification.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <Button onClick={handleSearch}>
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filters.status?.[0] || ''}
+                  onChange={(e) => handleFilterChange('status', e.target.value ? [e.target.value] : undefined)}
+                >
+                  <option value="">All</option>
+                  {statuses.map(status => (
+                    <option key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vendor Type
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filters.vendor_type?.[0] || ''}
+                  onChange={(e) => handleFilterChange('vendor_type', e.target.value ? [e.target.value] : undefined)}
+                >
+                  <option value="">All</option>
+                  {vendorTypes.map(type => (
+                    <option key={type} value={type}>
+                      {type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Unit
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filters.business_unit_id || ''}
+                  onChange={(e) => handleFilterChange('business_unit_id', e.target.value || undefined)}
+                >
+                  <option value="">All</option>
+                  {businessUnits.map(unit => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Filters */}
-            {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Risk Classification
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={filters.risk_classification?.[0] || ''}
-                    onChange={(e) => handleFilterChange('risk_classification', e.target.value ? [e.target.value] : undefined)}
-                  >
-                    <option value="">All</option>
-                    {riskClassifications.map(classification => (
-                      <option key={classification} value={classification}>
-                        {classification.charAt(0).toUpperCase() + classification.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div className="flex gap-4 mt-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={filters.assessment_overdue || false}
+                  onChange={(e) => handleFilterChange('assessment_overdue', e.target.checked)}
+                  className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Assessment Overdue</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={filters.high_risk_only || false}
+                  onChange={(e) => handleFilterChange('high_risk_only', e.target.checked)}
+                  className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">High Risk Only</span>
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={filters.status?.[0] || ''}
-                    onChange={(e) => handleFilterChange('status', e.target.value ? [e.target.value] : undefined)}
-                  >
-                    <option value="">All</option>
-                    {statuses.map(status => (
-                      <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vendor Type
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={filters.vendor_type?.[0] || ''}
-                    onChange={(e) => handleFilterChange('vendor_type', e.target.value ? [e.target.value] : undefined)}
-                  >
-                    <option value="">All</option>
-                    {vendorTypes.map(type => (
-                      <option key={type} value={type}>
-                        {type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Business Unit
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={filters.business_unit_id || ''}
-                    onChange={(e) => handleFilterChange('business_unit_id', e.target.value || undefined)}
-                  >
-                    <option value="">All</option>
-                    {businessUnits.map(unit => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.assessment_overdue || false}
-                      onChange={(e) => handleFilterChange('assessment_overdue', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Assessment Overdue</span>
-                  </label>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.contract_expiring_soon || false}
-                      onChange={(e) => handleFilterChange('contract_expiring_soon', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Contract Expiring Soon</span>
-                  </label>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.high_risk_only || false}
-                      onChange={(e) => handleFilterChange('high_risk_only', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">High Risk Only</span>
-                  </label>
-                </div>
-              </div>
+      {/* Third Parties Table */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {filteredThirdParties.length === 0 ? (
+          <div className="text-center py-12">
+            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No third parties found</h3>
+            <p className="text-gray-600 mb-6">
+              {thirdParties.length === 0
+                ? "Get started by adding your first third party."
+                : "Try adjusting your search or filter criteria."}
+            </p>
+            {thirdParties.length === 0 && (
+              <button
+                onClick={() => navigate('/third-party-risk-management/create')}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add Your First Third Party
+              </button>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Third Parties ({total} total)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">{error}</p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {thirdParties.map((thirdParty) => (
-              <div
-                key={thirdParty.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {thirdParty.name}
-                      </h3>
-                      <Badge className={getRiskLevelColor(thirdParty.risk_classification)}>
-                        {thirdParty.risk_classification.toUpperCase()}
-                      </Badge>
-                      <Badge className={getStatusColor(thirdParty.status)}>
-                        {thirdParty.status.toUpperCase()}
-                      </Badge>
-                      {isAssessmentOverdue(thirdParty.next_assessment_date) && (
-                        <Badge className="bg-red-100 text-red-800 border-red-200">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Assessment Overdue
-                        </Badge>
-                      )}
-                      {isContractExpiringSoon(thirdParty.contract_end_date) && (
-                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          Contract Expiring
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
-                      <div className="flex items-center space-x-2">
-                        <Building2 className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          {thirdParty.vendor_type.replace('_', ' ')}
-                        </span>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Third Party
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Risk Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Business Unit
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Value
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {filteredThirdParties.map((thirdParty, idx) => (
+                  <motion.tr
+                    key={thirdParty.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-3">
+                          <Building2 className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <button
+                            onClick={() => navigate(`/third-party-risk-management/${thirdParty.id}`)}
+                            className="text-sm font-semibold text-gray-900 hover:text-blue-600"
+                          >
+                            {thirdParty.name}
+                          </button>
+                          {thirdParty.legal_name && (
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                              {thirdParty.legal_name}
+                            </p>
+                          )}
+                          {thirdParty.country && (
+                            <p className="text-xs text-gray-400 mt-1 flex items-center">
+                              <Globe className="w-3 h-3 mr-1" />
+                              {thirdParty.country}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      
-                      {thirdParty.business_units?.name && (
-                        <div className="flex items-center space-x-2">
-                          <Users className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {thirdParty.business_units.name}
-                          </span>
-                        </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-900">
+                        {thirdParty.vendor_type?.replace('_', ' ').charAt(0).toUpperCase() + thirdParty.vendor_type?.replace('_', ' ').slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskLevelColor(thirdParty.risk_classification)}`}>
+                        {thirdParty.risk_classification?.charAt(0).toUpperCase() + thirdParty.risk_classification?.slice(1)}
+                      </span>
+                      {isAssessmentOverdue(thirdParty.next_assessment_date) && (
+                        <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Overdue
+                        </span>
                       )}
-
-                      {thirdParty.contract_value && (
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {thirdParty.currency} {thirdParty.contract_value.toLocaleString()}
-                          </span>
-                        </div>
-                      )}
-
-                      {thirdParty.country && (
-                        <div className="flex items-center space-x-2">
-                          <Globe className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {thirdParty.country}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      {thirdParty.contact_email && (
-                        <div className="flex items-center space-x-1">
-                          <Mail className="h-3 w-3" />
-                          <span>{thirdParty.contact_email}</span>
-                        </div>
-                      )}
-                      {thirdParty.contact_phone && (
-                        <div className="flex items-center space-x-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{thirdParty.contact_phone}</span>
-                        </div>
-                      )}
-                      {thirdParty.website && (
-                        <div className="flex items-center space-x-1">
-                          <ExternalLink className="h-3 w-3" />
-                          <a href={thirdParty.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            Website
-                          </a>
-                        </div>
-                      )}
-                    </div>
-
-                    {thirdParty.notes && (
-                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                        {thirdParty.notes}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex space-x-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedThirdParty(thirdParty)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                    >
-                      <Link to={`/third-party-risk-management/edit/${thirdParty.id}`}>
-                        <Edit className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(thirdParty.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(thirdParty.status)}`}>
+                        {thirdParty.status?.charAt(0).toUpperCase() + thirdParty.status?.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-900">
+                        {thirdParty.business_unit_id || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {thirdParty.contract_value && (
+                          <div className="flex items-center">
+                            <DollarSign className="w-4 h-4 text-gray-400 mr-1" />
+                            {thirdParty.contract_value.toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => navigate(`/third-party-risk-management/${thirdParty.id}`)}
+                          className="text-gray-500 hover:text-blue-600 text-sm"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => navigate(`/third-party-risk-management/edit/${thirdParty.id}`)}
+                          className="text-gray-500 hover:text-blue-600 text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(thirdParty.id)}
+                          className="text-gray-500 hover:text-red-600 text-sm"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        )}
 
-          {/* Pagination */}
-          {total > 10 && (
-            <div className="flex justify-between items-center mt-6 pt-4 border-t">
-              <div className="text-sm text-gray-600">
-                Showing {((page - 1) * 10) + 1} to {Math.min(page * 10, total)} of {total} results
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page * 10 >= total}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Third Party Details Modal */}
-      {selectedThirdParty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-semibold">{selectedThirdParty.name}</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedThirdParty(null)}
+        {/* Pagination */}
+        {total > 10 && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ×
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Legal Name</label>
-                  <p className="text-sm text-gray-900">{selectedThirdParty.legal_name || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Vendor ID</label>
-                  <p className="text-sm text-gray-900">{selectedThirdParty.vendor_id || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Industry</label>
-                  <p className="text-sm text-gray-900">{selectedThirdParty.industry || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Risk Score</label>
-                  <p className="text-sm text-gray-900">{selectedThirdParty.risk_score}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Person</label>
-                  <p className="text-sm text-gray-900">{selectedThirdParty.contact_person || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Email</label>
-                  <p className="text-sm text-gray-900">{selectedThirdParty.contact_email || 'N/A'}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Address</label>
-                <p className="text-sm text-gray-900">{selectedThirdParty.address || 'N/A'}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contract Start Date</label>
-                  <p className="text-sm text-gray-900">
-                    {selectedThirdParty.contract_start_date ? new Date(selectedThirdParty.contract_start_date).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contract End Date</label>
-                  <p className="text-sm text-gray-900">
-                    {selectedThirdParty.contract_end_date ? new Date(selectedThirdParty.contract_end_date).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
-                <p className="text-sm text-gray-900">{selectedThirdParty.notes || 'No notes available'}</p>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedThirdParty(null)}
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page * 10 >= total}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Close
-              </Button>
-              <Button asChild>
-                <Link to={`/third-party-risk-management/edit/${selectedThirdParty.id}`}>
-                  Edit Third Party
-                </Link>
-              </Button>
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to <span className="font-medium">{Math.min(page * 10, total)}</span> of <span className="font-medium">{total}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                  <button
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronDown className="h-4 w-4 transform rotate-90" />
+                  </button>
+                  <button
+                    onClick={() => setPage(page + 1)}
+                    disabled={page * 10 >= total}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronDown className="h-4 w-4 transform -rotate-90" />
+                  </button>
+                </nav>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

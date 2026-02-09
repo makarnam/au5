@@ -349,7 +349,7 @@ const CreateRiskWizard: React.FC = () => {
                 type="button"
                 disabled={!canContinue}
                 onClick={() => setStep((s) => (Math.min(3, s + 1) as WizardStep))}
-                className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 disabled:opacity-60"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
               >
                 Next
               </button>

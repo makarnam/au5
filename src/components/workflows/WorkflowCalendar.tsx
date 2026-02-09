@@ -42,7 +42,7 @@ const WorkflowCalendar: React.FC<WorkflowCalendarProps> = ({
   const loadEvents = async () => {
     setLoading(true);
     try {
-      let filters: any = {};
+      const filters: any = {};
       
       if (workflowId) {
         filters.workflow_id = workflowId;

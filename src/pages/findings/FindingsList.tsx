@@ -80,7 +80,7 @@ export default function FindingsList() {
     }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { load();   }, []);
 
   const applyFilters = (e: React.FormEvent) => {
     e.preventDefault();

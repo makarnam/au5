@@ -35,7 +35,7 @@ async function fetchSent(): Promise<any[]> {
   const recipientIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
 
   // 3) Fetch recipient user profiles (id, first_name, last_name, email)
-  let recipientsById: Record<string, { first_name: string; last_name: string; email: string }> = {};
+  const recipientsById: Record<string, { first_name: string; last_name: string; email: string }> = {};
   if (recipientIds.length > 0) {
     const { data: usersData, error: usersErr } = await supabase
       .from('users')

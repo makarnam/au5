@@ -591,7 +591,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({
   // Memoize filtered categories with search functionality
   const filteredCategories = useMemo(() => {
     // First filter by permissions
-    let categories = menuCategories.map(category => ({
+    const categories = menuCategories.map(category => ({
       ...category,
       items: category.items.filter(item =>
         item.roles.some(role => checkPermission(role as any))

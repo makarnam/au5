@@ -65,7 +65,7 @@ export default function GovernanceCalendar() {
     let enriched: AssessmentDue[] = [];
     if (rawAssess && rawAssess.length > 0) {
       const reqIds = Array.from(new Set(rawAssess.map((r: any) => r.requirement_id))).filter(Boolean);
-      let reqMap: Record<string, { title: string; code: string }> = {};
+      const reqMap: Record<string, { title: string; code: string }> = {};
       if (reqIds.length > 0) {
         const { data: reqs } = await supabase
           .from('compliance_requirements')

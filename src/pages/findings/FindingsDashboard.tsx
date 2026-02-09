@@ -93,7 +93,7 @@ export default function FindingsDashboard() {
     }
   };
 
-  useEffect(() => { loadFindings(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { loadFindings();   }, []);
 
   const auditsOptions = useMemo(() => [{ id: 'all', title: 'All Audits' }, ...audits], [audits]);
 

@@ -71,7 +71,7 @@ export default function ApproveRejectDialog({ requestId, open, onClose, onDone }
           <button
             onClick={() => handle('skip')}
             disabled={loading !== null}
-            className="px-3 py-2 rounded bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50"
+            className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {loading === 'skip' ? 'Skipping…' : 'Skip Step'}
           </button>

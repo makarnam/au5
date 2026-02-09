@@ -123,7 +123,7 @@ const getKPIRealData = async (entityType?: string, entityId?: string) => {
 
 const getFindingRealData = async (entityType?: string, entityId?: string) => {
   try {
-    let query = supabase
+    const query = supabase
       .from('findings')
       .select('id, title, severity, status, description, due_date')
       .order('created_at', { ascending: false })
@@ -154,7 +154,7 @@ const getFindingRealData = async (entityType?: string, entityId?: string) => {
 
 const getRiskRealData = async (entityType?: string, entityId?: string) => {
   try {
-    let query = supabase
+    const query = supabase
       .from('risks')
       .select('id, title, risk_level, impact_level, likelihood, status, description')
       .order('created_at', { ascending: false })
@@ -185,7 +185,7 @@ const getRiskRealData = async (entityType?: string, entityId?: string) => {
 
 const getControlRealData = async (entityType?: string, entityId?: string) => {
   try {
-    let query = supabase
+    const query = supabase
       .from('controls')
       .select('id, name, control_type, status, effectiveness_score, description')
       .order('created_at', { ascending: false })

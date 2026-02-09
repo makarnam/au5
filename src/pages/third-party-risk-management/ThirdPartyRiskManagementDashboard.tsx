@@ -2,19 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { AlertTriangle, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { 
   Building2, 
   Shield, 
-  AlertTriangle, 
   TrendingUp, 
   Users, 
   FileText, 
   Clock, 
   Calendar,
   Plus,
-  Search,
-  Filter,
-  Download,
   RefreshCw
 } from 'lucide-react';
 import { thirdPartyRiskManagementService } from '../../services/thirdPartyRiskManagementService';
@@ -24,9 +21,10 @@ import {
   ThirdPartyAssessmentTrend,
   ThirdPartyIncidentTrend
 } from '../../types/thirdPartyRiskManagement';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const ThirdPartyRiskManagementDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<ThirdPartyDashboardStats | null>(null);
   const [riskDistribution, setRiskDistribution] = useState<ThirdPartyRiskDistribution[]>([]);
   const [assessmentTrends, setAssessmentTrends] = useState<ThirdPartyAssessmentTrend[]>([]);
@@ -73,144 +71,141 @@ const ThirdPartyRiskManagementDashboard: React.FC = () => {
 
   const getRiskLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getRiskLevelIcon = (level: string) => {
     switch (level.toLowerCase()) {
-      case 'critical': return '🔴';
-      case 'high': return '🟠';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
+      case 'critical': return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'medium': return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default: return <CheckCircle className="h-4 w-4 text-gray-500" />;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="p-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="text-center text-gray-600 mt-4">Loading dashboard...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={loadDashboardData} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
-          </Button>
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Dashboard</h3>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={loadDashboardData}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Third Party Risk Management</h1>
-          <p className="text-gray-600 mt-2">Comprehensive vendor risk management and monitoring</p>
+          <p className="text-gray-600 mt-2">
+            Comprehensive vendor risk management and monitoring
+          </p>
         </div>
-        <div className="flex space-x-3">
-          <Button variant="outline" onClick={loadDashboardData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+
+        <div className="flex space-x-3 mt-4 sm:mt-0">
+          <button
+            onClick={loadDashboardData}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
-          </Button>
-          <Button asChild>
-            <Link to="/third-party-risk-management/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Third Party
-            </Link>
-          </Button>
+          </button>
+          <button
+            onClick={() => navigate('/third-party-risk-management/create')}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Third Party
+          </button>
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Third Parties</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_third_parties || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.active_third_parties || 0} active
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Risk Vendors</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {stats?.high_risk_third_parties || 0}
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Building2 className="w-6 h-6 text-blue-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Total Third Parties</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.total_third_parties || 0}</p>
+              <p className="text-xs text-gray-500">{stats?.active_third_parties || 0} active</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.critical_risk_third_parties || 0} critical
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue Assessments</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {stats?.overdue_assessments || 0}
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <AlertTriangle className="w-6 h-6 text-orange-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">High Risk Vendors</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.high_risk_third_parties || 0}</p>
+              <p className="text-xs text-gray-500">{stats?.critical_risk_third_parties || 0} critical</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Require immediate attention
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Incidents</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {stats?.active_incidents || 0}
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Clock className="w-6 h-6 text-red-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Overdue Assessments</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.overdue_assessments || 0}</p>
+              <p className="text-xs text-gray-500">Require attention</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Under investigation
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Shield className="w-6 h-6 text-red-600 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Active Incidents</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.active_incidents || 0}</p>
+              <p className="text-xs text-gray-500">Under investigation</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Risk Distribution and Trends */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Risk Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Risk Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Risk Distribution</h3>
+          </div>
+          <div className="p-6">
             <div className="space-y-4">
               {riskDistribution.map((item) => (
                 <div key={item.risk_level} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg">{getRiskLevelIcon(item.risk_level)}</span>
-                    <span className="font-medium capitalize">{item.risk_level}</span>
+                    {getRiskLevelIcon(item.risk_level)}
+                    <span className="font-medium capitalize text-gray-900">{item.risk_level}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -230,131 +225,144 @@ const ThirdPartyRiskManagementDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Assessment Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Assessment Trends (Last 12 Months)</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Assessment Trends (Last 12 Months)</h3>
+          </div>
+          <div className="p-6">
             <div className="space-y-4">
               {assessmentTrends.slice(-6).map((trend) => (
                 <div key={trend.month} className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-gray-900">
                     {new Date(trend.month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </span>
                   <div className="flex items-center space-x-4">
                     <span className="text-sm text-gray-600">
                       {trend.assessments_completed} assessments
                     </span>
-                    <Badge variant="outline">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskLevelColor(String(trend.average_risk_score))}`}>
                       Avg: {trend.average_risk_score}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/third-party-risk-management/catalog">
-                <Building2 className="h-6 w-6 mb-2" />
-                <span>Third Party Catalog</span>
-              </Link>
-            </Button>
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <button
+              onClick={() => navigate('/third-party-risk-management/catalog')}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors"
+            >
+              <Building2 className="h-6 w-6 text-blue-600 mb-2" />
+              <span className="text-sm font-medium text-gray-900">Third Party Catalog</span>
+            </button>
             
-            <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/third-party-risk-management/assessments">
-                <FileText className="h-6 w-6 mb-2" />
-                <span>Risk Assessments</span>
-              </Link>
-            </Button>
+            <button
+              onClick={() => navigate('/third-party-risk-management/assessments')}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors"
+            >
+              <FileText className="h-6 w-6 text-green-600 mb-2" />
+              <span className="text-sm font-medium text-gray-900">Risk Assessments</span>
+            </button>
             
-            <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/third-party-risk-management/engagements">
-                <Users className="h-6 w-6 mb-2" />
-                <span>Engagements</span>
-              </Link>
-            </Button>
+            <button
+              onClick={() => navigate('/third-party-risk-management/engagements')}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors"
+            >
+              <Users className="h-6 w-6 text-purple-600 mb-2" />
+              <span className="text-sm font-medium text-gray-900">Engagements</span>
+            </button>
             
-            <Button asChild variant="outline" className="h-20 flex-col">
-              <Link to="/third-party-risk-management/incidents">
-                <AlertTriangle className="h-6 w-6 mb-2" />
-                <span>Incidents</span>
-              </Link>
-            </Button>
+            <button
+              onClick={() => navigate('/third-party-risk-management/incidents')}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors"
+            >
+              <AlertTriangle className="h-6 w-6 text-red-600 mb-2" />
+              <span className="text-sm font-medium text-gray-900">Incidents</span>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Alerts and Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Alerts</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Recent Alerts</h3>
+        </div>
+        <div className="p-6">
           <div className="space-y-4">
             {stats?.overdue_assessments && stats.overdue_assessments > 0 && (
-              <div className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-red-800">
                     {stats.overdue_assessments} overdue assessment{stats.overdue_assessments > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs text-red-600">Requires immediate attention</p>
                 </div>
-                <Button asChild size="sm" variant="outline" className="ml-auto">
-                  <Link to="/third-party-risk-management/assessments">View</Link>
-                </Button>
+                <button
+                  onClick={() => navigate('/third-party-risk-management/assessments')}
+                  className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  View
+                </button>
               </div>
             )}
 
             {stats?.upcoming_renewals && stats.upcoming_renewals > 0 && (
-              <div className="flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center space-x-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <Calendar className="h-5 w-5 text-yellow-600" />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-yellow-800">
                     {stats.upcoming_renewals} contract{stats.upcoming_renewals > 1 ? 's' : ''} expiring soon
                   </p>
                   <p className="text-xs text-yellow-600">Within 30 days</p>
                 </div>
-                <Button asChild size="sm" variant="outline" className="ml-auto">
-                  <Link to="/third-party-risk-management/contracts">View</Link>
-                </Button>
+                <button
+                  onClick={() => navigate('/third-party-risk-management/contracts')}
+                  className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  View
+                </button>
               </div>
             )}
 
             {stats?.active_incidents && stats.active_incidents > 0 && (
-              <div className="flex items-center space-x-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center space-x-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <Shield className="h-5 w-5 text-orange-600" />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-orange-800">
                     {stats.active_incidents} active incident{stats.active_incidents > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs text-orange-600">Under investigation</p>
                 </div>
-                <Button asChild size="sm" variant="outline" className="ml-auto">
-                  <Link to="/third-party-risk-management/incidents">View</Link>
-                </Button>
+                <button
+                  onClick={() => navigate('/third-party-risk-management/incidents')}
+                  className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  View
+                </button>
               </div>
             )}
 
             {(!stats?.overdue_assessments || stats.overdue_assessments === 0) &&
              (!stats?.upcoming_renewals || stats.upcoming_renewals === 0) &&
              (!stats?.active_incidents || stats.active_incidents === 0) && (
-              <div className="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="flex items-center space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="text-sm font-medium text-green-800">All systems operational</p>
                   <p className="text-xs text-green-600">No critical alerts at this time</p>
@@ -362,36 +370,31 @@ const ThirdPartyRiskManagementDashboard: React.FC = () => {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Performance Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Performance Summary</h3>
+        </div>
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">
                 {stats?.average_risk_score || 0}
               </div>
-              <p className="text-sm text-gray-600">Average Risk Score</p>
+              <p className="text-sm text-gray-600 mt-1">Average Risk Score</p>
               <div className="mt-2">
-                <Badge className={getRiskLevelColor(
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskLevelColor(
                   (stats?.average_risk_score || 0) >= 75 ? 'critical' :
                   (stats?.average_risk_score || 0) >= 50 ? 'high' :
                   (stats?.average_risk_score || 0) >= 25 ? 'medium' : 'low'
-                )}>
-                  {getRiskLevelIcon(
-                    (stats?.average_risk_score || 0) >= 75 ? 'critical' :
-                    (stats?.average_risk_score || 0) >= 50 ? 'high' :
-                    (stats?.average_risk_score || 0) >= 25 ? 'medium' : 'low'
-                  )}
+                )}`}>
                   {(stats?.average_risk_score || 0) >= 75 ? 'Critical' :
                    (stats?.average_risk_score || 0) >= 50 ? 'High' :
                    (stats?.average_risk_score || 0) >= 25 ? 'Medium' : 'Low'}
-                </Badge>
+                </span>
               </div>
             </div>
 
@@ -401,7 +404,7 @@ const ThirdPartyRiskManagementDashboard: React.FC = () => {
                   ? Math.round((stats.active_third_parties / stats.total_third_parties) * 100)
                   : 0}%
               </div>
-              <p className="text-sm text-gray-600">Active Vendors</p>
+              <p className="text-sm text-gray-600 mt-1">Active Vendors</p>
               <p className="text-xs text-gray-500 mt-1">
                 {stats?.active_third_parties || 0} of {stats?.total_third_parties || 0}
               </p>
@@ -413,14 +416,14 @@ const ThirdPartyRiskManagementDashboard: React.FC = () => {
                   ? Math.round(((stats.high_risk_third_parties + stats.critical_risk_third_parties) / stats.total_third_parties) * 100)
                   : 0}%
               </div>
-              <p className="text-sm text-gray-600">High/Critical Risk</p>
+              <p className="text-sm text-gray-600 mt-1">High/Critical Risk</p>
               <p className="text-xs text-gray-500 mt-1">
                 {((stats?.high_risk_third_parties || 0) + (stats?.critical_risk_third_parties || 0))} vendors
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

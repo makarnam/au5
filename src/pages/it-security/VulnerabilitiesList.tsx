@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { motion } from 'framer-motion';
 import { 
   Search, 
   Filter, 
@@ -19,9 +20,13 @@ import {
   XCircle,
   Calendar,
   User,
-  Building
+  Building,
+  RefreshCw,
+  ArrowRight,
+  Bug
 } from 'lucide-react';
-import { itSecurityService, ITSecurityVulnerability, ITSecuritySearchParams } from '../../services/itSecurityService';
+import { itSecurityVulnerabilityService } from '../../services/itSecurityService';
+import { ITSecurityVulnerability, ITSecuritySearchParams } from '../../types/itSecurity';
 import { Link, useNavigate } from 'react-router-dom';
 
 const VulnerabilitiesList: React.FC = () => {
@@ -44,7 +49,7 @@ const VulnerabilitiesList: React.FC = () => {
   const loadVulnerabilities = async () => {
     try {
       setLoading(true);
-      const response = await itSecurityService.vulnerabilities.getAll(searchParams);
+      const response = await itSecurityVulnerabilityService.getAll(searchParams);
       setVulnerabilities(response.data);
       setTotalPages(response.totalPages);
       setTotalItems(response.total);
@@ -74,7 +79,7 @@ const VulnerabilitiesList: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this vulnerability?')) {
       try {
-        await itSecurityService.vulnerabilities.delete(id);
+        await itSecurityVulnerabilityService.delete(id);
         loadVulnerabilities();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to delete vulnerability');
@@ -135,261 +140,330 @@ const VulnerabilitiesList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Security Vulnerabilities</h1>
-          <p className="text-gray-600 mt-2">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Security Vulnerabilities</h1>
+          <p className="text-gray-600 text-lg">
             Manage and track security vulnerabilities across your IT infrastructure
           </p>
         </div>
-        <Button onClick={() => navigate('/it-security/vulnerabilities/create')}>
+        <Button 
+          onClick={() => navigate('/it-security/vulnerabilities/create')}
+          className="bg-blue-600 hover:bg-blue-700 transition-all duration-200"
+        >
           <Plus className="h-4 w-4 mr-2" />
           New Vulnerability
         </Button>
-      </div>
+      </motion.div>
 
       {/* Search and Filters */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Search & Filters</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search vulnerabilities..."
-                className="pl-10"
-                onChange={(e) => handleSearch(e.target.value)}
-              />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <Card className="shadow-sm hover:shadow-lg transition-all duration-300">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold">Search & Filters</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
             </div>
-
-            {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-                <div>
-                  <Label>Status</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-md"
-                    onChange={(e) => handleFilter({ status: e.target.value ? [e.target.value] : [] })}
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="open">Open</option>
-                    <option value="investigating">Investigating</option>
-                    <option value="patching">Patching</option>
-                    <option value="patched">Patched</option>
-                    <option value="verified">Verified</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </div>
-                <div>
-                  <Label>Severity</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-md"
-                    onChange={(e) => handleFilter({ severity: e.target.value ? [e.target.value] : [] })}
-                  >
-                    <option value="">All Severities</option>
-                    <option value="critical">Critical</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
-                <div>
-                  <Label>Priority</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-md"
-                    onChange={(e) => handleFilter({ priority: e.target.value ? [e.target.value] : [] })}
-                  >
-                    <option value="">All Priorities</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search vulnerabilities..."
+                  className="pl-10"
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
+              {showFilters && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t"
+                >
+                  <div>
+                    <Label className="font-medium">Status</Label>
+                    <select
+                      className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => handleFilter({ status: e.target.value ? [e.target.value] : [] })}
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="open">Open</option>
+                      <option value="investigating">Investigating</option>
+                      <option value="patching">Patching</option>
+                      <option value="patched">Patched</option>
+                      <option value="verified">Verified</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Severity</Label>
+                    <select
+                      className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => handleFilter({ severity: e.target.value ? [e.target.value] : [] })}
+                    >
+                      <option value="">All Severities</option>
+                      <option value="critical">Critical</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Priority</Label>
+                    <select
+                      className="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => handleFilter({ priority: e.target.value ? [e.target.value] : [] })}
+                    >
+                      <option value="">All Priorities</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-red-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Total Vulnerabilities</p>
-                <p className="text-2xl font-bold">{totalItems}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <Shield className="h-8 w-8 text-orange-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">High/Critical</p>
-                <p className="text-2xl font-bold">
-                  {vulnerabilities.filter(v => v.severity === 'high' || v.severity === 'critical').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-yellow-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Open</p>
-                <p className="text-2xl font-bold">
-                  {vulnerabilities.filter(v => v.status === 'open' || v.status === 'investigating').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Patched</p>
-                <p className="text-2xl font-bold">
-                  {vulnerabilities.filter(v => v.status === 'patched' || v.status === 'verified').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Vulnerabilities List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Vulnerabilities</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {vulnerabilities.map((vulnerability) => (
-              <div
-                key={vulnerability.id}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-semibold">{vulnerability.title}</h3>
-                      <Badge className={getSeverityColor(vulnerability.severity)}>
-                        {vulnerability.severity}
-                      </Badge>
-                      <Badge className={getStatusColor(vulnerability.status)}>
-                        {vulnerability.status}
-                      </Badge>
-                      <Badge className={getPriorityColor(vulnerability.priority)}>
-                        {vulnerability.priority}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-gray-600 mb-3">{vulnerability.description}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>Discovered: {new Date(vulnerability.discovery_date).toLocaleDateString()}</span>
-                      </div>
-                      {vulnerability.due_date && (
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>Due: {new Date(vulnerability.due_date).toLocaleDateString()}</span>
-                        </div>
-                      )}
-                      {vulnerability.cvss_score && (
-                        <div className="flex items-center">
-                          <Shield className="h-4 w-4 mr-2" />
-                          <span>CVSS: {vulnerability.cvss_score}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {vulnerability.affected_systems.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Affected Systems:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {vulnerability.affected_systems.map((system, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {system}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {vulnerability.assigned_to_user && (
-                      <div className="mt-3 flex items-center text-sm text-gray-500">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>Assigned to: {vulnerability.assigned_to_user.first_name} {vulnerability.assigned_to_user.last_name}</span>
-                      </div>
-                    )}
-
-                    {vulnerability.business_unit && (
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <Building className="h-4 w-4 mr-2" />
-                        <span>Business Unit: {vulnerability.business_unit.name}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/it-security/vulnerabilities/${vulnerability.id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/it-security/vulnerabilities/${vulnerability.id}/edit`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(vulnerability.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-red-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-red-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-red-100 rounded-lg mr-4">
+                  <Bug className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Total Vulnerabilities</p>
+                  <p className="text-3xl font-bold text-gray-900">{totalItems}</p>
                 </div>
               </div>
-            ))}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-            {vulnerabilities.length === 0 && (
-              <div className="text-center py-8">
-                <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No vulnerabilities found</p>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-orange-100 rounded-lg mr-4">
+                  <Shield className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">High/Critical</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {vulnerabilities.filter(v => v.severity === 'high' || v.severity === 'critical').length}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-yellow-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-yellow-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-yellow-100 rounded-lg mr-4">
+                  <Clock className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Open</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {vulnerabilities.filter(v => v.status === 'open' || v.status === 'investigating').length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-green-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-3 bg-green-100 rounded-lg mr-4">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Patched</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {vulnerabilities.filter(v => v.status === 'patched' || v.status === 'verified').length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+
+      {/* Vulnerabilities List */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold">Vulnerabilities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {vulnerabilities.map((vulnerability) => (
+                <motion.div
+                  key={vulnerability.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: parseInt(vulnerability.id) * 0.05 }}
+                  whileHover={{ scale: 1.01, x: 4 }}
+                  className="border rounded-lg p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">{vulnerability.title}</h3>
+                        <Badge className={getSeverityColor(vulnerability.severity)} variant="secondary">
+                          {vulnerability.severity}
+                        </Badge>
+                        <Badge className={getStatusColor(vulnerability.status)} variant="secondary">
+                          {vulnerability.status}
+                        </Badge>
+                        <Badge className={getPriorityColor(vulnerability.priority)} variant="secondary">
+                          {vulnerability.priority}
+                        </Badge>
+                      </div>
+                      
+                      <p className="text-gray-600 mb-4">{vulnerability.description}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500 mb-4">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-blue-500" />
+                          <span>Discovered: {new Date(vulnerability.discovery_date).toLocaleDateString()}</span>
+                        </div>
+                        {vulnerability.due_date && (
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-2 text-yellow-500" />
+                            <span>Due: {new Date(vulnerability.due_date).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        {vulnerability.cvss_score && (
+                          <div className="flex items-center">
+                            <Shield className="h-4 w-4 mr-2 text-purple-500" />
+                            <span>CVSS: {vulnerability.cvss_score}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {vulnerability.affected_systems.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Affected Systems:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {vulnerability.affected_systems.map((system, index) => (
+                              <Badge key={index} variant="outline" className="text-xs px-2 py-1">
+                                {system}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {vulnerability.assigned_to_user && (
+                        <div className="flex items-center text-sm text-gray-500 mb-2">
+                          <User className="h-4 w-4 mr-2 text-green-500" />
+                          <span>Assigned to: <span className="font-medium">{vulnerability.assigned_to_user.first_name} {vulnerability.assigned_to_user.last_name}</span></span>
+                        </div>
+                      )}
+
+                      {vulnerability.business_unit && (
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Building className="h-4 w-4 mr-2 text-orange-500" />
+                          <span>Business Unit: <span className="font-medium">{vulnerability.business_unit.name}</span></span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/it-security/vulnerabilities/${vulnerability.id}`)}
+                        className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/it-security/vulnerabilities/${vulnerability.id}/edit`)}
+                        className="hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(vulnerability.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+
+              {vulnerabilities.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="p-4 bg-gray-50 rounded-full inline-block mb-4">
+                    <AlertTriangle className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 text-lg">No vulnerabilities found</p>
+                </div>
+              )}
+            </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -421,8 +495,9 @@ const VulnerabilitiesList: React.FC = () => {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };

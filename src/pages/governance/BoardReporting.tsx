@@ -406,7 +406,15 @@ export default function BoardReporting() {
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // TODO: Navigate to edit page when implemented
+                            console.log('Edit report:', report.id);
+                            // navigate(`/governance/board-reports/${report.id}/edit`);
+                          }}
+                        >
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>

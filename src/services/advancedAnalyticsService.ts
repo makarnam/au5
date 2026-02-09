@@ -57,7 +57,7 @@ const advancedAnalyticsService = {
     groupBy: 'category' | 'level' | 'status' | 'month' = 'month'
   ): Promise<AnalyticsDataPoint[] | null> {
     return withErrorHandling(async () => {
-      let query = supabase
+      const query = supabase
         .from('risks')
         .select('created_at, category, risk_level, status')
         .gte('created_at', startDate)

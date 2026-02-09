@@ -352,7 +352,7 @@ Generate exactly ${matrixDimensions * matrixDimensions} cells, one for each posi
         fixed = fixed.replace(/:\s*"([^"]*)\s*([^"]*)"\s*([^"]*)/g, ':"$1$2$3"'); // Fix broken strings
         
         // Ensure proper closing
-        let braceCount = (fixed.match(/\{/g) || []).length;
+        const braceCount = (fixed.match(/\{/g) || []).length;
         let closeBraceCount = (fixed.match(/\}/g) || []).length;
         while (closeBraceCount < braceCount) {
           fixed += '}';
@@ -430,9 +430,9 @@ Generate exactly ${matrixDimensions * matrixDimensions} cells, one for each posi
         }
         
         // Ensure proper object/array closure
-        let openBraces = (fixed.match(/\{/g) || []).length;
+        const openBraces = (fixed.match(/\{/g) || []).length;
         let closeBraces = (fixed.match(/\}/g) || []).length;
-        let openBrackets = (fixed.match(/\[/g) || []).length;
+        const openBrackets = (fixed.match(/\[/g) || []).length;
         let closeBrackets = (fixed.match(/\]/g) || []).length;
         
         while (closeBraces < openBraces) {
@@ -484,9 +484,9 @@ Generate exactly ${matrixDimensions * matrixDimensions} cells, one for each posi
         }
         
         // Complete any incomplete arrays
-        let openBraces = (fixed.match(/\{/g) || []).length;
+        const openBraces = (fixed.match(/\{/g) || []).length;
         let closeBraces = (fixed.match(/\}/g) || []).length;
-        let openBrackets = (fixed.match(/\[/g) || []).length;
+        const openBrackets = (fixed.match(/\[/g) || []).length;
         let closeBrackets = (fixed.match(/\]/g) || []).length;
         
         console.log('Strategy 8 bracket analysis:', {

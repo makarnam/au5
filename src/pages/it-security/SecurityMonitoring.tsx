@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
+import { motion } from 'framer-motion';
 import { 
   Activity, 
   AlertTriangle, 
@@ -18,7 +19,9 @@ import {
   Server,
   Database,
   Globe,
-  Users
+  Users,
+  RefreshCw,
+  ArrowRight
 } from 'lucide-react';
 
 interface SecurityEvent {
@@ -199,271 +202,400 @@ const SecurityMonitoring: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Security Monitoring</h1>
-          <p className="text-gray-600">Real-time security monitoring and system status</p>
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Security Monitoring</h1>
+          <p className="text-gray-600 text-lg">Real-time security monitoring and system status</p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
+        <div className="flex space-x-3">
+          <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
             <Eye className="h-4 w-4 mr-2" />
             View Logs
           </Button>
-          <Button>
-            <Activity className="h-4 w-4 mr-2" />
+          <Button className="hover:bg-blue-700 transition-all duration-200">
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Threats</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">3</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 text-red-600" /> +12% from yesterday
-            </p>
-          </CardContent>
-        </Card>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-red-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-red-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Active Threats</CardTitle>
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-600">3</div>
+              <p className="text-sm text-gray-600 mt-2">
+                <TrendingUp className="inline h-4 w-4 text-red-600 mr-1" /> 
+                <span className="font-medium">+12%</span> from yesterday
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Uptime</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">99.2%</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 text-green-600" /> +0.3% from last week
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-green-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">System Uptime</CardTitle>
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">99.2%</div>
+              <p className="text-sm text-gray-600 mt-2">
+                <TrendingUp className="inline h-4 w-4 text-green-600 mr-1" /> 
+                <span className="font-medium">+0.3%</span> from last week
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Shield className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">87</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 text-blue-600" /> +5 points from last month
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Security Score</CardTitle>
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Shield className="h-5 w-5 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">87</div>
+              <p className="text-sm text-gray-600 mt-2">
+                <TrendingUp className="inline h-4 w-4 text-blue-600 mr-1" /> 
+                <span className="font-medium">+5 points</span> from last month
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Incidents Today</CardTitle>
-            <Activity className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">7</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingDown className="inline h-3 w-3 text-green-600" /> -2 from yesterday
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        <motion.div
+          whileHover={{ scale: 1.02, y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-gray-700">Incidents Today</CardTitle>
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Activity className="h-5 w-5 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">7</div>
+              <p className="text-sm text-gray-600 mt-2">
+                <TrendingDown className="inline h-4 w-4 text-green-600 mr-1" /> 
+                <span className="font-medium">-2</span> from yesterday
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Security Events */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5" />
-              <span>Recent Security Events</span>
-            </CardTitle>
-            <CardDescription>Latest security events and alerts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {securityEvents.map((event) => {
-                const EventIcon = getEventIcon(event.type);
-                return (
-                  <div key={event.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                    <EventIcon className="h-5 w-5 mt-0.5 text-gray-500" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {event.title}
-                        </h4>
-                        <Badge className={getSeverityColor(event.severity)}>
-                          {event.severity}
-                        </Badge>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="shadow-sm hover:shadow-lg transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-lg">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                <span>Recent Security Events</span>
+              </CardTitle>
+              <CardDescription className="text-base">Latest security events and alerts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {securityEvents.map((event) => {
+                  const EventIcon = getEventIcon(event.type);
+                  return (
+                    <motion.div
+                      key={event.id}
+                      whileHover={{ scale: 1.01, x: 4 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <EventIcon className="h-5 w-5 text-gray-600" />
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-500">{event.source}</span>
-                        <span className="text-xs text-gray-500">{getTimeAgo(event.timestamp)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-gray-900 truncate">
+                            {event.title}
+                          </h4>
+                          <Badge className={getSeverityColor(event.severity)} variant="secondary">
+                            {event.severity}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{event.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500 font-medium">{event.source}</span>
+                          <span className="text-xs text-gray-500">{getTimeAgo(event.timestamp)}</span>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-4">
-              <Button variant="outline" className="w-full">
-                View All Events
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+              <div className="mt-6">
+                <Button variant="outline" className="w-full hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                  View All Events
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* System Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Server className="h-5 w-5" />
-              <span>System Status</span>
-            </CardTitle>
-            <CardDescription>Current status of all monitored systems</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {systemStatus.map((system) => (
-                <div key={system.name} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      system.status === 'operational' ? 'bg-green-500' :
-                      system.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}></div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">{system.name}</h4>
-                      <p className="text-xs text-gray-500">
-                        Uptime: {system.uptime}% • Last check: {getTimeAgo(system.lastCheck)}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className={getStatusColor(system.status)}>
-                    {system.status}
-                  </Badge>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card className="shadow-sm hover:shadow-lg transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-lg">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Server className="h-5 w-5 text-blue-600" />
                 </div>
-              ))}
-            </div>
-            <div className="mt-4">
-              <Button variant="outline" className="w-full">
-                View Detailed Status
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <span>System Status</span>
+              </CardTitle>
+              <CardDescription className="text-base">Current status of all monitored systems</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {systemStatus.map((system) => (
+                  <motion.div
+                    key={system.name}
+                    whileHover={{ scale: 1.01, x: 4 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-3 h-3 rounded-full ${
+                        system.status === 'operational' ? 'bg-green-500' :
+                        system.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">{system.name}</h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Uptime: <span className="font-medium">{system.uptime}%</span> • Last check: {getTimeAgo(system.lastCheck)}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={getStatusColor(system.status)} variant="secondary">
+                      {system.status}
+                    </Badge>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="mt-6">
+                <Button variant="outline" className="w-full hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                  View Detailed Status
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Security Dashboard */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5" />
-            <span>Security Dashboard</span>
-          </CardTitle>
-          <CardDescription>Comprehensive security metrics and trends</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Threat Intelligence */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Threat Intelligence</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Known Threats</span>
-                  <span className="text-sm font-medium">1,247</span>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <Card className="shadow-sm hover:shadow-lg transition-all duration-300">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-3 text-lg">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <BarChart3 className="h-5 w-5 text-purple-600" />
+              </div>
+              <span>Security Dashboard</span>
+            </CardTitle>
+            <CardDescription className="text-base">Comprehensive security metrics and trends</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Threat Intelligence */}
+              <div className="space-y-4 p-4 bg-gradient-to-br from-red-50 to-white rounded-lg border border-red-100">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Threat Intelligence</h3>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">New Threats (24h)</span>
-                  <span className="text-sm font-medium text-red-600">+23</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Blocked Attacks</span>
-                  <span className="text-sm font-medium">892</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">Known Threats</span>
+                    <span className="text-sm font-bold text-gray-900">1,247</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">New Threats (24h)</span>
+                    <span className="text-sm font-bold text-red-600">+23</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">Blocked Attacks</span>
+                    <span className="text-sm font-bold text-gray-900">892</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Network Security */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Network Security</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Firewall Rules</span>
-                  <span className="text-sm font-medium">156</span>
+              {/* Network Security */}
+              <div className="space-y-4 p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Network className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Network Security</h3>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">VPN Connections</span>
-                  <span className="text-sm font-medium">42</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Blocked IPs</span>
-                  <span className="text-sm font-medium">1,089</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">Firewall Rules</span>
+                    <span className="text-sm font-bold text-gray-900">156</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">VPN Connections</span>
+                    <span className="text-sm font-bold text-gray-900">42</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">Blocked IPs</span>
+                    <span className="text-sm font-bold text-gray-900">1,089</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Data Protection */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Data Protection</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Encrypted Data</span>
-                  <span className="text-sm font-medium">99.8%</span>
+              {/* Data Protection */}
+              <div className="space-y-4 p-4 bg-gradient-to-br from-green-50 to-white rounded-lg border border-green-100">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Database className="h-5 w-5 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Data Protection</h3>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Backup Status</span>
-                  <span className="text-sm font-medium text-green-600">Healthy</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">DLP Alerts</span>
-                  <span className="text-sm font-medium">5</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">Encrypted Data</span>
+                    <span className="text-sm font-bold text-gray-900">99.8%</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">Backup Status</span>
+                    <span className="text-sm font-bold text-green-600">Healthy</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-md">
+                    <span className="text-sm text-gray-600">DLP Alerts</span>
+                    <span className="text-sm font-bold text-gray-900">5</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common security monitoring tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col">
-              <Eye className="h-5 w-5 mb-2" />
-              <span className="text-sm">View Logs</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <AlertTriangle className="h-5 w-5 mb-2" />
-              <span className="text-sm">Create Alert</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <BarChart3 className="h-5 w-5 mb-2" />
-              <span className="text-sm">Generate Report</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Shield className="h-5 w-5 mb-2" />
-              <span className="text-sm">Security Scan</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <Card className="shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Quick Actions</CardTitle>
+            <CardDescription className="text-base">Common security monitoring tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button variant="outline" className="w-full h-24 flex-col hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                  <div className="p-2 bg-blue-100 rounded-lg mb-2">
+                    <Eye className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="text-sm font-medium">View Logs</span>
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button variant="outline" className="w-full h-24 flex-col hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200">
+                  <div className="p-2 bg-red-100 rounded-lg mb-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                  </div>
+                  <span className="text-sm font-medium">Create Alert</span>
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button variant="outline" className="w-full h-24 flex-col hover:bg-purple-50 hover:border-purple-300 hover:shadow-md transition-all duration-200">
+                  <div className="p-2 bg-purple-100 rounded-lg mb-2">
+                    <BarChart3 className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <span className="text-sm font-medium">Generate Report</span>
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button variant="outline" className="w-full h-24 flex-col hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all duration-200">
+                  <div className="p-2 bg-green-100 rounded-lg mb-2">
+                    <Shield className="h-5 w-5 text-green-600" />
+                  </div>
+                  <span className="text-sm font-medium">Security Scan</span>
+                </Button>
+              </motion.div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };

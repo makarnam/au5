@@ -376,7 +376,7 @@ const RiskDashboard: React.FC = () => {
 
   useEffect(() => {
     void loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [searchTerm, statusFilter, levelFilter, categoryFilter]);
 
   // Keyboard shortcuts
